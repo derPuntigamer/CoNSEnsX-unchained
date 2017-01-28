@@ -1,14 +1,618 @@
-#!/usr/bin/perl -I/home/szpari/programs/Perl
+#!/usr/bin/perl 
+
+#To elimninate dependence on an external package, Vector3D is defined here
+{
+
+package Vector3D;
+
+###################################################
+##
+## Class for handling 3D points and vectors
+## The constructor expects an array with the coordinates of
+## the point. 
+##
+## All subroutines are also defined in a static manner,
+## e.g Length() and Length2() differ in invocation
+## (the first is invoked as an object method, the second
+## as a class method with an object as argument)
+##
+## Parts of the code are based on the following book:
+## [JT]: L. Jánossy, P. Tasnádi: Vektorszámítás (1982)
+## Tankönyvkiadó, Budapest (in Hungarian)
+##
+## Version 0.2, 13.02.2002. 
+###################################################
+
+use strict;
+
+
+##############
+## Constructor
+##############
+
+sub new {
+
+    my $Vector3D={};
+    bless ($Vector3D);
+    my $type=shift;
+    my $coordx=shift;my $coordy=shift; my $coordz=shift;
+
+    $Vector3D->{COORDX}=$coordx;
+    $Vector3D->{COORDY}=$coordy;
+    $Vector3D->{COORDZ}=$coordz;
+
+    return ($Vector3D);
+
+}#_sub new
+
+#----------------------------------------------------
+
+sub PrintInfo{
+
+    my $this=shift;
+    print "COORDINATES : $this->{COORDX}\t$this->{COORDY}\t$this->{COORDZ}\n";
+
+}#_sub PrintInfo
+
+#----------------------------------------------------
+
+sub Length{
+
+    my $this=shift;
+
+#    $this->{LENGTH}=sqrt(($this->{COORDX}**2)+($this->{COORDY}**2)+($this->{COORDZ}**2));
+    my $length=sqrt(($this->{COORDX}**2)+($this->{COORDY}**2)+($this->{COORDZ}**2));
+
+    return($length);
+
+}#_sub Length
+
+#----------------------------------------------------
+
+sub Length2{
+
+    my $type=shift;
+    my $first=shift;
+    return ($first->Length());
+
+}#_sub Length2
+
+#-----------------------------------------------------
+
+# Constructing unity vector from $this
+
+sub Norm{
+
+    my $this=shift;
+    my $length=$this->Length();
+    my $m_x;  my $m_y;  my $m_z;
+
+    if ($length != 0){
+	$m_x=$this->{COORDX}/$length;
+	$m_y=$this->{COORDY}/$length;
+	$m_z=$this->{COORDZ}/$length;
+    }
+    else {
+	$m_x=0;
+	$m_y=0;
+	$m_z=0;
+    }
+
+    return (new Vector3D($m_x,$m_y,$m_z));
+
+}#_sub Norm
+
+#-----------------------------------------------------
+
+# Making unity vector from $this
+
+sub Norm2{
+
+    my $type1=shift;
+    my $first=shift;
+    return ($first->Norm());
+
+}#_sub Norm2
+
+
+#-----------------------------------------------------
+
+# Scaling $this (with argument $scale)
+
+sub Scale{
+
+    my $this=shift;
+    my $scale=shift;
+    my $length=$this->Length();
+    my $m_x=$this->{COORDX}*$scale;
+    my $m_y=$this->{COORDY}*$scale;
+    my $m_z=$this->{COORDZ}*$scale;
+
+    return (new Vector3D($m_x,$m_y,$m_z));
+
+}#_sub Scale
+
+#-----------------------------------------------------
+
+# Scaling Vector3D object (fisrt arg) with $scale (second arg)
+
+sub Scale2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $scale=shift;
+    return ($first->Scale($scale));
+
+}#_sub Scale2
+
+#-----------------------------------------------------
+
+# Distance calculator for $this and another Vector3D object
+
+sub Distance{
+
+    my $this=shift;
+    my $second=shift;
+
+    my $xd=$this->{COORDX}-$second->{COORDX};
+    my $yd=$this->{COORDY}-$second->{COORDY};
+    my $zd=$this->{COORDZ}-$second->{COORDZ};
+
+    my $dist=sqrt(($xd**2)+($yd**2)+($zd**2));
+
+    return($dist);
+}#_sub Distance
+
+#-----------------------------------------------------
+
+# Distance calculator for two Vector3D objects
+
+sub Distance2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $second=shift;
+
+    return($first->Distance($second));
+
+}#_sub Distance2
+
+#-------------------------------------------
+
+# Scalar product of $this and another Vector3D object
+
+sub ScalarProduct{
+
+    my $this=shift;
+    my $second=shift;
+    my $scalarproduct=$this->{COORDX}*$second->{COORDX}+$this->{COORDY}*$second->{COORDY}+$this->{COORDZ}*$second->{COORDZ};
+
+    return ($scalarproduct);
+
+}#_sub ScalarProduct
+
+
+#-------------------------------------------
+
+# Scalar product of two Vector3D objects
+
+sub ScalarProduct2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $second=shift;
+
+    return ($first->ScalarProduct($second));
+
+}#_sub ScalarProduct2
+
+#--------------------------------------------
+
+# Vectorial product of $this and another Vector3D object
+
+sub VectorialProduct{
+
+    my $this=shift;
+    my $second=shift;
+    my $product_x=$this->{COORDY}*$second->{COORDZ}-$this->{COORDZ}*$second->{COORDY};
+    my $product_y=$this->{COORDZ}*$second->{COORDX}-$this->{COORDX}*$second->{COORDZ};
+    my $product_z=$this->{COORDX}*$second->{COORDY}-$this->{COORDY}*$second->{COORDX};
+
+    return (new Vector3D($product_x,$product_y,$product_z));
+
+}#_sub VectorialProduct
+
+
+#-------------------------------------------
+
+# Vectorial product of two Vector3D objects
+
+sub VectorialProduct2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $second=shift;
+
+    return ($first->VectorialProduct($second));
+
+}#_sub VectorialProduct2
+
+#--------------------------------------------
+
+
+# Difference vector of $this and another Vector3D object
+
+sub Diff{
+
+    my $this=shift;
+    my $second=shift;
+    my $m_x=$this->{COORDX}-$second->{COORDX};
+    my $m_y=$this->{COORDY}-$second->{COORDY};
+    my $m_z=$this->{COORDZ}-$second->{COORDZ};
+
+    return (new Vector3D($m_x,$m_y,$m_z));
+
+}#_sub Diff
+
+
+#-------------------------------------------
+
+# Difference of two Vector3D objects
+
+sub Diff2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $second=shift;
+
+    return ($first->Diff($second));
+
+
+}#_sub Diff2
+
+#--------------------------------------------
+
+# Sum vector of $this and another Vector3D object
+
+sub Sum{
+
+    my $this=shift;
+    my $second=shift;
+    my $m_x=$this->{COORDX}+$second->{COORDX};
+    my $m_y=$this->{COORDY}+$second->{COORDY};
+    my $m_z=$this->{COORDZ}+$second->{COORDZ};
+
+    return (new Vector3D($m_x,$m_y,$m_z));
+
+}#_sub Sum
+
+
+#-------------------------------------------
+
+# Sum of two Vector3D objects
+
+sub Sum2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $second=shift;
+
+    return ($first->Sum($second));
+
+
+}#_sub Sum2
+
+
+#--------------------------------------------
+
+# Harmas vegyes szorzat : a*(b X c)
+
+sub MixedProduct{
+
+    my $this=shift;
+    my $second=shift;
+    my $third=shift;
+
+    return ($this->ScalarProduct($second->VectorialProduct($third)));
+
+}#_sub MixedProduct
+
+
+#-------------------------------------------
+
+# Harmas vegyes szorzat 2
+
+sub MixedProduct2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $second=shift;
+    my $third=shift;
+
+    return ($first->MixedProduct($second,$third));
+
+
+}#_sub MixedProduct2
+
+#--------------------------------------------
+sub MatrixMul{
+
+   my $this=shift;
+   my $row1=shift;
+   my $row2=shift;
+   my $row3=shift;
+
+   my $x1=$this->ScalarProduct($row1);
+   my $x2=$this->ScalarProduct($row2);
+   my $x3=$this->ScalarProduct($row3);
+
+   return new Vector3D($x1,$x2,$x3);
+
+
+}#_sub MatrixMul
+
+#--------------------------------------------
+
+# Reciprocal vector of $this (needs two arguments)
+# [JT, p. 4., eq. 4.8-10.]
+
+sub Reciprocal{
+
+    my $this=shift;
+    my $second=shift;
+    my $third=shift;
+
+    my $v=$this->MixedProduct($second,$third);
+#   print "[Reciprocal] $v";
+
+    my $rec=$second->VectorialProduct($third);
+    $rec=$rec->Scale((1/$v));
+#   $rec->PrintInfo();
+    return ($rec);
+
+
+}#_sub MixedProduct
+
+
+#-------------------------------------------
+
+# Reciprocal vector, three args
+
+sub Reciprocal2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $second=shift;
+    my $third=shift;
+
+    return ($first->Reciprocal($second,$third));
+
+}#_sub Reciprocal2
+
+#--------------------------------------------
+
+# Projecting $this to a plane defined by its normal vector
+# A point in the plane ($a) and its normal vector ($norm) 
+# is prvided as an argument
+# [JT, pp. 59] $M=$normal; $b=$this
+
+sub Project{
+
+    my $this=shift;
+    my $a=shift;
+    my $normal=shift;
+
+    # The projaction line is perpendicular to the plane, so $M=$normal
+    # $this is the point to project, it is on the line
+    # Ensuring consistency with symbols in [JT]
+    my $M=$normal;  
+    my $b=$this;
+
+    # Constructing two vectors in the plane:
+    # A vector not paralel to $norm
+    my $n2=new Vector3D($normal->{COORDY},((-1)*$normal->{COORDX})+5,$normal->{COORDZ});
+    # $K is perpendicular to $normal, $L is perpendicular to $normal and $K
+    my $K=$normal->VectorialProduct($n2);
+    my $L=$normal->VectorialProduct($K);
+
+#    print "K,L,M:\n";
+#    $K->PrintInfo();
+#    $L->PrintInfo();
+#    $M->PrintInfo();
+#    my $mixed=$K->MixedProduct($L,$M);
+#    print "$mixed\n\n";
+#    my $vecKL=$K->VectorialProduct($L);
+#    $vecKL->PrintInfo();
+#    my $svecKL=$vecKL->Scale((1/$mixed));
+#    $svecKL->PrintInfo();
+
+
+    # Constructing reciprocal vectors
+    my $k=$K->Reciprocal($L,$M);
+    my $l=$L->Reciprocal($M,$K);
+    my $m=$M->Reciprocal($K,$L);
+
+#    print "k,l,m, vegyesszorzatuk:\n";
+#    $k->PrintInfo();
+#    $l->PrintInfo();
+#    $m->PrintInfo();
+#    $mixed=$k->MixedProduct($l,$m);
+#    print "$mixed\n\n";
+
+    my $s=$m->ScalarProduct($b->Diff($a));
+
+    # $r is the intercept of the line and the plane,
+    # in other words, the projected point.
+    my $r=$b->Diff($M->Scale($s));
+
+    return($r);
+
+}#_sub Project
+
+#--------------------------------------------
+
+sub Project2{
+
+    my $type1=shift;
+    my $b=shift;
+    my $a=shift;
+    my $normal=shift;
+
+    return($b->Project($a,$normal));
+
+}#_sub Project2
+
+#---------------------------------------------
+
+# Angle of $this and a second Vector3D object
+
+sub Angle{
+
+    my $this=shift;
+    my $second=shift;
+
+    my $angle;
+
+    my $this_length=$this->Length();
+    my $second_length=$second->Length();
+
+    my $scalar=$this->ScalarProduct($second);
+    my $vectorial=$this->VectorialProduct($second);
+
+    if ($this_length*$second_length == 0){$angle="NaN"}
+    else {
+
+	my $cos=$scalar/($this_length*$second_length);
+	my $sin=$vectorial->Length()/($this_length*$second_length);
+
+#       print STDERR "$scalar $vectorial $this_length $second_length $sin $cos\n";
+
+	$angle=atan2($sin,$cos);
+    }
+
+    return($angle);
+
+}#_sub Angle
+
+
+#-------------------------------------------
+
+# Angle of two Vector3D objects
+
+sub Angle2{
+
+    my $type1=shift;
+    my $first=shift;
+    my $second=shift;
+
+    return ($first->Angle($second));
+
+}#_sub Angle2
+
+#--------------------------------------------
+
+# Rotation around X axis
+# Expects angle (radian)
+# Currently not uses rotation matrices (mainly for
+# "speed" reasons :-))
+
+sub RotateX{
+
+    my $this=shift;
+    my $angle=shift;
+    my $sin=sin($angle);
+    my $cos=cos($angle);
+
+    my $resultx; my $resulty; my $resultz;
+
+    $resultx=$this->{COORDX};
+    $resulty=$cos*$this->{COORDY}-$sin*$this->{COORDZ};
+    $resultz=$sin*$this->{COORDY}+$cos*$this->{COORDZ};
+
+    return new Vector3D($resultx,$resulty,$resultz);
+
+}#_sub RotateX
+
+#-------------------------------------------
+
+# Rotation around Y axis
+# Expects angle (radian)
+# Currently not uses rotation matrices (mainly for
+# "speed" reasons :-))
+
+sub RotateY{
+
+    my $this=shift;
+    my $angle=shift;
+    my $sin=sin($angle);
+    my $cos=cos($angle);
+
+    my $resultx; my $resulty; my $resultz;
+
+    $resultx=$cos*$this->{COORDX}+$sin*$this->{COORDZ};
+    $resulty=$this->{COORDY};
+    $resultz=$cos*$this->{COORDZ}-$sin*$this->{COORDX};
+
+    return new Vector3D($resultx,$resulty,$resultz);
+
+}#_sub RotateY
+
+#-------------------------------------------
+
+# Rotation around Z axis
+# Expects angle (radian)
+# Currently not uses rotation matrices (mainly for
+# "speed" reasons :-))
+
+sub RotateZ{
+
+    my $this=shift;
+    my $angle=shift;
+    my $sin=sin($angle);
+    my $cos=cos($angle);
+
+    my $resultx; my $resulty; my $resultz;
+
+    $resultx=$cos*$this->{COORDX}-$sin*$this->{COORDY};
+    $resulty=$sin*$this->{COORDX}+$cos*$this->{COORDY};
+    $resultz=$this->{COORDZ};
+
+    return new Vector3D($resultx,$resulty,$resultz);
+
+}#_sub RotateZ
+
+#-------------------------------------------
+
+# Rotation around X, Y and Z axis (in this order)
+# Expects 3 angles (radian)
+# Currently not uses rotation matrices (mainly for
+# "speed" reasons :-))
+
+sub Rotate{
+
+    my $this=shift;
+    my $anglex=shift;
+    my $angley=shift;
+    my $anglez=shift;
+
+    # Mmmm.... piece of cake :-)))
+    return (($this->RotateX($anglex))->RotateY($angley))->RotateZ($anglez);
+#    return $this->RotateZ($this->RotateY($this->RotateX($anglex),$angley),$anglez);
+
+}#_sub Rotate
+
+#-------------------------------------------
+
+
+}
+
 
 $|=1;
 
 print STDERR "
-                    :-] G R O M A C S [-:
-                        legacy tools
-
-                     :-] disrechk.pl  [-:
-
-                   version as of 11 Feb 2016
+                     :-] disre_chk.pl [-:
+                 with a GROMACS-like interface
+                   version as of 27 Jan 2017
 
 Option     Filename  Type          Description
 ------------------------------------------------------------
@@ -16,7 +620,7 @@ Option     Filename  Type          Description
 
 
 use Getopt::Std;
-use Vector3D;
+#use Vector3D;
 
 $opt_f="eiwit.pdb";
 $opt_d="noe.disre";
