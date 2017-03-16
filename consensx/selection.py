@@ -651,15 +651,17 @@ def run_selection(my_path, original_values, user_selection_JSON):
     if os.path.isfile(my_path + "/selected.pdb"):
         os.remove(my_path + "/selected.pdb")
 
+    global max_size
+    global min_size
+    global overdrive
+
     if "min_size" not in globals():
         min_size = None
 
     if "max_size" not in globals():
         max_size = None
 
-    global max_size
-    global min_size
-    global overdrive
+
     print("max_size -> ", max_size)
 
     if "overdrive" not in globals():
