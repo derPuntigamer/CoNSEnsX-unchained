@@ -365,10 +365,10 @@ class Restraint_Record(object):
                             res.seq_ID1, res.seq_ID2, res.seq_name1,
                             res.seq_name2, atom1, atom2, res.dist_max)
 
-                        print(res.csx_id, res.curr_distID,
-                            res.seq_ID1, res.seq_name1, atom1,
-                            res.seq_ID2, res.seq_name2, atom2,
-                            res.dist_max)
+                        # print(res.csx_id, res.curr_distID,
+                        #     res.seq_ID1, res.seq_name1, atom1,
+                        #     res.seq_ID2, res.seq_name2, atom2,
+                        #     res.dist_max)
 
                         Restraint_Record.resolved_restraints.append(new)
 

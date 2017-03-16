@@ -583,13 +583,15 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
     PDB_coords    = csx_func.pdb2coords(PDB_file)
     prev_id       = -1
     avg_distances = {}
+    all_distances = {}
     measured_avg  = {}
     str_distaces  = {}
 
     for model in list(PDB_coords.keys()):
         avg_distances[model] = {}
+        all_distances[model] = {}
 
-        for restraint in restraints:
+        for restraint_num, restraint in enumerate(restraints):
             rest_id = int(restraint.csx_id)
             resnum1 = restraint.seq_ID1
             atom1   = restraint.atom_ID1
@@ -601,6 +603,8 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
 
             distance = (atom_coord1 - atom_coord2).magnitude()
 
+            all_distances[model][restraint_num] = distance
+
             if prev_id == rest_id:
                 avg_distances[model][rest_id].append(distance)
 
@@ -610,6 +614,24 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
                 str_distaces[rest_id] = restraint.dist_max
 
                 avg_distances[model][rest_id].append(distance)
+
+    # import pdb; pdb.set_trace()
+
+    for restraint_num, restraint in enumerate(restraints):
+        rest_id = int(restraint.csx_id)
+        resnum1 = restraint.seq_ID1
+        segname1 = restraint.seq_name1
+        atom1 = restraint.atom_ID1
+        resnum2 = restraint.seq_ID2
+        segname2 = restraint.seq_name2
+        atom2 = restraint.atom_ID2
+
+        dist_str = "> {} {} {} {} {}  |   ".format(rest_id, resnum1, atom1, resnum2, atom2)
+
+        for model in list(PDB_coords.keys()):
+            dist_str += "{0:.2f}  ".format(all_distances[model][restraint_num])
+
+        print("DISTS", dist_str)
 
     # at this point avg_distances[model][curr_id] contains distances for one
     # model and one restraint GROUP identified with "csx_id" number
