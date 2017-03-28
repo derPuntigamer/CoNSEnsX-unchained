@@ -1,6 +1,32 @@
+.tooltip > .tooltip-inner {
+  width: 200px;
+  background-color: #E5E5E5;
+  color: #000;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #2b9dae;
+  text-align: left;
+}
+
+.tooltip.in {
+  opacity: 1;
+  filter:alpha(opacity=100);
+}
+
+.tooltip.right > .tooltip-arrow {
+    border-right: 5px solid #2b9dae;
+}
+
 .tooltip_icon {
+  opacity: 0.6;
   margin-left: 6px;
-  width: 24px;
+  width: 22px;
+}
+
+.tooltip_icon:hover {
+  opacity: 1;
+  margin-left: 6px;
+  width: 22px;
 }
 
 #shortcodes {
