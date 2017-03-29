@@ -52,6 +52,62 @@ $(document).ready(function() {
         }
     });
 
+    $("#bulk_RDC").click(function () {
+        $(".inputrange").each(function() {
+            my_id    = $( this ).attr('id');
+            my_range = $( this ).attr('id').split('_');
+            my_type  = my_range[0];
+
+            if (my_type == "RDC") {
+                $( this ).val("10");
+                $('output[for="' + my_id + '"]').prop('value', "10");
+            }
+        })
+        console.log("RDC bulk selection done.")
+    });
+
+    $("#bulk_S2").click(function () {
+        $(".inputrange").each(function() {
+            my_id    = $( this ).attr('id');
+            my_range = $( this ).attr('id').split('_');
+            my_type  = my_range[0];
+
+            if (my_type == "S2") {
+                $( this ).val("10");
+                $('output[for="' + my_id + '"]').prop('value', "10");
+            }
+        })
+        console.log("S2 bulk selection done.")
+    });
+
+    $("#bulk_Jcoup").click(function () {
+        $(".inputrange").each(function() {
+            my_id    = $( this ).attr('id');
+            my_range = $( this ).attr('id').split('_');
+            my_type  = my_range[0];
+
+            if (my_type == "Jcoup") {
+                $( this ).val("10");
+                $('output[for="' + my_id + '"]').prop('value', "10");
+            }
+        })
+        console.log("Jcoup bulk selection done.")
+    });
+
+    $("#bulk_CS").click(function () {
+        $(".inputrange").each(function() {
+            my_id    = $( this ).attr('id');
+            my_range = $( this ).attr('id').split('_');
+            my_type  = my_range[0];
+
+            if (my_type == "CS") {
+                $( this ).val("10");
+                $('output[for="' + my_id + '"]').prop('value', "10");
+            }
+        })
+        console.log("CS bulk selection done.")
+    });
+
 
     $(".inputrange").on( 'change', function() {
         if (RDC_calc) {

@@ -1,3 +1,20 @@
+.floating {
+    float: left;
+    margin: 10px;
+    height: 36px;
+}
+
+.bulk {
+    margin-left: 6px;
+    margin-right: 0px;
+}
+
+.bulk_select_div {
+    width: 845px;
+    display: table;
+    margin: 0 auto 0 auto;
+}
+
 .hidden {
     visibility: hidden;
     display: none;

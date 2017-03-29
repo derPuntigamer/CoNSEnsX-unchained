@@ -136,6 +136,40 @@
 
         </table>
 
+        <div class=bulk_select_div>
+            <div class="floating" style="paddig-top: 4px">
+                <p>Bulk select:</p>
+            </div>
+            {% if RDC_data %}
+            <div class="floating bulk" id="bulk_RDC">
+                <button class="btn">
+                      RDC
+                </button>
+            </div>
+            {% endif %}
+            {% if S2_data %}
+            <div class="floating bulk" id="bulk_S2">
+                <button class="btn">
+                      order parameters
+                </button>
+            </div>
+            {% endif %}
+            {% if Jcoup_data %}
+            <div class="floating bulk" id="bulk_Jcoup">
+                <button class="btn">
+                      J-couplings
+                </button>
+            </div>
+            {% endif %}
+            {% if chemshift_data %}
+            <div class="floating bulk" id="bulk_CS">
+                <button class="btn">
+                      chemical shifts
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
         <button class="btn btn-primary" id="startsel">
               Start selection
         </button>
