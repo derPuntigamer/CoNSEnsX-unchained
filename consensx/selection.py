@@ -9,6 +9,8 @@ import json
 # own modules
 import consensx.csx_libs.methods as csx_func
 import consensx.csx_libs.objects as csx_obj
+import consensx.csx_libs.pca as csx_pca
+from .models import CSX_upload
 
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -340,9 +342,6 @@ def selection_on(my_path, measure, user_sel,
         model_scores = {}
         iter_scores  = {}
 
-        # print("PDBMODELS")
-        # print(pdb_models)
-
         # iterate on all PDB models
         for num, pdb in enumerate(pdb_models):
 
@@ -631,7 +630,6 @@ def selection_on(my_path, measure, user_sel,
 
 
 def run_selection(my_path, original_values, user_selection_JSON):
-
     DumpedData.RDC_isloaded       = False
     DumpedData.S2_isloaded        = False
     DumpedData.PDB_isloaded       = False
@@ -712,9 +710,14 @@ def run_selection(my_path, original_values, user_selection_JSON):
 
             output_pdb.write(model_line + "\n")
 
-    print(' '.join(map(str, in_selection)))
+    # print(' '.join(map(str, in_selection))
+    # print("iter_data", iter_data)
+    calc_id = my_path.split('/')[-1]
+    print('calcID', calc_id)
+    DB_entry = CSX_upload.objects.get(id_code=calc_id)
+    print(DB_entry.PDB_file)
+    print("DB_entry", DB_entry)
 
-
-    print("iter_data", iter_data)
+    csx_pca.create_PCA_comparison(my_path, DB_entry.PDB_file)
 
     return num_coordsets, iter_data
