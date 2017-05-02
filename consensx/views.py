@@ -2,9 +2,9 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-import random # ID generation
-import string # ID generation
-import os     # mkdir
+import random  # ID generation
+import string  # ID generation
+import os      # mkdir
 import pickle
 import json
 
@@ -30,8 +30,9 @@ def db(request, my_id):
     print("PATH", request.path)
     return HttpResponse(DB_entry.returnHTML())
 
+
 def home(request):
-    if request.method == 'POST': # if the form has been submitted...
+    if request.method == 'POST':  # if the form has been submitted...
         # generate ID for calcilation
         my_id = ''.join(random.choice(chars) for _ in range(6))
         my_path = os.path.join(BASE_DIR, 'media', my_id)
@@ -41,7 +42,6 @@ def home(request):
         if request.POST.get('submit_test', False):
             # IMPLEMENT TEST CALC HERE!
             return run_calculation(request, my_id)
-
 
         PDB_file = request.FILES['pdb_upload']  # get PDB file
         handle_uploaded_file(PDB_file, my_path, PDB_file.name)
@@ -82,7 +82,6 @@ def home(request):
         except KeyError:
             svd_enable = False
 
-
         post_data = CSX_upload(
             id_code=my_id,
             PDB_file=PDB_file.name,
@@ -101,6 +100,7 @@ def home(request):
 
     else:
         return render(request, "consensx/home.html")
+
 
 @csrf_exempt
 def selection(request, my_id):

@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-import sys
 import os
 import pickle
 import prody
-import json
 
 # own modules
 import consensx.csx_libs.methods as csx_func
@@ -12,14 +10,11 @@ import consensx.csx_libs.objects as csx_obj
 import consensx.csx_libs.pca as csx_pca
 from .models import CSX_upload
 
-from django.http import HttpResponse
-from django.http import JsonResponse
-
 
 def getPDBModels(path):
     pdb_models = []
     for file in os.listdir(path):
-        if file.endswith(".pdb") and file.startswith("model_") :
+        if file.endswith(".pdb") and file.startswith("model_"):
             pdb_models.append(file)
 
     pdb_models = csx_func.natural_sort(pdb_models)
@@ -27,24 +22,24 @@ def getPDBModels(path):
 
 
 class DumpedData():
-    RDC_isloaded         = False
-    RDC_lists            = None
-    RDC_model_data       = None
+    RDC_isloaded = False
+    RDC_lists = None
+    RDC_model_data = None
 
-    S2_isloaded          = False
-    S2_dict              = None
-    S2_fit               = False
-    S2_fit_range         = None
+    S2_isloaded = False
+    S2_dict = None
+    S2_fit = False
+    S2_fit_range = None
 
-    PDB_isloaded         = False
-    PDB_model_data       = None
+    PDB_isloaded = False
+    PDB_model_data = None
 
-    Jcoup_isloaded       = False
-    Jcoup_dict           = None
-    Jcoup_model_data     = None
+    Jcoup_isloaded = False
+    Jcoup_dict = None
+    Jcoup_model_data = None
 
-    ChemShift_isloaded   = False
-    ChemShift_lists      = None
+    ChemShift_isloaded = False
+    ChemShift_lists = None
     ChemShift_model_data = None
 
     @staticmethod
@@ -146,19 +141,19 @@ def getUserSel(sel_dict):
 
         # read S2 selections
         elif key.split('_')[0] == "S2":
-            my_type   = key.split('_')[1]
+            my_type = key.split('_')[1]
             my_weight = float(value)
             user_sel.append(["S2", my_type, my_weight])
 
         # read J-coupling selections
         elif key.split('_')[0] == "JCoup":
-            my_type   = key.split('_')[1]
+            my_type = key.split('_')[1]
             my_weight = float(value)
             user_sel.append(["JCoup", my_type, my_weight])
 
         # read chemical shifts selections
         elif key.split('_')[0] == "CS":
-            my_type   = key.split('_')[1]
+            my_type = key.split('_')[1]
             my_weight = float(value)
             user_sel.append(["ChemShift", my_type, my_weight])
 
@@ -167,7 +162,7 @@ def getUserSel(sel_dict):
 
 def get_best_S2_pair(measure, S2_dict, S2_type, args):
     model_list = csx_obj.PDB_model.model_list
-    scores     = {}
+    scores = {}
 
     for i in range(len(model_list)):
         for j in range(i + 1, len(model_list)):
@@ -275,8 +270,8 @@ def averageS2_on(models, PDB_data, S2_dict, S2_type, fit, fit_range):
        averageS2[residue] = value"""
 
     model_data = PDB_data
-    my_models  = []
-    averageS2  = {}
+    my_models = []
+    averageS2 = {}
 
     for model_num in models:
         model_data.atomgroup.setACSIndex(model_num)
@@ -328,19 +323,19 @@ def selection_on(my_path, measure, user_sel,
 
     print("STARTING WITH MODEL:", in_selection)
 
-    first_run  = True
-    first_try  = True
+    first_run = True
+    first_try = True
     above_best = 0
     iter_data = []
 
     if measure == "correlation":
-        prev_best  = -2
+        prev_best = -2
     else:
         prev_best = 1000
 
     while True:
         model_scores = {}
-        iter_scores  = {}
+        iter_scores = {}
 
         # iterate on all PDB models
         for num, pdb in enumerate(pdb_models):
@@ -350,12 +345,12 @@ def selection_on(my_path, measure, user_sel,
                 continue
 
             divide_by = 0.0                   # variable for storing weight sum
-            pdb_sel   = [num] + in_selection  # creating test ensemble
+            pdb_sel = [num] + in_selection  # creating test ensemble
 
             for sel_data in user_sel:
                 if sel_data[0] == "RDC":
-                    RDC_num    = sel_data[1]
-                    RDC_type   = sel_data[2]
+                    RDC_num = sel_data[1]
+                    RDC_type = sel_data[2]
                     RDC_weight = sel_data[3]
 
                     my_data = DumpedData.RDC_model_data.RDC_data[RDC_num][RDC_type]
@@ -368,7 +363,7 @@ def selection_on(my_path, measure, user_sel,
                     # print("AVGRDC ")
                     # print(averageRDC)
                     # print("AVGRDC END")
-                    my_RDC     = RDC_lists[RDC_num - 1][RDC_type]
+                    my_RDC = RDC_lists[RDC_num - 1][RDC_type]
 
                     if measure == "correlation":
                         calced = csx_func.calcCorrel(averageRDC, my_RDC)
@@ -389,7 +384,7 @@ def selection_on(my_path, measure, user_sel,
                     iter_scores[my_key] = calced
 
                 elif sel_data[0] == "S2":
-                    S2_type   = sel_data[1]
+                    S2_type = sel_data[1]
                     S2_weight = sel_data[2]
 
                     averageS2 = averageS2_on(
@@ -416,12 +411,12 @@ def selection_on(my_path, measure, user_sel,
                     iter_scores[sel_data[0] + '_' + str(sel_data[1])] = calced
 
                 elif sel_data[0] == "JCoup":
-                    JCoup_type   = sel_data[1]
+                    JCoup_type = sel_data[1]
                     JCoup_weight = sel_data[2]
 
-                    my_type      = JCoup_modell_data[JCoup_type]
+                    my_type = JCoup_modell_data[JCoup_type]
                     averageJCoup = averageJCoup_on(pdb_sel, my_type)
-                    my_JCoup     = Jcoup_dict[JCoup_type]
+                    my_JCoup = Jcoup_dict[JCoup_type]
 
                     if measure == "correlation":
                         calced = csx_func.calcCorrel(averageJCoup, my_JCoup)
@@ -440,7 +435,7 @@ def selection_on(my_path, measure, user_sel,
                     iter_scores[sel_data[0] + '_' + str(sel_data[1])] = calced
 
                 elif sel_data[0] == "ChemShift":
-                    ChemShift_type   = sel_data[1]
+                    ChemShift_type = sel_data[1]
                     ChemShift_weight = sel_data[2]
 
                     my_ChemShifts = ChemShifts[0][ChemShift_type]
@@ -497,8 +492,10 @@ def selection_on(my_path, measure, user_sel,
             print("size limit reached!")
 
             if overdrive:
-                if ((measure == "correlation" and best_val > prev_best) or
-                    (measure in ["q-value", "rmsd"] and best_val < prev_best)):
+                if (
+                    (measure == "correlation" and best_val > prev_best) or
+                    (measure in ["q-value", "rmsd"] and best_val < prev_best)
+                ):
 
                     above_best = 0
 
@@ -524,19 +521,21 @@ def selection_on(my_path, measure, user_sel,
                     return in_selection, iter_data[-above_best - 1], iter_data
 
         # if new selection results a higher score
-        if ((measure == "correlation" and best_val > prev_best) or
-            (measure in ["q-value", "rmsd"] and best_val < prev_best)):
+        if (
+            (measure == "correlation" and best_val > prev_best) or
+            (measure in ["q-value", "rmsd"] and best_val < prev_best)
+        ):
 
             # reset above the best threshold
-            above_best     = 0
-            prev_best      = best_val
+            above_best = 0
+            prev_best = best_val
             overdrive_best = -1
             print("CURRENT SEL:", in_selection)
             print("APPEND:", best_num)
             in_selection.append(best_num)
 
             # check if selection reached the desired maximal size (if any)
-            if max_size and len(in_selection) -1 == max_size:
+            if max_size and len(in_selection) - 1 == max_size:
                 print("size limit reached!")
                 # in_selection = [x+1 for x in in_selection]
                 in_selection.sort()
@@ -578,10 +577,10 @@ def selection_on(my_path, measure, user_sel,
                 in_selection.append(best_num)
 
                 if measure == "correlation" and overdrive_best > prev_best:
-                    prev_best  = overdrive_best
+                    prev_best = overdrive_best
                     above_best = 0
                 elif measure in ["q-value", "rmsd"] and overdrive_best < prev_best:
-                    prev_best  = overdrive_best
+                    prev_best = overdrive_best
                     above_best = 0
 
                 if overdrive == above_best:
@@ -630,12 +629,11 @@ def selection_on(my_path, measure, user_sel,
 
 
 def run_selection(my_path, original_values, user_selection_JSON):
-    DumpedData.RDC_isloaded       = False
-    DumpedData.S2_isloaded        = False
-    DumpedData.PDB_isloaded       = False
-    DumpedData.Jcoup_isloaded     = False
+    DumpedData.RDC_isloaded = False
+    DumpedData.S2_isloaded = False
+    DumpedData.PDB_isloaded = False
+    DumpedData.Jcoup_isloaded = False
     DumpedData.ChemShift_isloaded = False
-
 
     working_dir = my_path
 
@@ -659,7 +657,6 @@ def run_selection(my_path, original_values, user_selection_JSON):
     if "max_size" not in globals():
         max_size = None
 
-
     print("max_size -> ", max_size)
 
     if "overdrive" not in globals():
@@ -679,7 +676,7 @@ def run_selection(my_path, original_values, user_selection_JSON):
     # sel_calced.close()
 
     DumpedData.loadPDBData(my_path)
-    PDB_data     = DumpedData.PDB_model_data
+    PDB_data = DumpedData.PDB_model_data
     sel_ensemble = PDB_data.atomgroup.copy()
 
     for model_num in reversed(range(sel_ensemble.numCoordsets())):
@@ -694,8 +691,8 @@ def run_selection(my_path, original_values, user_selection_JSON):
     prody.writePDB(pdb_output_name, sel_ensemble)
 
     in_selection = [str(x+1) for x in sorted(in_selection)]
-    dummy_pdb    = open(pdb_output_name, 'r')
-    output_pdb   = open(my_path + "/selected.pdb", "w")
+    dummy_pdb = open(pdb_output_name, 'r')
+    output_pdb = open(my_path + "/selected.pdb", "w")
 
     for line in dummy_pdb:
         output_pdb.write(line)

@@ -17,23 +17,22 @@ Fork of: https://github.com/derPuntigamer/CoNSEnsX
 
 # standard modules
 import os
-import time
 import pickle
 
 # own modules
-import consensx.csx_libs.calc    as csx_calc
+import consensx.csx_libs.calc as csx_calc
 import consensx.csx_libs.methods as csx_func
 import consensx.csx_libs.objects as csx_obj
 
 # Django server
 from django.shortcuts import render
+from django.http import HttpResponse
 from .models import CSX_upload, CSX_calculation
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-def run_calculation(request, calc_id):
-    ts = time.time()
 
+def run_calculation(request, calc_id):
     abspath = os.path.abspath(__file__)
     dirname = os.path.dirname(abspath)
     csx_func.check_3rd_party(dirname)
@@ -45,8 +44,7 @@ def run_calculation(request, calc_id):
     my_path = os.path.join(settings.MEDIA_ROOT, my_id) + '/'
     DB_entry = CSX_upload.objects.get(id_code=calc_id)
 
-
-    #-----------------  Setting up working directory and files  ---------------#
+    # ----------------  Setting up working directory and files  ------------- #
     my_CSV_buffer = csx_obj.CSV_buffer(my_path)
 
     my_PDB = my_path + DB_entry.PDB_file
@@ -64,7 +62,7 @@ def run_calculation(request, calc_id):
     pdb_models = csx_func.natural_sort(pdb_models)
     data_found = False
 
-    #----------------------  Read  and parse NOE file   -----------------------#
+    # ---------------------  Read  and parse NOE file   --------------------- #
     if DB_entry.NOE_file:
         # empty class variables
         csx_obj.Restraint_Record.all_restraints = []
@@ -94,17 +92,18 @@ def run_calculation(request, calc_id):
         NOE_n = ""
         NOE_PRIDE_data = None
 
-
-    #----------------------  Read  and parse STR file   -----------------------#
+    # ---------------------  Read  and parse STR file   --------------------- #
     if DB_entry.STR_file:
         STR_name = DB_entry.STR_file
         my_STR = my_path + DB_entry.STR_file
+
         try:
             parsed = csx_func.parseSTR(my_STR)
         except Exception as e:
-            return e
+            print("EXCEPTION", e)
+            return HttpResponse(e)
 
-        #-------------------------  RDC calculation  --------------------------#
+        # ------------------------  RDC calculation  ------------------------ #
         RDC_lists = csx_func.get_RDC_lists(parsed.value)
         RDC_lists_path = my_path + "/RDC_lists.pickle"
         pickle.dump(RDC_lists, open(RDC_lists_path, "wb"))
@@ -118,7 +117,7 @@ def run_calculation(request, calc_id):
         else:
             RDC_data = None
 
-        #-----------------------------  S2 calc  ------------------------------#
+        # ----------------------------  S2 calc  ---------------------------- #
         S2_dict = csx_func.parseS2_STR(parsed.value)
         S2_dump = [S2_dict, DB_entry.superimpose, DB_entry.fit_range]
         S2_dict_path = my_path + "/S2_dict.pickle"
@@ -134,7 +133,7 @@ def run_calculation(request, calc_id):
         else:
             S2_data = None
 
-        S2_sidechain = csx_func.parse_sidechain_S2_STR(parsed.value)
+        # S2_sidechain = csx_func.parse_sidechain_S2_STR(parsed.value)
 
         # TODO
         # if S2_sidechain:
@@ -142,19 +141,20 @@ def run_calculation(request, calc_id):
         #                               fit=DB_entry.superimpose)
         #     data_found = True
 
-        #-------------------------  J-coupling calc  --------------------------#
+        # ------------------------  J-coupling calc  ------------------------ #
         Jcoup_dict = csx_func.parseJcoup_STR(parsed.value)
         Jcoup_dict_path = my_path + "/Jcoup_dict.pickle"
         pickle.dump(Jcoup_dict, open(Jcoup_dict_path, "wb"))
 
         if Jcoup_dict:
-            Jcoup_data = csx_calc.calcJCouplings(my_CSV_buffer, DB_entry.karplus,
-                                                 Jcoup_dict, my_PDB, my_path)
+            Jcoup_data = csx_calc.calcJCouplings(
+                my_CSV_buffer, DB_entry.karplus, Jcoup_dict, my_PDB, my_path
+            )
             data_found = True
         else:
             Jcoup_data = None
 
-        #------------------------  Chemical shift calc  -----------------------#
+        # -----------------------  Chemical shift calc  --------------------- #
         ChemShift_lists = csx_func.parseChemShift_STR(parsed.value)
         ChemShift_lists_path = my_path + "/ChemShift_lists.pickle"
         pickle.dump(ChemShift_lists, open(ChemShift_lists_path, "wb"))
@@ -173,10 +173,7 @@ def run_calculation(request, calc_id):
         Jcoup_data = None
         chemshift_data = None
 
-
     my_CSV_buffer.writeCSV()
-
-    te = time.time()
 
     if data_found:
         print(csx_obj.CalcPickle.data)
@@ -187,7 +184,7 @@ def run_calculation(request, calc_id):
             "my_PDB": DB_entry.PDB_file,
             "n_model": model_count,
             "my_NOE": NOE_name,
-            "n_NOE" : NOE_n,
+            "n_NOE": NOE_n,
             "my_STR": STR_name,
             "NOE_PRIDE_data": NOE_PRIDE_data,
             "RDC_data": RDC_data,
@@ -196,7 +193,6 @@ def run_calculation(request, calc_id):
             "chemshift_data": chemshift_data,
             "SVD_calc": DB_entry.svd_enable
         })
-
 
         print("RENDERED PAGE ---------------- START")
         post_data = CSX_calculation(
@@ -208,4 +204,5 @@ def run_calculation(request, calc_id):
         print("RENDERED PAGE ------------------ END")
         return rendered_page
     else:
+        print("NO DATA FOUND IN STAR-NMR FILE")
         return "NO DATA FOUND IN STAR-NMR FILE"
