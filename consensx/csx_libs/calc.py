@@ -171,7 +171,8 @@ def calcRDC(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model
     return RDC_data
 
 
-def calcS2(my_CSV_buffer, S2_dict, my_path, calculate_on_models=None, fit=None, fit_range=None):
+def calcS2(my_CSV_buffer, S2_dict, my_path, calculate_on_models=None, fit=None,
+           fit_range=None):
     """Back calculate order paramteres from given S2 dict and PDB models"""
     S2_data = []
     model_data = csx_obj.PDB_model.model_data
@@ -184,22 +185,20 @@ def calcS2(my_CSV_buffer, S2_dict, my_path, calculate_on_models=None, fit=None, 
                                     S2_dict[S2_type],
                                     S2_type, fit, fit_range)
 
-        correl  = csx_func.calcCorrel(S2_calced, S2_dict[S2_type])
+        correl = csx_func.calcCorrel(S2_calced, S2_dict[S2_type])
         q_value = csx_func.calcQValue(S2_calced, S2_dict[S2_type])
-        rmsd    = csx_func.calcRMSD(S2_calced, S2_dict[S2_type])
+        rmsd = csx_func.calcRMSD(S2_calced, S2_dict[S2_type])
 
         # TODO DB upload!
         corr_key = "S2_" + S2_type + "_corr"
         qval_key = "S2_" + S2_type + "_qval"
         rmsd_key = "S2_" + S2_type + "_rmsd"
 
-        csx_obj.CalcPickle.data.update(
-            {
+        csx_obj.CalcPickle.data.update({
             corr_key: "{0}".format('{0:.3f}'.format(correl)),
             qval_key: "{0}".format('{0:.3f}'.format(q_value)),
             rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
-            }
-        )
+        })
 
         my_CSV_buffer.csv_data.append({
             "name": "S2 (" + S2_type + ")",
@@ -240,12 +239,12 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
     """Back calculate order paramteres from given S2 dict and PDB models"""
 
     sc_LOT = {
-        'VAL' : {'CG1':'CB', 'CG2':'CB'},
-        'ILE' : {'CG2':'CB', 'CD':'CG1', 'CD1':'CG1'},
-        'THR' : {'CG2':'CB'},
-        'LEU' : {'CD1':'CG', 'CD2':'CG'},
-        'ALA' : {'CB':'CA'},
-        'MET' : {'CE':'SD'}
+        'VAL': {'CG1': 'CB', 'CG2': 'CB'},
+        'ILE': {'CG2': 'CB', 'CD': 'CG1', 'CD1': 'CG1'},
+        'THR': {'CG2': 'CB'},
+        'LEU': {'CD1': 'CG', 'CD2': 'CG'},
+        'ALA': {'CB': 'CA'},
+        'MET': {'CE': 'SD'}
     }
 
     model_data = csx_obj.PDB_model.model_data
@@ -258,9 +257,9 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
 
     for record in S2_sidechain:
         vectors = []
-        resnum  = record.resnum
+        resnum = record.resnum
         my_type = record.type
-        my_res  = model_data.atomgroup[('A', resnum)].getResname()
+        my_res = model_data.atomgroup[('A', resnum)].getResname()
 
         # find pair for measured aa
         pair = sc_LOT[my_res][my_type]
@@ -268,10 +267,18 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
         for model_num in range(model_data.model_count):
             model_data.atomgroup.setACSIndex(model_num)
 
-            sel = "resnum {} name {}".format(resnum, my_type)
-            coords = model_data.atomgroup.select(sel).getCoords()[0]
-            sel = "resnum {} name {}".format(resnum, pair)
-            pair_coords = model_data.atomgroup.select(sel).getCoords()[0]
+            try:
+                sel = "resnum {} name {}".format(resnum, my_type)
+                print("SEL1 ", sel)
+                coords = model_data.atomgroup.select(sel).getCoords()[0]
+                sel = "resnum {} name {}".format(resnum, pair)
+                print("SEL2 ", sel)
+                pair_coords = model_data.atomgroup.select(sel).getCoords()[0]
+            except AttributeError:
+                return {
+                    "error": "Sidechain order parameter atom name not found\
+                    in PDB. Please check your atom naming."
+                }
 
             vectors.append(csx_obj.Vec_3D(coords - pair_coords).normalize())
 
@@ -294,13 +301,13 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
         xz /= len(vectors)
         yz /= len(vectors)
 
-        s2 = 3 / 2.0 * (x2 ** 2     + y2 ** 2     + z2 ** 2 +
+        s2 = 3 / 2.0 * (x2 ** 2 + y2 ** 2 + z2 ** 2 +
                         2 * xy ** 2 + 2 * xz ** 2 + 2 * yz ** 2) - 0.5
 
         record.calced = s2
 
     # prepare data for CSV object inicialization
-    sidechain_exp1, sidechain_exp2   = [], []
+    sidechain_exp1, sidechain_exp2 = [], []
     sidechain_calc1, sidechain_calc2 = {}, {}
 
     prev_resnum = -100000
@@ -332,7 +339,7 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
     D = [0.0, 0.0]
 
     for record in S2_sidechain:
-        exp  = record.value
+        exp = record.value
         calc = record.calced
 
         M[0] += calc
@@ -344,11 +351,11 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
     M[2] /= len(S2_sidechain)
 
     for record in S2_sidechain:
-        exp  = record.value
+        exp = record.value
         calc = record.calced
 
         D[0] += (calc - M[0]) ** 2
-        D[1] += (exp  - M[1]) ** 2
+        D[1] += (exp - M[1]) ** 2
 
     D[0] /= len(S2_sidechain)
     D[0] = math.sqrt(D[0])
@@ -359,10 +366,10 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
     print("Corr: ", correl)
 
     # Q-value calculation
-    D2, E2, C2 = 0, 0, 0
+    D2, E2 = 0, 0
 
     for record in S2_sidechain:
-        exp  = record.value
+        exp = record.value
         calc = record.calced
 
         D2 += (calc - exp) ** 2
@@ -376,7 +383,7 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
     D2 = 0
 
     for record in S2_sidechain:
-        exp  = record.value
+        exp = record.value
         calc = record.calced
 
         D2 += (calc - exp) ** 2
@@ -384,10 +391,12 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
     RMSD = math.sqrt(D2 / len(S2_sidechain))
     print("RMSD: ", round(RMSD, 6))
 
-    csx_out.write_sidechain_data(my_path, "Sidechain",
-                             len(S2_sidechain),
-                             correl, q_value, RMSD,
-                             "Sidechain")
+    return None
+
+    # csx_out.write_sidechain_data(my_path, "Sidechain",
+    #                          len(S2_sidechain),
+    #                          correl, q_value, RMSD,
+    #                          "Sidechain")
 
 
 def calcJCouplings(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):

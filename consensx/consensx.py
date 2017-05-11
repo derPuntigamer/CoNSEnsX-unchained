@@ -138,13 +138,20 @@ def run_calculation(request, calc_id):
         else:
             S2_data = None
 
-        # S2_sidechain = csx_func.parse_sidechain_S2_STR(parsed.value)
+        S2_sidechain = csx_func.parse_sidechain_S2_STR(parsed.value)
 
         # TODO
-        # if S2_sidechain:
-        #     csx_calc.calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path,
-        #                               fit=DB_entry.superimpose)
-        #     data_found = True
+        if S2_sidechain:
+            sidechain_calc_error = csx_calc.calcS2_sidechain(
+                my_CSV_buffer, S2_sidechain, my_path, fit=DB_entry.superimpose
+            )
+
+            if sidechain_calc_error:
+                return render(request, "consensx/home.html", {
+                    "error": sidechain_calc_error["error"]
+                })
+            
+            data_found = True
 
         # ------------------------  J-coupling calc  ------------------------ #
         Jcoup_dict = csx_func.parseJcoup_STR(parsed.value)
