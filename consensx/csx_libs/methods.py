@@ -4,8 +4,6 @@ import re
 import subprocess
 import math
 import copy
-import string
-import random
 import prody
 import time
 import pickle

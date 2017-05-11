@@ -138,6 +138,10 @@ $(document).ready(function() {
     });
 
     $('#startsel').click(function() {
+        $(".loader").toggleClass('hidden');
+        $(".loader_text").toggleClass('hidden');
+        $("#startsel").prop("disabled", true);
+        $("#startsel").css('cursor', 'not-allowed');
         var ranges = document.querySelectorAll(".inputrange");
         var measures = document.querySelectorAll(".options");
         var min_size = $("#min_ens_size").val().trim();
@@ -201,16 +205,16 @@ $(document).ready(function() {
         let my_id = $('#calculation_id').text();
         console.log("POST TARGET:", post_target, "ID", my_id);
 
-
-
-
-
         $.ajax({
             url: post_target,
             type: "POST",
             data: JSON.stringify(command),
             contentType: "application/json",
-            complete: function(data, status){
+            complete: function(data, status) {
+                $(".loader").toggleClass('hidden');
+                $(".loader_text").toggleClass('hidden');
+                $("#startsel").prop("disabled", false);
+                $("#startsel").css('cursor', 'auto');
 
                 let sel_html = "\
                 <h3 style=\"text-align: center;\">Selection results</h3>\
@@ -231,29 +235,22 @@ $(document).ready(function() {
                     sel_html += '</tr>';
                 }
 
-
-
                 sel_html += "</table>";
-
-
                 sel_html += "<div class=\"results\">\
                   <h4 class=\"table-source\">PCA projections of the <b>selected</b> ensemble</h4>";
 
                 sel_html += '<table class=\"pca_table\"><tr>';
                 sel_html += '<td class=\"pca_graph\"><a class=\"fancybox\" title=\"PCA mode 1-2\" href=\"/media/'
-                         + my_id +'/pca_mode_12.svg\"><img width=\"320\" src=\"/media/'
-                         + my_id +'/pca_mode_12.svg\"></td>';
+                         + my_id +'/' + data.responseJSON.pca_image_names[0] + '\"><img width=\"320\" src=\"/media/'
+                         + my_id +'/' + data.responseJSON.pca_image_names[0] + '\"></td>';
                 sel_html += '<td class=\"pca_graph\"><a class=\"fancybox\" title=\"PCA mode 2-3\" href=\"/media/'
-                         + my_id +'/pca_mode_23.svg\"><img width=\"320\" src=\"/media/'
-                         + my_id +'/pca_mode_23.svg\"></td>';
+                         + my_id +'/' + data.responseJSON.pca_image_names[1] + '\"><img width=\"320\" src=\"/media/'
+                         + my_id +'/' + data.responseJSON.pca_image_names[1] + '\"></td>';
                 sel_html += '<td class=\"pca_graph\"><a class=\"fancybox\" title=\"PCA mode 3-4\" href=\"/media/'
-                         + my_id +'/pca_mode_34.svg\"><img width=\"320\" src=\"/media/'
-                         + my_id +'/pca_mode_34.svg\"></td>';
+                         + my_id +'/' + data.responseJSON.pca_image_names[2] + '\"><img width=\"320\" src=\"/media/'
+                         + my_id +'/' + data.responseJSON.pca_image_names[2] + '\"></td>';
                 sel_html += '</tr></table>';
-
                 sel_html += "</div>"
-
-
                 sel_html += "<h3 style=\"text-align: center;\">Back-calculated data for the <b>original</b> ensemble</h3>";
 
                 $(".selection-results").html(sel_html);

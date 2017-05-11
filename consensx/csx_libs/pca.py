@@ -1,6 +1,10 @@
+import random  # ID generation
+import string  # ID generation
 import prody
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+
+chars = string.ascii_uppercase + string.digits
 
 
 def create_PCA_comparison(my_path, original):
@@ -20,28 +24,36 @@ def create_PCA_comparison(my_path, original):
 
     color_list = ["blue" for i in range(1, len(sel_ensemble1) + 1)]
 
-    for i in range(sel1_len + 1, len(sel_ensemble1)):
+    for i in range(sel1_len, len(sel_ensemble1)):
         color_list[i] = "red"
 
     pca = prody.PCA("PCA1")
     pca.buildCovariance(sel_ensemble1)
     pca.calcModes()
 
-    projection = prody.calcProjection(sel_ensemble1, pca[:2])
+    # projection = prody.calcProjection(sel_ensemble1, pca[:2])
+
+    pca_image_names = []
 
     for i in range(0, 3):
-        my_plot = prody.showProjection(
+        # my_plot = prody.showProjection(
+        prody.showProjection(
             sel_ensemble1, pca[i:i+2], color=color_list
         )
 
-        fig_name = my_path + "/pca_mode_" + str(i+1) + str(i+2) + ".svg"
+        fig_hash = ''.join(random.choice(chars) for _ in range(6))
+        fig_name = "/pca_mode_" + str(i+1) + str(i+2) + "_" + fig_hash + ".svg"
+        pca_image_names.append(fig_name)
         red_patch = mpatches.Patch(color='red', label='Selection')
         blue_patch = mpatches.Patch(color='blue', label='Original')
         plt.legend(handles=[blue_patch, red_patch])
         plt.tight_layout(pad=1.08)
-        plt.savefig(fig_name, format="svg")
+        plt.savefig(my_path + "/" + fig_name, format="svg")
 
         plt.close()
+
+    print(pca_image_names)
+    return pca_image_names
 
 # x1 = []
 # x2 = []

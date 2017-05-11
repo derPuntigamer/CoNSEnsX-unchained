@@ -302,12 +302,12 @@ def selection_on(my_path, measure, user_sel,
 
         if "S2" in sel and not DumpedData.S2_isloaded:
             DumpedData.loadS2Dump(my_path)
-            S2_dict   = DumpedData.S2_dict
-            fit       = DumpedData.S2_fit
+            S2_dict = DumpedData.S2_dict
+            fit = DumpedData.S2_fit
             fit_range = DumpedData.S2_fit_range
 
             DumpedData.loadPDBData(my_path)
-            PDB_data  = DumpedData.PDB_model_data
+            PDB_data = DumpedData.PDB_model_data
 
         if "JCoup" in sel and not DumpedData.Jcoup_isloaded:
             DumpedData.loadJCoupData(my_path)
@@ -715,6 +715,6 @@ def run_selection(my_path, original_values, user_selection_JSON):
     print(DB_entry.PDB_file)
     print("DB_entry", DB_entry)
 
-    csx_pca.create_PCA_comparison(my_path, DB_entry.PDB_file)
+    pca_image_names = csx_pca.create_PCA_comparison(my_path, DB_entry.PDB_file)
 
-    return num_coordsets, iter_data
+    return num_coordsets, iter_data, pca_image_names

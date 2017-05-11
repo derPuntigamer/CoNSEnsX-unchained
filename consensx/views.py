@@ -108,13 +108,13 @@ def selection(request, my_id):
     my_path = os.path.join(BASE_DIR, 'media', my_id)
     user_selection = json.loads(request.body.decode("utf-8"))
 
-    original_values = pickle.load( open( my_path + "/calced_values.p", "rb" ) )
+    original_values = pickle.load(open(my_path + "/calced_values.p", "rb"))
 
     # GYULA!
-    if request.method == 'POST': # if the AJAX request has been received...
-        num_coordsets, sel_values = run_selection(my_path,
-                                                  original_values,
-                                                  user_selection)
+    if request.method == 'POST':  # if the AJAX request has been received...
+        num_coordsets, sel_values, pca_image_names = run_selection(
+            my_path, original_values, user_selection
+        )
 
     measure = user_selection["MEASURE"]
 
@@ -122,6 +122,7 @@ def selection(request, my_id):
 
     return_dict["measure"] = measure
     return_dict["num_coordsets"] = num_coordsets
+    return_dict["pca_image_names"] = pca_image_names
 
     if measure == "correlation":
         measure = "corr"
@@ -136,7 +137,6 @@ def selection(request, my_id):
             "original": original_values[key + "_" + measure],
             "selection": "{0:.3g}".format(value)
         }
-
 
     print("values_dict")
     print(values_dict)
