@@ -52,7 +52,12 @@ def run_calculation(request, calc_id):
     csx_func.pdb_cleaner(my_path, my_PDB, my_CSV_buffer)
     model_count = csx_func.pdb_splitter(my_path, my_PDB)
 
-    csx_func.get_model_list(my_PDB, my_path, model_count)
+    if not csx_func.get_model_list(my_PDB, my_path, model_count):
+        return render(request, "consensx/home.html", {
+            "error": "DISCARDED MODELS FOUND, CHECK IF ALL MODELS HAVE THE SAME\
+            NUMBER OF ATOMS"
+        })
+
 
     pdb_models = []                                # list of models (PDB)
     for file in os.listdir(my_path):
@@ -205,4 +210,6 @@ def run_calculation(request, calc_id):
         return rendered_page
     else:
         print("NO DATA FOUND IN STAR-NMR FILE")
-        return "NO DATA FOUND IN STAR-NMR FILE"
+        return render(request, "consensx/home.html", {
+            "error": "NO DATA FOUND IN STAR-NMR FILE"
+        })

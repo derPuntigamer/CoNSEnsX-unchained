@@ -1,6 +1,6 @@
 import math
 import copy
-import pdb
+
 
 class CalcPickle(dict):
     pass
@@ -19,12 +19,12 @@ class RDC_modell_corr(object):
     @staticmethod
     def get_best_model(RDC_list_num):
         best_value = -1
-        best_num   = -1
+        best_num = -1
 
         for num, value in enumerate(RDC_modell_corr.RDC_lists[RDC_list_num]):
             if value > best_value:
                 best_value = value
-                best_num   = num
+                best_num = num
 
         return best_num, best_value
 
@@ -32,9 +32,9 @@ class RDC_modell_corr(object):
 class ThirdParty(object):
 
     """Class to store 3rd party software information"""
-    pales    = ""
-    shiftx   = ""
-    prideDB  = ""
+    pales = ""
+    shiftx = ""
+    prideDB = ""
     prideNMR = ""
 
     @staticmethod
@@ -57,7 +57,6 @@ class CSV_buffer(object):
 
     """Class which stores data for values.CSV"""
 
-
     def __init__(self, my_path):
         self.working_dir = my_path
         self.max_resnum = -1
@@ -71,7 +70,6 @@ class CSV_buffer(object):
         #     self.exp[i.resnum] = i.value
 
         # csv_data.append(self)
-
 
     def writeCSV(self):
         filename = self.working_dir + "values.csv"

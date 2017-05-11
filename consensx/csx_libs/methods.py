@@ -18,10 +18,10 @@ from .objects import *
 
 
 shortcodes = {
-    'ALA': 'A',  'ASP': 'D',  'ASN': 'N',  'ARG': 'R',  'CYS': 'C',  'GLY': 'G',
-    'GLU': 'E',  'GLN': 'Q',  'HIS': 'H',  'ILE': 'I',  'LEU': 'L',  'LYS': 'K',
-    'MET': 'M',  'PHE': 'F',  'PRO': 'P',  'SER': 'S',  'THR': 'T',  'TRP': 'W',
-    'TYR': 'Y',  'VAL': 'V'
+    'ALA': 'A', 'ASP': 'D', 'ASN': 'N', 'ARG': 'R', 'CYS': 'C', 'GLY': 'G',
+    'GLU': 'E', 'GLN': 'Q', 'HIS': 'H', 'ILE': 'I', 'LEU': 'L', 'LYS': 'K',
+    'MET': 'M', 'PHE': 'F', 'PRO': 'P', 'SER': 'S', 'THR': 'T', 'TRP': 'W',
+    'TYR': 'Y', 'VAL': 'V'
 }
 
 # Equation and coefficients from:
@@ -107,10 +107,23 @@ def get_PDB(args):
 def get_model_list(PDB_file, my_path, model_count):
     """Parsing PDB file into models in the PDB_model object"""
     prody.confProDy(verbosity="info")
-    PDB_model(prody.parsePDB(PDB_file, ter=True), model_count)
+
+    atomgroup = prody.parsePDB(PDB_file, ter=True)
+    num_coordsets = atomgroup.numCoordsets()
+
+    # check for discarded models
+    for model_num in range(num_coordsets):
+        atomgroup.setACSIndex(model_num)
+
+        if atomgroup.getCoords()[0][0] == float(0):
+            print("DISCARDED MODEL FOUND")
+            return False
+
+    PDB_model(atomgroup, model_count)
 
     PDB_model_path = my_path + "/PDB_model.pickle"
     pickle.dump(PDB_model.model_data, open(PDB_model_path, 'wb'))
+    return True
 
 
 @timeit
@@ -135,7 +148,7 @@ def pdb_cleaner(my_path, PDB_file, my_CSV_buffer):
 
         if line.startswith("ATOM"):
 
-            name   = line[12:16].strip()
+            name = line[12:16].strip()
             resnum = int(line[22:26])
 
             if resnum >= max_resnum:
