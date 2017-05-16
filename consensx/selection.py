@@ -707,14 +707,14 @@ def run_selection(my_path, original_values, user_selection_JSON):
 
             output_pdb.write(model_line + "\n")
 
-    # print(' '.join(map(str, in_selection))
-    # print("iter_data", iter_data)
     calc_id = my_path.split('/')[-1]
     print('calcID', calc_id)
     DB_entry = CSX_upload.objects.get(id_code=calc_id)
     print(DB_entry.PDB_file)
     print("DB_entry", DB_entry)
 
-    pca_image_names = csx_pca.create_PCA_comparison(my_path, DB_entry.PDB_file)
+    pca_image_names = csx_pca.create_PCA_comparison(
+        my_path, DB_entry.PDB_file, in_selection
+    )
 
     return num_coordsets, iter_data, pca_image_names

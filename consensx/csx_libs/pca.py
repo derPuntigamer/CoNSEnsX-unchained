@@ -7,42 +7,33 @@ import matplotlib.patches as mpatches
 chars = string.ascii_uppercase + string.digits
 
 
-def create_PCA_comparison(my_path, original):
+def create_PCA_comparison(my_path, original, in_selection):
 
     sel_data1 = prody.parsePDB(my_path + '/' + original, subset='calpha')
     sel_ensemble1 = prody.Ensemble(sel_data1)
 
-    sel_data2 = prody.parsePDB(my_path + "/selected.pdb", subset='calpha')
-    sel_ensemble2 = prody.Ensemble(sel_data2)
-
-    sel1_len = len(sel_ensemble1.getCoordsets())
-    print("num orig models", len(sel_ensemble1.getCoordsets()))
-    print("num sel models", len(sel_ensemble2.getCoordsets()))
-
-    sel_ensemble1.addCoordset(sel_ensemble2.getCoordsets())
     sel_ensemble1.iterpose()
 
-    color_list = ["blue" for i in range(1, len(sel_ensemble1) + 1)]
+    color_list = ["blue" for i in range(len(sel_ensemble1))]
 
-    for i in range(sel1_len, len(sel_ensemble1)):
+    print("LEN color_list", len(color_list))
+
+    for i in [int(x)-1 for x in in_selection]:
         color_list[i] = "red"
 
     pca = prody.PCA("PCA1")
     pca.buildCovariance(sel_ensemble1)
     pca.calcModes()
 
-    # projection = prody.calcProjection(sel_ensemble1, pca[:2])
-
     pca_image_names = []
 
     for i in range(0, 3):
-        # my_plot = prody.showProjection(
         prody.showProjection(
             sel_ensemble1, pca[i:i+2], color=color_list
         )
 
         fig_hash = ''.join(random.choice(chars) for _ in range(6))
-        fig_name = "/pca_mode_" + str(i+1) + str(i+2) + "_" + fig_hash + ".svg"
+        fig_name = "pca_mode_" + str(i+1) + str(i+2) + "_" + fig_hash + ".svg"
         pca_image_names.append(fig_name)
         red_patch = mpatches.Patch(color='red', label='Selection')
         blue_patch = mpatches.Patch(color='blue', label='Original')
