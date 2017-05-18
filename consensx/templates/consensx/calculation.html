@@ -308,6 +308,27 @@
     </div>
     {% endif %}
 
+    {% if S2_sc_data %}
+    <div class="results">
+      <h4 class="table-source">Order parameters - sidechain</h4>
+    <table class="result_table">
+      <tbody>
+        <tr>
+        <td><table class="values_table">
+        <tr><td><strong>S<sup>2</sup> sidechain</strong></td><td></td></tr>
+        <tr><td>Values:</td><td>{{ S2_sc_data.S2_model_n }}</td></tr>
+        <tr><td>Correlation:</td><td>{{ S2_sc_data.correlation }}</td></tr>
+        <!-- <tr><td>Q-factor:</td><td>{{ S2.q_value }} %</td></tr> -->
+        <tr><td>RMSD:</td><td>{{ S2_sc_data.rmsd }}</td></tr>
+        </table></td>
+        <td><a class="fancybox" title="coming soon" href="{{ MEDIA_URL }}{{ S2_sc_data.corr_graph_name }}"><img width="270" src="{{ MEDIA_URL }}{{ S2_sc_data.corr_graph_name }}"></a></td>
+        <td><a class="fancybox" title="coming soon" href="{{ MEDIA_URL }}{{ S2_sc_data.graph_name }}"><img width="450" src="{{ MEDIA_URL }}{{ S2_sc_data.graph_name }}"></a></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    {% endif %}
+
 
     {% if Jcoup_data %}
     <div class="results">

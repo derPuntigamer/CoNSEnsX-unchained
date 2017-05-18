@@ -5,6 +5,9 @@ import os
 import prody
 import pickle
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 from . import methods as csx_func
 from . import objects as csx_obj
 
@@ -269,10 +272,8 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
 
             try:
                 sel = "resnum {} name {}".format(resnum, my_type)
-                print("SEL1 ", sel)
                 coords = model_data.atomgroup.select(sel).getCoords()[0]
                 sel = "resnum {} name {}".format(resnum, pair)
-                print("SEL2 ", sel)
                 pair_coords = model_data.atomgroup.select(sel).getCoords()[0]
             except AttributeError:
                 return {
@@ -388,15 +389,94 @@ def calcS2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
 
         D2 += (calc - exp) ** 2
 
-    RMSD = math.sqrt(D2 / len(S2_sidechain))
-    print("RMSD: ", round(RMSD, 6))
+    rmsd = math.sqrt(D2 / len(S2_sidechain))
+    print("RMSD: ", round(rmsd, 6))
 
-    return None
+    exp_values = []
+    calced_values = []
 
-    # csx_out.write_sidechain_data(my_path, "Sidechain",
-    #                          len(S2_sidechain),
-    #                          correl, q_value, RMSD,
-    #                          "Sidechain")
+    for record in S2_sidechain:
+        exp_values.append(record.value)
+        calced_values.append(record.calced)
+
+    min_calc = min(calced_values)
+    max_calc = max(calced_values)
+
+    min_exp = min(exp_values)
+    max_exp = max(exp_values)
+    miny = min(min_calc, min_exp)             # get minimum value
+    maxy = max(max_calc, max_exp)             # get maximum value
+
+    diag = []
+
+    margin = int(abs(miny - maxy) * 0.05)
+
+    if abs(miny - maxy) < 10:
+        margin = 0.3
+    elif abs(miny - maxy) < 2:
+        margin = 0.01
+    elif abs(miny - maxy) < 1:
+        margin = 0
+
+    maxy += margin
+    miny -= margin
+
+    for i in np.arange(miny, maxy * 1.42, 0.1):  # draw graph diagonal
+        diag.append(i)
+
+    plt.figure(figsize=(6, 5), dpi=80)
+    plt.plot(diag, diag, linewidth=2.0, color='red', alpha=.7)
+    plt.plot(exp_values, calced_values, 'bo')
+    plt.axis([miny, maxy, miny, maxy])
+    plt.xlabel('experimental')
+    plt.ylabel('calculated')
+    plt.tight_layout(pad=1.08)
+    plt.savefig(my_path + "/" + "S2_sc_corr.svg", format="svg")
+    plt.close()
+
+    xs = []
+    prev_resnum2 = -1
+
+    for record in S2_sidechain:
+        if record.resnum != prev_resnum2:
+            xs.append(record.resnum)
+            prev_resnum2 = record.resnum
+        else:
+            xs.append(record.resnum + 0.3)
+
+    print("XS AXIS", xs)
+    print("len SC", len(S2_sidechain))
+    print("len xs", len(xs))
+
+    plt.figure(figsize=(10, 5), dpi=80)
+    plt.plot(xs, exp_values,
+             linewidth=2.0, color='red', marker='o', label='exp', alpha=.7)
+    plt.plot(xs, calced_values,
+             linewidth=2.0, color='blue', marker='o', label='calc', alpha=.7)
+    plt.legend(loc='lower left')
+    plt.xlabel('residue number')
+    plt.ylabel('value')
+    ax = plt.axes()
+    ax.yaxis.grid()
+    plt.tight_layout(pad=1.08)
+    plt.savefig(my_path + "/" + "S2_sc_graph.svg", format="svg")
+    plt.close()
+
+    my_id = my_path.split('/')[-2] + '/'
+
+    print("CORR GRAPH", my_id + "S2_sc_corr.svg")
+    print("GRAPH", my_id + "S2_sc_graph.svg")
+
+    S2_sc_data = {
+        "S2_model_n": len(S2_sidechain),
+        "correlation": '{0:.3f}'.format(correl),
+        "q_value": '{0:.3f}'.format(q_value),
+        "rmsd": '{0:.3f}'.format(rmsd),
+        "corr_graph_name": my_id + "S2_sc_corr.svg",
+        "graph_name": my_id + "S2_sc_graph.svg"
+    }
+
+    return S2_sc_data
 
 
 def calcJCouplings(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):
@@ -423,22 +503,20 @@ def calcJCouplings(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):
 
         avg_model_corr = sum(model_corrs) / len(model_corrs)
 
-        correl  = csx_func.calcCorrel(JCoup_calced, Jcoup_dict[Jcoup_type])
+        correl = csx_func.calcCorrel(JCoup_calced, Jcoup_dict[Jcoup_type])
         q_value = csx_func.calcQValue(JCoup_calced, Jcoup_dict[Jcoup_type])
-        rmsd    = csx_func.calcRMSD(JCoup_calced, Jcoup_dict[Jcoup_type])
+        rmsd = csx_func.calcRMSD(JCoup_calced, Jcoup_dict[Jcoup_type])
 
         # TODO
         corr_key = "JCoup_" + Jcoup_type + "_corr"
         qval_key = "JCoup_" + Jcoup_type + "_qval"
         rmsd_key = "JCoup_" + Jcoup_type + "_rmsd"
 
-        csx_obj.CalcPickle.data.update(
-            {
+        csx_obj.CalcPickle.data.update({
             corr_key: "{0}".format('{0:.3f}'.format(correl)),
             qval_key: "{0}".format('{0:.3f}'.format(q_value)),
             rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
-            }
-        )
+        })
 
         my_CSV_buffer.csv_data.append({
             "name": "J-couplings (" + Jcoup_type + ")",
@@ -494,17 +572,17 @@ def calcChemShifts(my_CSV_buffer, ChemShift_lists, pdb_models, my_path):
     CS_model_data_path = my_path + "/ChemShift_model_data.pickle"
     pickle.dump(model_data, open(CS_model_data_path, 'wb'))
 
-    for list_num, CS_list in enumerate(ChemShift_lists):
+    for n, CS_list in enumerate(ChemShift_lists):
         for CS_type in sorted(list(CS_list.keys())):
             model_corrs = []
 
             for model in model_data:
-                inner_exp_dict = {}
+                inner_exp = {}
 
                 for record in CS_list[CS_type]:
-                    inner_exp_dict[record.resnum] = model[CS_type][record.resnum]
+                    inner_exp[record.resnum] = model[CS_type][record.resnum]
 
-                model_corrs.append(csx_func.calcCorrel(inner_exp_dict,
+                model_corrs.append(csx_func.calcCorrel(inner_exp,
                                                        CS_list[CS_type]))
 
             avg_model_corr = sum(model_corrs) / len(model_corrs)
@@ -514,22 +592,20 @@ def calcChemShifts(my_CSV_buffer, ChemShift_lists, pdb_models, my_path):
             for record in CS_list[CS_type]:
                 exp_dict[record.resnum] = CS_calced[CS_type][record.resnum]
 
-            correl  = csx_func.calcCorrel(exp_dict, CS_list[CS_type])
+            correl = csx_func.calcCorrel(exp_dict, CS_list[CS_type])
             q_value = csx_func.calcQValue(exp_dict, CS_list[CS_type])
-            rmsd    = csx_func.calcRMSD(exp_dict, CS_list[CS_type])
+            rmsd = csx_func.calcRMSD(exp_dict, CS_list[CS_type])
 
             # TODO
             corr_key = "CS_" + CS_type + "_corr"
             qval_key = "CS_" + CS_type + "_qval"
             rmsd_key = "CS_" + CS_type + "_rmsd"
 
-            csx_obj.CalcPickle.data.update(
-                {
+            csx_obj.CalcPickle.data.update({
                 corr_key: "{0}".format('{0:.3f}'.format(correl)),
                 qval_key: "{0}".format('{0:.3f}'.format(q_value)),
                 rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
-                }
-            )
+            })
 
             my_CSV_buffer.csv_data.append({
                 "name": "ChemShifts (" + CS_type + ")",
@@ -543,17 +619,19 @@ def calcChemShifts(my_CSV_buffer, ChemShift_lists, pdb_models, my_path):
             print("RMSD:   ", rmsd)
             print()
 
-            graph_name = str(list_num + 1) + "_CS_" + CS_type + ".svg"
+            graph_name = str(n + 1) + "_CS_" + CS_type + ".svg"
             csx_func.makeGraph(my_path, exp_dict, CS_list[CS_type],
                                graph_name)
 
-            corr_graph_name = str(list_num + 1) + "_CS_corr_" + CS_type + ".svg"
+            corr_graph_name = str(n + 1) + "_CS_corr_" + CS_type + ".svg"
             csx_func.makeCorrelGraph(my_path, exp_dict, CS_list[CS_type],
                                      corr_graph_name)
 
             mod_corr_graph_name = "CS_mod_corr_" + CS_type + ".svg"
-            csx_func.modCorrelGraph(my_path, correl, avg_model_corr, model_corrs,
-                                mod_corr_graph_name)
+            csx_func.modCorrelGraph(
+                my_path, correl, avg_model_corr,
+                model_corrs, mod_corr_graph_name
+            )
 
             my_id = my_path.split('/')[-2] + '/'
 
@@ -589,12 +667,12 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
     # fetch all restraint from class
     restraints = csx_obj.Restraint_Record.getNOERestraints()
 
-    PDB_coords    = csx_func.pdb2coords(PDB_file)
-    prev_id       = -1
+    PDB_coords = csx_func.pdb2coords(PDB_file)
+    prev_id = -1
     avg_distances = {}
     all_distances = {}
-    measured_avg  = {}
-    str_distaces  = {}
+    measured_avg = {}
+    str_distaces = {}
 
     for model in list(PDB_coords.keys()):
         avg_distances[model] = {}
@@ -603,9 +681,9 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
         for restraint_num, restraint in enumerate(restraints):
             rest_id = int(restraint.csx_id)
             resnum1 = restraint.seq_ID1
-            atom1   = restraint.atom_ID1
+            atom1 = restraint.atom_ID1
             resnum2 = restraint.seq_ID2
-            atom2   = restraint.atom_ID2
+            atom2 = restraint.atom_ID2
 
             atom_coord1 = PDB_coords[model][resnum1][atom1]
             atom_coord2 = PDB_coords[model][resnum2][atom2]
@@ -624,18 +702,16 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
 
                 avg_distances[model][rest_id].append(distance)
 
-    # import pdb; pdb.set_trace()
-
     for restraint_num, restraint in enumerate(restraints):
         rest_id = int(restraint.csx_id)
         resnum1 = restraint.seq_ID1
-        segname1 = restraint.seq_name1
         atom1 = restraint.atom_ID1
         resnum2 = restraint.seq_ID2
-        segname2 = restraint.seq_name2
         atom2 = restraint.atom_ID2
 
-        dist_str = "> {} {} {} {} {}  |   ".format(rest_id, resnum1, atom1, resnum2, atom2)
+        dist_str = "> {} {} {} {} {}  |   ".format(
+            rest_id, resnum1, atom1, resnum2, atom2
+        )
 
         for model in list(PDB_coords.keys()):
             dist_str += "{0:.2f}  ".format(all_distances[model][restraint_num])
@@ -676,7 +752,7 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
 
     for restraint in restraints:
         curr_id = int(restraint.curr_distID)
-        avg     = 0.0
+        avg = 0.0
 
         for model in list(PDB_coords.keys()):
             avg += math.pow(avg_distances[model][curr_id], -6)
@@ -689,8 +765,8 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
 
     avg_dist_keys = list(measured_avg.keys())
     avg_dist_keys.sort()
-    violations = {"0-0.5" : 0, "0.5-1" : 0, "1-1.5" : 0,
-                  "1.5-2" : 0, "2-2.5" : 0, "2.5-3" : 0, "3<" : 0}
+    violations = {"0-0.5": 0, "0.5-1": 0, "1-1.5": 0,
+                  "1.5-2": 0, "2-2.5": 0, "2.5-3": 0, "3<": 0}
     viol_count = 0
 
     for key in avg_dist_keys:
@@ -722,21 +798,20 @@ def calcNOEviolations(PDB_file, saveShifts, my_path, r3_averaging):
 def calcNMR_Pride(pdb_models, my_path):
     """Calculate NMR-PRIDE score on given PDB models"""
 
-    pwd =  os.getcwd()
+    pwd = os.getcwd()
     os.chdir(my_path)
 
     # write model list text file
     model_list = open("model_list.txt", 'w')
 
     for model in pdb_models:
-        #model_list.write(my_path + model + "\n")
         model_list.write(model + "\n")
 
     model_list.write("END\n")
     model_list.close()
 
     # write distance dict to text file
-    restraints  = csx_obj.Restraint_Record.getPRIDE_restraints()
+    restraints = csx_obj.Restraint_Record.getPRIDE_restraints()
     pride_input = open("pride_input.txt", 'w')
 
     pride_input.write("HEADER\n")
@@ -752,8 +827,8 @@ def calcNMR_Pride(pdb_models, my_path):
     pride_input.close()
 
     # create binary database for PRIDE-NMR
-    DEVNULL    = open(os.devnull, 'w')
-    hhdb_log   = open("hhdb.log", 'w')
+    DEVNULL = open(os.devnull, 'w')
+    hhdb_log = open("hhdb.log", 'w')
     model_list = open("model_list.txt", 'r')
     subprocess.call([csx_obj.ThirdParty.prideDB,
                     "-D", "HHDB",  # model list
@@ -767,18 +842,21 @@ def calcNMR_Pride(pdb_models, my_path):
     model_list.close()
 
     # run PRIDE-NMR
-    DEVNULL      = open(os.devnull, 'w')
-    pride_input  = open("pride_input.txt", 'r')
+    DEVNULL = open(os.devnull, 'w')
+    pride_input = open("pride_input.txt", 'r')
     pride_output = open("pride_output.txt", 'w')
     subprocess.call(
-        [csx_obj.ThirdParty.prideNMR,
-         "-D", "HHDB",
-         "-d", str(56),
-         "-b", str(len(pdb_models)),
-         "-m", str(3)],
-         stdin=pride_input,
-         stdout=pride_output,
-         stderr=DEVNULL)
+        [
+            csx_obj.ThirdParty.prideNMR,
+            "-D", "HHDB",
+            "-d", str(56),
+            "-b", str(len(pdb_models)),
+            "-m", str(3)
+        ],
+        stdin=pride_input,
+        stdout=pride_output,
+        stderr=DEVNULL
+    )
 
     pride_input.close()
     pride_output.close()
@@ -788,7 +866,7 @@ def calcNMR_Pride(pdb_models, my_path):
     pride_output = open("pride_output.txt", 'r')
     for line in pride_output:
         if line.startswith("PRIDENMR:"):
-            model_num   = int(line.split()[-1])
+            model_num = int(line.split()[-1])
             model_score = float(line.split()[1])
             pride_scores[model_num] = model_score
 

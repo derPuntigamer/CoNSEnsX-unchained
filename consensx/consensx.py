@@ -12,7 +12,6 @@ This is the Django webapp implemetation of
      Compliance of NMR-derived Structural Ensembles with experimental data
 
 Authors: Zoltán Gáspári, Dániel Dudola
-Fork of: https://github.com/derPuntigamer/CoNSEnsX
 """
 
 # standard modules
@@ -57,7 +56,6 @@ def run_calculation(request, calc_id):
             "error": "DISCARDED MODELS FOUND, CHECK IF ALL MODELS HAVE THE SAME\
             NUMBER OF ATOMS"
         })
-
 
     pdb_models = []                                # list of models (PDB)
     for file in os.listdir(my_path):
@@ -140,18 +138,19 @@ def run_calculation(request, calc_id):
 
         S2_sidechain = csx_func.parse_sidechain_S2_STR(parsed.value)
 
-        # TODO
         if S2_sidechain:
-            sidechain_calc_error = csx_calc.calcS2_sidechain(
+            S2_sc_data = csx_calc.calcS2_sidechain(
                 my_CSV_buffer, S2_sidechain, my_path, fit=DB_entry.superimpose
             )
 
-            if sidechain_calc_error:
+            if "error" in S2_sc_data.keys():
                 return render(request, "consensx/home.html", {
-                    "error": sidechain_calc_error["error"]
+                    "error": S2_sidechain["error"]
                 })
-            
+
             data_found = True
+        else:
+            S2_sc_data = None
 
         # ------------------------  J-coupling calc  ------------------------ #
         Jcoup_dict = csx_func.parseJcoup_STR(parsed.value)
@@ -201,6 +200,7 @@ def run_calculation(request, calc_id):
             "NOE_PRIDE_data": NOE_PRIDE_data,
             "RDC_data": RDC_data,
             "S2_data": S2_data,
+            "S2_sc_data": S2_sc_data,
             "Jcoup_data": Jcoup_data,
             "chemshift_data": chemshift_data,
             "SVD_calc": DB_entry.svd_enable

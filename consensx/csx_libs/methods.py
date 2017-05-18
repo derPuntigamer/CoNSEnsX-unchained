@@ -214,7 +214,7 @@ def pdb_splitter(my_path, PDB_file):
         raise SystemExit
 
     model_names = []
-    model_data  = []
+    model_data = []
 
     my_name = ""
     my_data = []
@@ -248,7 +248,7 @@ def pdb_splitter(my_path, PDB_file):
 
     for i in range(len(model_names)):
         file_name = my_path + "model_" + model_names[i] + ".pdb"
-        temp_pdb  = open(file_name, 'w')
+        temp_pdb = open(file_name, 'w')
         temp_pdb.write("HEADER    MODEL " + model_names[i] + "\n")
 
         for _ in model_data[i]:
@@ -262,12 +262,12 @@ def pdb_splitter(my_path, PDB_file):
 
 @timeit
 def getNOE(NOE_file):
-    NOE_key   = "_Gen_dist_constraint_list.Constraint_type"
+    NOE_key = "_Gen_dist_constraint_list.Constraint_type"
     NOE_value = "NOE"
-    in_frame  = False
-    in_loop   = False
-    loops     = []
-    NOE_data  = []
+    in_frame = False
+    in_loop = False
+    loops = []
+    NOE_data = []
 
     for line in open(NOE_file, encoding="utf-8"):
         tok = line.strip().split()
@@ -911,9 +911,9 @@ def calcS2(model_data, calculate_on_models,
             for model_num in calculate_on_models:
                 model_data.atomgroup.setACSIndex(model_num)
 
-                mobile    = model_data.atomgroup[:]
-                matches   = prody.matchChains(reference, mobile)
-                match     = matches[0]
+                mobile = model_data.atomgroup[:]
+                matches = prody.matchChains(reference, mobile)
+                match = matches[0]
                 ref_chain = match[0]
                 mob_chain = match[1]
 
@@ -925,19 +925,19 @@ def calcS2(model_data, calculate_on_models,
                 for i in range(int(fit_start) - 1, int(fit_end) - 1):
                     weights[i] = 1
 
-
                 t = prody.calcTransformation(mob_chain, ref_chain, weights)
                 t.apply(mobile)
 
         te = time.time()
 
-        print('\x1b[31m%r -> %2.2f sec\x1b[0m' % ("FITTING", te-ts),
-                  file=sys.stderr)
+        print(
+            '\x1b[31m%r -> %2.2f sec\x1b[0m' % ("FITTING", te-ts),
+            file=sys.stderr
+        )
 
     # get NH vectors from models (model_data[] -> vectors{resnum : vector})
     vector_data = []
-    s2_pairs   = {'N':  'H',
-                  'CA': 'HA'}
+    s2_pairs = {'N': 'H', 'CA': 'HA'}
 
     ts = time.time()
 
@@ -1004,7 +1004,7 @@ def calcS2(model_data, calculate_on_models,
         yz /= len(vector_data)
 
         # S2 calcuation
-        s2 = 3 / 2.0 * (x2 ** 2     + y2 ** 2     + z2 ** 2 +
+        s2 = 3 / 2.0 * (x2 ** 2 + y2 ** 2 + z2 ** 2 +
                         2 * xy ** 2 + 2 * xz ** 2 + 2 * yz ** 2) - 0.5
 
         S2_calced[resnum] = s2
@@ -1032,10 +1032,10 @@ def calcDihedAngles(model_data):
             if atom_res != current_Resindex:
 
                 if (prev_C is not None and my_N is not None and
-                    my_CA is not None and my_C is not None):
+                        my_CA is not None and my_C is not None):
 
                     NCA_vec = my_N - my_CA
-                    CN_vec  = prev_C - my_N
+                    CN_vec = prev_C - my_N
                     CCA_vec = my_C - my_CA
 
                     first_cross  = Vec_3D.cross(CN_vec, NCA_vec)
@@ -1389,15 +1389,15 @@ def makeGraph(my_path, calced, my_experimental, graph_name):
 
     min_exp = min(exp_values)
     max_exp = max(exp_values)
-    miny    = min(min_calc, min_exp)               # get minimum value
-    maxy    = max(max_calc, max_exp)               # get maximum value
+    miny = min(min_calc, min_exp)               # get minimum value
+    maxy = max(max_calc, max_exp)               # get maximum value
 
     exp_line, calc_line = [], []
 
     for k in range(0, max(calced.keys()) + 1):  # fetch data from arguments
         if k in list(calced.keys()):
             calc = calced[k]
-            exp  = experimental.pop(0).value
+            exp = experimental.pop(0).value
 
             exp_line.append(exp)
             calc_line.append(calc)
@@ -1409,8 +1409,8 @@ def makeGraph(my_path, calced, my_experimental, graph_name):
     # connect line over missing (None) values, more info at ->
     # http://stackoverflow.com/questions/14399689/
     # matplotlib-drawing-lines-between-points-ignoring-missing-data
-    exp_line  = np.array(exp_line).astype(np.double)
-    exp_mask  = np.where(np.isfinite(exp_line))
+    exp_line = np.array(exp_line).astype(np.double)
+    exp_mask = np.where(np.isfinite(exp_line))
     calc_line = np.array(calc_line).astype(np.double)
     calc_mask = np.where(np.isfinite(calc_line))
 
@@ -1426,8 +1426,8 @@ def makeGraph(my_path, calced, my_experimental, graph_name):
     plt.plot(xs[calc_mask], calc_line[calc_mask],
              linewidth=2.0, color='blue', marker='o', label='calc', alpha=.7)
     # setting axis limits
-    plt.axis([min(calced.keys()), max(calced.keys()),
-              miny, maxy])
+    # plt.axis([min(calced.keys()), max(calced.keys()),
+    #           miny, maxy])
     plt.legend(loc='lower left')
     plt.xlabel('residue number')
     plt.ylabel('value')
