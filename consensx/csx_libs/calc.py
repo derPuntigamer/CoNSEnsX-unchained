@@ -1,4 +1,3 @@
-import __main__
 import math
 import subprocess
 import os
@@ -10,6 +9,8 @@ import numpy as np
 
 from . import methods as csx_func
 from . import objects as csx_obj
+
+plt.switch_backend('Agg')
 
 
 # DUMP ME!
@@ -45,7 +46,6 @@ class RDC_model_data(object):
                 elif measure == "rmsd":
                     calced = csx_func.calcRMSD(model, experimental)
 
-
                 if model_num in model_scores.keys():
                     model_scores[model_num] += calced * sel_data[3]
                 else:
@@ -72,7 +72,8 @@ class RDC_model_data(object):
             return min_loc
 
 
-def calcRDC(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
+def calcRDC(my_CSV_buffer, RDC_lists, pdb_models,
+            my_path, SVD_enabled, lc_model):
     """Back calculate RDC from given RDC lists and PDB models"""
     RDC_data = {}
 
@@ -93,7 +94,9 @@ def calcRDC(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model
             model_corrs = []
 
             for model in model_data:
-                model_corrs.append(csx_func.calcCorrel(model, RDC_dict[RDC_type]))
+                model_corrs.append(
+                    csx_func.calcCorrel(model, RDC_dict[RDC_type])
+                )
 
             RDC_model_data(list_num + 1, RDC_type, model_data)
             csx_obj.RDC_modell_corr(model_corrs)
@@ -106,9 +109,9 @@ def calcRDC(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model
             for record in RDC_dict[RDC_type]:
                 my_averageRDC[record.resnum] = averageRDC[record.resnum]
 
-            correl  = csx_func.calcCorrel(my_averageRDC, RDC_dict[RDC_type])
+            correl = csx_func.calcCorrel(my_averageRDC, RDC_dict[RDC_type])
             q_value = csx_func.calcQValue(my_averageRDC, RDC_dict[RDC_type])
-            rmsd    = csx_func.calcRMSD(my_averageRDC, RDC_dict[RDC_type])
+            rmsd = csx_func.calcRMSD(my_averageRDC, RDC_dict[RDC_type])
 
             RDC_simple = RDC_type.replace('_', '')
 
@@ -119,9 +122,9 @@ def calcRDC(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model
 
             csx_obj.CalcPickle.data.update(
                 {
-                corr_key: "{0}".format('{0:.3f}'.format(correl)),
-                qval_key: "{0}".format('{0:.3f}'.format(q_value)),
-                rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
+                    corr_key: "{0}".format('{0:.3f}'.format(correl)),
+                    qval_key: "{0}".format('{0:.3f}'.format(q_value)),
+                    rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
                 }
             )
 
@@ -830,12 +833,15 @@ def calcNMR_Pride(pdb_models, my_path):
     DEVNULL = open(os.devnull, 'w')
     hhdb_log = open("hhdb.log", 'w')
     model_list = open("model_list.txt", 'r')
-    subprocess.call([csx_obj.ThirdParty.prideDB,
-                    "-D", "HHDB",  # model list
-                    ],
-                    stdin  = model_list,
-                    stdout = DEVNULL,
-                    stderr = hhdb_log)
+    subprocess.call(
+        [
+            csx_obj.ThirdParty.prideDB,
+            "-D", "HHDB",  # model list
+        ],
+        stdin=model_list,
+        stdout=DEVNULL,
+        stderr=hhdb_log
+    )
 
     hhdb_log.close()
     DEVNULL.close()

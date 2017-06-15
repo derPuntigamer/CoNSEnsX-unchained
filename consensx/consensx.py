@@ -181,6 +181,7 @@ def run_calculation(request, calc_id):
         STR_name = "[NOT PRESENT]"
         RDC_data = None
         S2_data = None
+        S2_sc_data = None
         Jcoup_data = None
         chemshift_data = None
 
