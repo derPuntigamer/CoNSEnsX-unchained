@@ -193,10 +193,6 @@ def averageRDCs_on(models, my_data):
     """Returns a dictonary with the average RDCs for the given RDC type:
        averageRDC[residue] = value"""
 
-    # print("MODELS")
-    # print(models)
-    # print("MODELS END")
-
     averageRDC = {}
 
     for model_num, model in enumerate(my_data):
@@ -205,15 +201,9 @@ def averageRDCs_on(models, my_data):
 
         for resnum in model:
             if resnum in averageRDC.keys():
-                # print("LOL1")
                 averageRDC[resnum] += model[resnum]
             else:
-                # print("LOL2 " + str(resnum))
                 averageRDC[resnum] = model[resnum]
-
-    # print("AVERAGERDC")
-    # print(averageRDC)
-    # print("AVERAGERDC END")
 
     for resnum in list(averageRDC.keys()):
         averageRDC[resnum] /= len(models)
@@ -271,7 +261,6 @@ def averageS2_on(models, PDB_data, S2_dict, S2_type, fit, fit_range):
 
     model_data = PDB_data
     my_models = []
-    averageS2 = {}
 
     for model_num in models:
         model_data.atomgroup.setACSIndex(model_num)
@@ -353,16 +342,8 @@ def selection_on(my_path, measure, user_sel,
                     RDC_type = sel_data[2]
                     RDC_weight = sel_data[3]
 
-                    my_data = DumpedData.RDC_model_data.RDC_data[RDC_num][RDC_type]
-                    # print("MYDATA")
-                    # for i in my_data:
-                    #     print(i)
+                    my_data = RDC_model_data.RDC_data[RDC_num][RDC_type]
                     averageRDC = averageRDCs_on(pdb_sel, my_data)
-                    # print("PDBSEL")
-                    # print(pdb_sel)
-                    # print("AVGRDC ")
-                    # print(averageRDC)
-                    # print("AVGRDC END")
                     my_RDC = RDC_lists[RDC_num - 1][RDC_type]
 
                     if measure == "correlation":
@@ -380,7 +361,9 @@ def selection_on(my_path, measure, user_sel,
                     divide_by += RDC_weight
 
                     my_type = "".join(sel_data[2].split('_'))
-                    my_key = sel_data[0] + '_' + str(sel_data[1]) + '_' + my_type
+                    my_key = (
+                        sel_data[0] + '_' + str(sel_data[1]) + '_' + my_type
+                    )
                     iter_scores[my_key] = calced
 
                 elif sel_data[0] == "S2":
@@ -439,16 +422,24 @@ def selection_on(my_path, measure, user_sel,
                     ChemShift_weight = sel_data[2]
 
                     my_ChemShifts = ChemShifts[0][ChemShift_type]
-                    my_type = ChemShift_model_data.get_type_data(ChemShift_type)
+                    my_type = ChemShift_model_data.get_type_data(
+                        ChemShift_type
+                    )
 
                     averageChemShift = averageChemShift_on(pdb_sel, my_type)
 
                     if measure == "correlation":
-                        calced = csx_func.calcCorrel(averageChemShift, my_ChemShifts)
+                        calced = csx_func.calcCorrel(
+                            averageChemShift, my_ChemShifts
+                        )
                     elif measure == "q-value":
-                        calced = csx_func.calcQValue(averageChemShift, my_ChemShifts)
+                        calced = csx_func.calcQValue(
+                            averageChemShift, my_ChemShifts
+                        )
                     elif measure == "rmsd":
-                        calced = csx_func.calcRMSD(averageChemShift, my_ChemShifts)
+                        calced = csx_func.calcRMSD(
+                            averageChemShift, my_ChemShifts
+                        )
 
                     if num in model_scores.keys():
                         model_scores[num] += calced * ChemShift_weight
@@ -502,22 +493,23 @@ def selection_on(my_path, measure, user_sel,
                 print("overdrive is:", above_best)
                 # remove overdrive models
                 for _ in range(above_best):
-                    # print(in_selection)
                     print("POP", in_selection[-1])
                     del in_selection[-1]
 
                     print("CURRENT SEL:", in_selection)
 
-                # in_selection = [x+1 for x in in_selection]
                 in_selection.sort()
-                # print("numbered as in PDB file:\n", in_selection)
                 if above_best == 0:
-                    print("EXIT -> selection reached max desired size NOT in overdrive")
-                    # del in_selection[-1]
+                    print(
+                        "EXIT -> selection reached max desired size \
+                        NOT in overdrive"
+                    )
                     return in_selection, iter_data[-above_best - 1], iter_data
                 else:
-                    print("EXIT -> selection reached max desired size in overdrive")
-                    # del in_selection[-1]
+                    print(
+                        "EXIT -> selection reached max desired size \
+                        in overdrive"
+                    )
                     return in_selection, iter_data[-above_best - 1], iter_data
 
         # if new selection results a higher score
@@ -563,12 +555,15 @@ def selection_on(my_path, measure, user_sel,
 
                         print("CURRENT SEL:", in_selection)
 
-                    print("EXIT -> selection reached original size in overdrive")
+                    print(
+                        "EXIT -> selection reached original size in overdrive"
+                    )
                     del in_selection[-1]
                     return in_selection, iter_data[-above_best - 1], iter_data
 
                 above_best += 1
-                print("\x1b[31mwe are in overdrive with \x1b[0m" + str(above_best))
+                print("\x1b[31mwe are in overdrive with \x1b[0m" +
+                      str(above_best))
                 overdrive_best = best_val
                 print("overdrive_best: " + str(overdrive_best))
                 print("prev_best: " + str(prev_best))
@@ -579,7 +574,8 @@ def selection_on(my_path, measure, user_sel,
                 if measure == "correlation" and overdrive_best > prev_best:
                     prev_best = overdrive_best
                     above_best = 0
-                elif measure in ["q-value", "rmsd"] and overdrive_best < prev_best:
+                elif (measure in ["q-value", "rmsd"] and
+                      overdrive_best < prev_best):
                     prev_best = overdrive_best
                     above_best = 0
 
@@ -593,11 +589,12 @@ def selection_on(my_path, measure, user_sel,
                             print("CURRENT SEL:", in_selection)
 
                         print("EXIT -> selection reached max override value")
-                        return in_selection, iter_data[-above_best - 1], iter_data
+                        return (
+                            in_selection, iter_data[-above_best - 1], iter_data
+                        )
 
-                    if measure in ["q-value", "rmsd"] and overdrive_best > prev_best:
-                        # if len(in_selection) > 1:
-                        #     del in_selection[-1]
+                    if (measure in ["q-value", "rmsd"] and
+                            overdrive_best > prev_best):
 
                         for _ in range(above_best + 1):
                             print("POP", in_selection[-1])
@@ -606,7 +603,9 @@ def selection_on(my_path, measure, user_sel,
                             print("CURRENT SEL:", in_selection)
 
                         print("EXIT -> selection reached max override value")
-                        return in_selection, iter_data[-above_best - 1], iter_data
+                        return (
+                            in_selection, iter_data[-above_best - 1], iter_data
+                        )
 
                 continue
 
@@ -669,13 +668,8 @@ def run_selection(my_path, original_values, user_selection_JSON):
 
     print("ITER ALL", iter_all)
 
-    # sel_calced = open(my_path + "/selection_calced.txt", 'w')
-
     for key, val in iter_data.items():
-        # sel_calced.write("{} {}\n".format(key, '{0:.3f}'.format(val)))
         print("CALCED ", key, '{0:.3f}'.format(val))
-
-    # sel_calced.close()
 
     DumpedData.loadPDBData(my_path)
     PDB_data = DumpedData.PDB_model_data

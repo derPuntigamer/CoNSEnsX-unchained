@@ -92,7 +92,10 @@ class CSV_buffer(object):
 
                 try:
                     # pdb.set_trace()
-                    output_csv.write("{0:.2f}".format(exp[resnum]) + ',' + "{0:.2f}".format(data["calced"][resnum]) + ',')
+                    output_csv.write(
+                        "{0:.2f}".format(exp[resnum]) + ',' +
+                        "{0:.2f}".format(data["calced"][resnum]) + ','
+                    )
                 except (IndexError, KeyError):
                     output_csv.write(',,')
 
@@ -105,11 +108,11 @@ class RDC_Record(object):
     def __init__(self, resnum1, atom1, resnum2, atom2, RDC_value):
         self.RDC_type = (str(int(resnum1) - int(resnum2))
                          + '_' + atom1 + '_' + atom2)
-        self.resnum   = int(resnum1)
-        self.atom     = atom1
-        self.resnum2  = int(resnum2)
-        self.atom2    = atom2
-        self.value    = float(RDC_value)
+        self.resnum = int(resnum1)
+        self.atom = atom1
+        self.resnum2 = int(resnum2)
+        self.atom2 = atom2
+        self.value = float(RDC_value)
 
 
 class S2_Record(object):
@@ -117,8 +120,8 @@ class S2_Record(object):
     """Class for storing S2 data"""
     def __init__(self, resnum, S2_type, S2_value):
         self.resnum = int(resnum)
-        self.type   = S2_type
-        self.value  = float(S2_value)
+        self.type = S2_type
+        self.value = float(S2_value)
         self.calced = None
 
 
@@ -127,18 +130,29 @@ class JCoup_Record(object):
     """Class for storing J-Coupling data"""
     def __init__(self, resnum, jcoup_type, JCoup_value):
         self.resnum = int(resnum)
-        self.type   = jcoup_type
-        self.value  = float(JCoup_value)
+        self.type = jcoup_type
+        self.value = float(JCoup_value)
 
 
 class ChemShift_Record(object):
 
     """Class for storing chemical shift data"""
     def __init__(self, resnum, res_name, atom_name, ChemShift_value):
-        self.resnum    = int(resnum)
-        self.res_name  = res_name
+        self.resnum = int(resnum)
+        self.res_name = res_name
         self.atom_name = atom_name
-        self.value     = float(ChemShift_value)
+        self.value = float(ChemShift_value)
+
+    def __str__(self):
+        return (
+            "resnum: " + str(self.resnum) + "," +
+            "res_name: " + self.res_name + "," +
+            "atom_name: " + self.atom_name + "," +
+            "value: " + str(self.value) + "\n"
+        )
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class ChemShift_modell_data(object):
@@ -159,19 +173,19 @@ class ChemShift_modell_data(object):
 class PDB_model(object):
 
     """Class for storing PDB model data"""
-    is_fitted  = False
+    is_fitted = False
     model_data = None
 
     def __init__(self, atomgroup, model_count):
-        self.atomgroup   = atomgroup
+        self.atomgroup = atomgroup
         self.model_count = model_count
         try:
-            self.elements    = atomgroup.getElements()
+            self.elements = atomgroup.getElements()
         except AttributeError:
             print("ERROR -> PDB parsing failed. Please check your PDB file!")
             raise SystemExit
-        self.names       = atomgroup.getNames()
-        self.coordsets   = atomgroup.numCoordsets()
+        self.names = atomgroup.getNames()
+        self.coordsets = atomgroup.numCoordsets()
         PDB_model.model_data = self
 
 
@@ -181,18 +195,18 @@ class Restraint_Record(object):
     all_restraints = []
     resolved_restraints = []
 
-    def __init__(self, csx_id, curr_distID, seq_ID1, seq_ID2, seq_name1, seq_name2,
-                 atom_ID1, atom_ID2, dist_max):
+    def __init__(self, csx_id, curr_distID, seq_ID1, seq_ID2,
+                 seq_name1, seq_name2, atom_ID1, atom_ID2, dist_max):
 
-        self.csx_id      = int(csx_id)
+        self.csx_id = int(csx_id)
         self.curr_distID = int(curr_distID)
-        self.seq_ID1     = int(seq_ID1)
-        self.seq_ID2     = int(seq_ID2)
-        self.seq_name1   = str(seq_name1)
-        self.seq_name2   = str(seq_name2)
-        self.dist_max    = float(dist_max)
-        self.atom_ID1    = atom_ID1
-        self.atom_ID2    = atom_ID2
+        self.seq_ID1 = int(seq_ID1)
+        self.seq_ID2 = int(seq_ID2)
+        self.seq_name1 = str(seq_name1)
+        self.seq_name2 = str(seq_name2)
+        self.dist_max = float(dist_max)
+        self.atom_ID1 = atom_ID1
+        self.atom_ID2 = atom_ID2
 
         Restraint_Record.all_restraints.append(copy.deepcopy(self))
 
@@ -250,10 +264,10 @@ class Restraint_Record(object):
 
                         # separate trailing number, if any
                         try:
-                            num  = str(int(res.atom_ID1[-1]))
+                            num = str(int(res.atom_ID1[-1]))
                             base = 'H' + res.atom_ID1[1:-1]
                         except ValueError:
-                            num  = 0
+                            num = 0
 
                         atom_names1 = []
 
@@ -269,13 +283,12 @@ class Restraint_Record(object):
                                     atom_names1.append(base + str(2) + i)
                                     atom_names1.append(i + base + str(2))
 
-                            elif res.seq_name1 == "THR" and res.atom_ID1 == "MG":
+                            elif (res.seq_name1 == "THR" and
+                                  res.atom_ID1 == "MG"):
                                 atom_names1.append("HG1")
                                 atom_names1.append("1HG")
 
                             else:
-
-
                                 for i in ['1', '2', '3']:
                                     atom_names1.append(base + i)
 
@@ -312,10 +325,10 @@ class Restraint_Record(object):
                         base = 'H' + res.atom_ID2[1:]
 
                         try:
-                            num  = str(int(res.atom_ID2[-1]))
+                            num = str(int(res.atom_ID2[-1]))
                             base = 'H' + res.atom_ID2[1:-1]
                         except ValueError:
-                            num  = 0
+                            num = 0
 
                         if num != 0:
                             for i in ['1', '2', '3']:
@@ -327,7 +340,8 @@ class Restraint_Record(object):
                                     atom_names2.append(base + str(2) + i)
                                     atom_names2.append(i + base + str(2))
 
-                            elif res.seq_name2 == "THR" and res.atom_ID2 == "MG":
+                            elif (res.seq_name2 == "THR" and
+                                  res.atom_ID2 == "MG"):
                                 atom_names2.append("HG1")
                                 atom_names2.append("1HG")
 
@@ -353,15 +367,13 @@ class Restraint_Record(object):
                     resol2 = list(set(atom_names2) & set(PDB_names2))
                     # print("resol_names2:", res.atom_ID2, resol2)
 
-                # print("curr_distID ->", res.curr_distID)
-                # print("resol1 ->", resol1)
-                # print("resol2 ->", resol2)
-
                 for atom1 in resol1:
                     for atom2 in resol2:
-                        new = Restraint_Record(res.csx_id, res.curr_distID,
+                        new = Restraint_Record(
+                            res.csx_id, res.curr_distID,
                             res.seq_ID1, res.seq_ID2, res.seq_name1,
-                            res.seq_name2, atom1, atom2, res.dist_max)
+                            res.seq_name2, atom1, atom2, res.dist_max
+                        )
 
                         # print(res.csx_id, res.curr_distID,
                         #     res.seq_ID1, res.seq_name1, atom1,
@@ -372,7 +384,6 @@ class Restraint_Record(object):
 
         return Restraint_Record.resolved_restraints
 
-
     @staticmethod
     def getPRIDE_restraints():
         PRIDE_restraints = {}
@@ -381,11 +392,11 @@ class Restraint_Record(object):
         seq_dist = -1
 
         for restraint in Restraint_Record.resolved_restraints:
-            curr_id  = restraint.curr_distID
+            curr_id = restraint.curr_distID
             atom_ID1 = restraint.atom_ID1
             atom_ID2 = restraint.atom_ID2
-            seq_ID1  = restraint.seq_ID1
-            seq_ID2  = restraint.seq_ID2
+            seq_ID1 = restraint.seq_ID1
+            seq_ID2 = restraint.seq_ID2
 
             if prev_id != curr_id:
                 prev_id = curr_id
@@ -397,9 +408,9 @@ class Restraint_Record(object):
                         PRIDE_restraints[seq_dist] = 1
 
                 atom1_HA = atom_ID1 in ["H", "HA", "HA1", "HA2", "HA3"]
-                seq1_ok  = atom1_HA or atom_ID1.startswith("HB")
+                seq1_ok = atom1_HA or atom_ID1.startswith("HB")
                 atom2_HA = atom_ID2 in ["H", "HA", "HA1", "HA2", "HA3"]
-                seq2_ok  = atom2_HA or atom_ID2.startswith("HB")
+                seq2_ok = atom2_HA or atom_ID2.startswith("HB")
                 seq_dist = abs(seq_ID1 - seq_ID2)
                 distance_ok = seq_dist > 2
 
@@ -407,9 +418,9 @@ class Restraint_Record(object):
 
             else:
                 atom1_HA = atom_ID1 in ["H", "HA", "HA1", "HA2", "HA3"]
-                seq1_ok  &= atom1_HA or atom_ID1.startswith("HB")
+                seq1_ok &= atom1_HA or atom_ID1.startswith("HB")
                 atom2_HA = atom_ID2 in ["H", "HA", "HA1", "HA2", "HA3"]
-                seq2_ok  &= atom2_HA or atom_ID2.startswith("HB")
+                seq2_ok &= atom2_HA or atom_ID2.startswith("HB")
                 seq_dist = abs(seq_ID1 - seq_ID2)
                 distance_ok &= seq_dist > 2 and id_distance == seq_dist
 
@@ -449,7 +460,7 @@ class Vec_3D(object):
     def normalize(self):
         vmag = self.magnitude()
         v = self.v
-        return Vec_3D([v[i] / vmag  for i in range(len(v))])
+        return Vec_3D([v[i] / vmag for i in range(len(v))])
 
     @classmethod
     def cross(cls, one, other):

@@ -8,14 +8,14 @@ import prody
 import time
 import pickle
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-# matplotlib.verbose.set_level('silent')
+
 import matplotlib.pyplot as plt
 # installed modules
 import consensx.nmrpystar as nmrpystar
-from .objects import *
+from . import objects as csx_obj
 
+
+plt.switch_backend('Agg')
 
 shortcodes = {
     'ALA': 'A', 'ASP': 'D', 'ASN': 'N', 'ARG': 'R', 'CYS': 'C', 'GLY': 'G',
@@ -70,15 +70,19 @@ def timeit(method):
 
 
 def natural_sort(l):
-    convert = lambda text: int(text) if text.isdigit() else text.lower()
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    def convert(text):
+        return int(text) if text.isdigit() else text.lower()
+
+    def alphanum_key(key):
+        return [convert(c) for c in re.split('([0-9]+)', key)]
+
     return sorted(l, key=alphanum_key)
 
 
 def check_3rd_party(install_dir):
     config_file_name = install_dir + "/.config"
     if os.path.isfile(config_file_name):
-        ThirdParty.get_thirdparty(config_file_name)
+        csx_obj.ThirdParty.get_thirdparty(config_file_name)
     else:
         init_conf = (
             "# CoNSEnsX config file\n" +
@@ -119,10 +123,10 @@ def get_model_list(PDB_file, my_path, model_count):
             print("DISCARDED MODEL FOUND")
             return False
 
-    PDB_model(atomgroup, model_count)
+    csx_obj.PDB_model(atomgroup, model_count)
 
     PDB_model_path = my_path + "/PDB_model.pickle"
-    pickle.dump(PDB_model.model_data, open(PDB_model_path, 'wb'))
+    pickle.dump(csx_obj.PDB_model.model_data, open(PDB_model_path, 'wb'))
     return True
 
 
@@ -171,7 +175,7 @@ def pdb_cleaner(my_path, PDB_file, my_CSV_buffer):
                     chars.append(i)
 
             try:
-                _ = int(name[0])
+                # _ = int(name[0])
                 name = (''.join(str(i) for i in chars) +    # characters
                         ''.join(str(i) for i in reversed(numbers)))   # numbers
             except ValueError:
@@ -301,14 +305,14 @@ def getNOE(NOE_file):
 
     for loop in loops:
         try:
-            ind_ID    = loop[0].index("_Gen_dist_constraint.ID")
-            ind_seg1  = loop[0].index("_Gen_dist_constraint.PDB_residue_no_1")
-            ind_seg2  = loop[0].index("_Gen_dist_constraint.PDB_residue_no_2")
+            ind_ID = loop[0].index("_Gen_dist_constraint.ID")
+            ind_seg1 = loop[0].index("_Gen_dist_constraint.PDB_residue_no_1")
+            ind_seg2 = loop[0].index("_Gen_dist_constraint.PDB_residue_no_2")
             ind_comp1 = loop[0].index("_Gen_dist_constraint.Comp_ID_1")
             ind_comp2 = loop[0].index("_Gen_dist_constraint.Comp_ID_2")
             ind_atom1 = loop[0].index("_Gen_dist_constraint.Atom_ID_1")
             ind_atom2 = loop[0].index("_Gen_dist_constraint.Atom_ID_2")
-            ind_bnd   = loop[0].index(
+            ind_bnd = loop[0].index(
                 "_Gen_dist_constraint.Distance_upper_bound_val")
         except ValueError:
             continue
@@ -360,7 +364,7 @@ def get_RDC_lists(parsed_value):
     """Returns RDC lists as dictonaries containing RDC_Record objects,
        grouped by RDCtype (keys())"""
     list_number = 1
-    RDC_lists   = []
+    RDC_lists = []
 
     while True:
         saveShiftName = 'RDC_list_' + str(list_number)
@@ -368,13 +372,13 @@ def get_RDC_lists(parsed_value):
             saveShifts = parsed_value.saves[saveShiftName]
         except KeyError:
             break
-        loopShifts  = saveShifts.loops[-1]
+        loopShifts = saveShifts.loops[-1]
         RDC_records = []
 
         # STR key values recognised by this program
-        rdc_res1_keys  = ["RDC.Seq_ID_1", "Atom_one_residue_seq_code"]
+        rdc_res1_keys = ["RDC.Seq_ID_1", "Atom_one_residue_seq_code"]
         rdc_atom1_keys = ["RDC.Atom_type_1", "Atom_one_atom_name"]
-        rdc_res2_keys  = ["RDC.Seq_ID_2", "Atom_two_residue_seq_code"]
+        rdc_res2_keys = ["RDC.Seq_ID_2", "Atom_two_residue_seq_code"]
         rdc_atom2_keys = ["RDC.Atom_type_2", "Atom_two_atom_name"]
         rdc_value_keys = ["RDC.Val", "Residual_dipolar_coupling_value"]
 
@@ -405,17 +409,13 @@ def get_RDC_lists(parsed_value):
             # check if all parameters are fetched
             if (resnum1 and atom1 and resnum2 and atom2 and RDC_value):
                 # append RDC_Record object to list
-                RDC_records.append(RDC_Record(resnum1, atom1,
-                                              resnum2, atom2, RDC_value))
+                RDC_records.append(
+                    csx_obj.RDC_Record(
+                        resnum1, atom1, resnum2, atom2, RDC_value
+                    )
+                )
             else:
                 print(row)
-
-            # {'Residual_dipolar_coupling_value_error': '0.010',
-            # 'Residual_dipolar_coupling_value': '-0.004',
-            # 'Atom_one_atom_name': 'CA', 'Atom_one_residue_seq_code': '30',
-            # 'Residual_dipolar_coupling_ID': 'DCAC',
-            # 'Atom_two_atom_name': 'C', 'Atom_two_residue_seq_code': '30'}
-
 
         RDC_lists.append(RDC_records)
         list_number += 1
@@ -424,7 +424,7 @@ def get_RDC_lists(parsed_value):
     new_RDC_list = []
     for list_num, RDC_list in enumerate(RDC_lists):
         prev_type = ""
-        RDC_dict  = {}
+        RDC_dict = {}
 
         for record in RDC_list:
             if prev_type != record.RDC_type:
@@ -453,9 +453,10 @@ def parseS2_STR(parsed_value):
 
             S2_value = float("{0:.2f}".format(float(row["S2_value"])))
 
-            S2_records.append(S2_Record(row["Residue_seq_code"],
-                                        row["Atom_name"],
-                                        S2_value))
+            S2_records.append(
+                csx_obj.S2_Record(
+                    row["Residue_seq_code"], row["Atom_name"], S2_value)
+            )
 
         # split list into dict according to S2 types
         S2_dict = {}
@@ -490,9 +491,11 @@ def parse_sidechain_S2_STR(parsed_value):
 
             S2_value = float("{0:.2f}".format(float(row["S2_value"])))
 
-            S2_records.append(S2_Record(row["Residue_seq_code"],
-                                        row["Atom_name"],
-                                        S2_value))
+            S2_records.append(
+                csx_obj.S2_Record(
+                    row["Residue_seq_code"], row["Atom_name"], S2_value
+                )
+            )
 
         return S2_records
 
@@ -514,9 +517,13 @@ def parseJcoup_STR(parsed_value):
             JC_value = row["Coupling_constant_value"]
             JC_value = float("{0:.2f}".format(float(JC_value)))
 
-            jcoup_records.append(JCoup_Record(row["Atom_one_residue_seq_code"],
-                                              row["Coupling_constant_code"],
-                                              JC_value))
+            jcoup_records.append(
+                csx_obj.JCoup_Record(
+                    row["Atom_one_residue_seq_code"],
+                    row["Coupling_constant_code"],
+                    JC_value
+                )
+            )
 
         # split list into dict according to J-cuopling types
         jcoup_dict = {}
@@ -545,29 +552,29 @@ def parseChemShift_STR(parsed_value):
     ChemShift_lists = []
     cs_lot = [
         {
-            "seq_code" : "Residue_seq_code",
-            "label" : "Residue_label",
-            "name" : "Atom_name",
-            "value" : "Chem_shift_value"
+            "seq_code": "Residue_seq_code",
+            "label": "Residue_label",
+            "name": "Atom_name",
+            "value": "Chem_shift_value"
         },
         {
-            "seq_code" : "Atom_chem_shift.Seq_ID",
-            "label" : "Atom_chem_shift.Comp_ID",
-            "name" : "Atom_chem_shift.Atom_ID",
-            "value" : "Atom_chem_shift.Val"
+            "seq_code": "Atom_chem_shift.Seq_ID",
+            "label": "Atom_chem_shift.Comp_ID",
+            "name": "Atom_chem_shift.Atom_ID",
+            "value": "Atom_chem_shift.Val"
         }
     ]
 
     while True:
         saveShiftName = 'chem_shift_list_' + str(list_number)
-        altShiftName  = 'assigned_chem_shift_list_' + str(list_number)
+        altShiftName = 'assigned_chem_shift_list_' + str(list_number)
         try:
             saveShifts = parsed_value.saves[saveShiftName]
-            str_type   = 0
+            str_type = 0
         except KeyError:
             try:
                 saveShifts = parsed_value.saves[altShiftName]
-                str_type   = 1
+                str_type = 1
             except KeyError:
                 break
 
@@ -589,30 +596,35 @@ def parseChemShift_STR(parsed_value):
                 HA_sum += CS_value
 
                 ChemShift_records.append(
-                    ChemShift_Record(
+                    csx_obj.ChemShift_Record(
                         row[cs_lot[str_type]["seq_code"]],
                         row[cs_lot[str_type]["label"]],
-                        "HA", HA_sum / 2)
+                        "HA", HA_sum / 2
+                    )
                 )
                 HA_sum = 0.0
                 continue
 
-            if row[cs_lot[str_type]["name"]] in ["HA", "CA", "CB", "N", "H", "C"]:
+            chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
+
+            if row[cs_lot[str_type]["name"]] in chemshift_types:
                 ChemShift_records.append(
-                    ChemShift_Record(
+                    csx_obj.ChemShift_Record(
                         row[cs_lot[str_type]["seq_code"]],
                         row[cs_lot[str_type]["label"]],
                         row[cs_lot[str_type]["name"]],
-                        CS_value)
+                        CS_value
+                    )
                 )
 
             elif row[cs_lot[str_type]["name"]] == "HN":
                 ChemShift_records.append(
-                    ChemShift_Record(
+                    csx_obj.ChemShift_Record(
                         row[cs_lot[str_type]["seq_code"]],
                         row[cs_lot[str_type]["label"]],
                         "H",
-                        CS_value)
+                        CS_value
+                    )
                 )
 
         ChemShift_lists.append(ChemShift_records)
@@ -641,11 +653,11 @@ def callPalesOn(my_path, pdb_files, RDC_dict, lc_model, SVD_enable):
     """Writes pales dummy from the given RDC values, and call Pales with the
     given parameters"""
 
-    pwd =  os.getcwd()
+    pwd = os.getcwd()
     os.chdir(my_path)
 
     for o, pdb_file in enumerate(pdb_files):
-        #-------------------  Open file and read PDB data  -------------------#
+        # ------------------  Open file and read PDB data  -------------------#
         try:
             input_pdb = open(pdb_file)
         except IOError:
@@ -661,35 +673,35 @@ def callPalesOn(my_path, pdb_files, RDC_dict, lc_model, SVD_enable):
 
         input_pdb.close()
 
-        #-----------------------  Write sequence data  -----------------------#
+        # ----------------------  Write sequence data  -----------------------#
         short_seg = ""
 
         for i in range(len(seg)):
             short_seg += shortcodes[seg[i]]
 
-        my_line      = "DATA SEQUENCE "
+        my_line = "DATA SEQUENCE "
         char_counter = 0
-        row_counter  = 0
-        pales_dummy  = open('pales_dummy.txt', 'w')
+        row_counter = 0
+        pales_dummy = open('pales_dummy.txt', 'w')
 
         for char in short_seg:
             if char_counter == 10:          # write aa output in 10 wide blocks
-                my_line      += " "
+                my_line += " "
                 char_counter = 0
-                row_counter  += 1
+                row_counter += 1
 
                 if row_counter == 5:        # write 5 block per line
                     pales_dummy.write(my_line + "\n")
                     char_counter = 0
-                    row_counter  = 0
+                    row_counter = 0
                     my_line = "DATA SEQUENCE "
 
-            my_line      += char
+            my_line += char
             char_counter += 1
 
         pales_dummy.write(my_line + "\n")    # write last line of aa output
 
-        #-----------------------  Write dummy dipoles  -----------------------#
+        # ----------------------  Write dummy dipoles  -----------------------#
         pales_dummy.write(
             "\nVARS RESID_I RESNAME_I ATOMNAME_I " +
             "RESID_J RESNAME_J ATOMNAME_J D DD W\n" +
@@ -705,11 +717,15 @@ def callPalesOn(my_path, pdb_files, RDC_dict, lc_model, SVD_enable):
 
                 pales_dummy.write(
                     "%5s  %6s  %6s  %5s  %6s  %6s  %9.3f  %9.3f  %.2f\n" % (
-                    str(RDC_record.resnum) + 'A', seg[RDC_record.resnum - 1],
-                    str(RDC_record.atom),
-                    str(RDC_record.resnum2) + 'A', seg[RDC_record.resnum2 - 1],
-                    str(RDC_record.atom2),
-                    RDC_record.value, 1.000,  1.00))
+                        str(RDC_record.resnum) + 'A',
+                        seg[RDC_record.resnum - 1],
+                        str(RDC_record.atom),
+                        str(RDC_record.resnum2) + 'A',
+                        seg[RDC_record.resnum2 - 1],
+                        str(RDC_record.atom2),
+                        RDC_record.value, 1.000,  1.00
+                    )
+                )
 
         pales_dummy.close()
 
@@ -722,21 +738,29 @@ def callPalesOn(my_path, pdb_files, RDC_dict, lc_model, SVD_enable):
 
         try:
             if SVD_enable:                          # if SVD is enabled
-                p = subprocess.Popen([ThirdParty.pales,
-                                "-inD", "pales_dummy.txt",
-                                "-pdb", pdb_file,           # pdb file
-                                '-' + lc_model,             # rdc lc model
-                                "-bestFit"],                # SVD
-                                stdout=outfile,
-                                stderr=DEVNULL)
-                p.wait() #now wait
+                p = subprocess.Popen(
+                    [
+                        csx_obj.ThirdParty.pales,
+                        "-inD", "pales_dummy.txt",
+                        "-pdb", pdb_file,           # pdb file
+                        '-' + lc_model,             # rdc lc model
+                        "-bestFit"                  # SVD
+                    ],
+                    stdout=outfile,
+                    stderr=DEVNULL
+                )
+                p.wait()                        # now wait
             else:                               # if SVD is disabled (default)
-                subprocess.call([ThirdParty.pales,
-                                "-inD", "pales_dummy.txt",
-                                "-pdb", pdb_file,           # pdb file
-                                '-' + lc_model],            # rdc lc model
-                                stdout=outfile,
-                                stderr=DEVNULL)
+                subprocess.call(
+                    [
+                        csx_obj.ThirdParty.pales,
+                        "-inD", "pales_dummy.txt",
+                        "-pdb", pdb_file,           # pdb file
+                        '-' + lc_model              # rdc lc model
+                    ],
+                    stdout=outfile,
+                    stderr=DEVNULL
+                )
         except OSError as e:
             print("Execution failed:", e, file=sys.stderr)
         outfile.close()
@@ -752,14 +776,16 @@ def callShiftxOn(my_path, pdb_files):
     for i, pdb_file in enumerate(pdb_files):
         pdb_file = my_path + pdb_file
         out_name = my_path + "/modell_" + str(i+1) + ".out"
-        subprocess.call([ThirdParty.shiftx, '1', pdb_file, out_name])
+        subprocess.call([csx_obj.ThirdParty.shiftx, '1', pdb_file, out_name])
 
-    averageHA, averageH, averageN, averageCA, averageCB, averageC = {}, {}, {}, {}, {}, {}
-    modHA, modH, modN, modCA, modCB, modC= {}, {}, {}, {}, {}, {}
+    averageHA, averageH, averageN = {}, {}, {}
+    averageCA, averageCB, averageC = {}, {}, {}
+    modHA, modH, modN, modCA, modCB, modC = {}, {}, {}, {}, {}, {}
     model_data_list = []
 
-    for some_file in os.listdir(my_path):
+    for some_file in natural_sort(os.listdir(my_path)):
         if some_file.startswith("modell") and some_file.endswith(".out"):
+            print(".OUT FILE NAME", some_file)
             out_file = open(my_path + some_file)
             part = 0
 
@@ -782,18 +808,18 @@ def callShiftxOn(my_path, pdb_files):
                     except ValueError:
                         resnum = int(line_values[0][1:])
                     HA = float(line_values[2])
-                    H  = float(line_values[3])
-                    N  = float(line_values[4])
+                    H = float(line_values[3])
+                    N = float(line_values[4])
                     CA = float(line_values[5])
                     CB = float(line_values[6])
-                    C  = float(line_values[7])
+                    C = float(line_values[7])
 
                     modHA[resnum] = HA
-                    modH[resnum]  = H
-                    modN[resnum]  = N
+                    modH[resnum] = H
+                    modN[resnum] = N
                     modCA[resnum] = CA
                     modCB[resnum] = CB
-                    modC[resnum]  = C
+                    modC[resnum] = C
 
                     if resnum in list(averageHA.keys()):
                         averageHA[resnum] += HA
@@ -830,7 +856,9 @@ def callShiftxOn(my_path, pdb_files):
                                     "CA": modCA, "CB": modCB, "C": modC})
             modHA, modH, modN, modCA, modCB, modC = {}, {}, {}, {}, {}, {}
 
-    for avg_dict in [averageHA, averageH, averageN, averageCA, averageCB, averageC]:
+    averages = [averageHA, averageH, averageN, averageCA, averageCB, averageC]
+
+    for avg_dict in averages:
         for key in avg_dict:
             avg_dict[key] /= len(pdb_files)
 
@@ -843,12 +871,12 @@ def avgPalesRDCs(pales_out, my_RDC_type):
        averageRDC[residue] = value
        and calculated model data as a list of dictonaries
        model_data_list[{1: value}, ...]"""
-    pales_out       = open(pales_out)
+    pales_out = open(pales_out)
     n_of_structures = 0
-    averageRDC      = {}
+    averageRDC = {}
     model_data_list = []
     model_data_dict = {}
-    first_run       = True
+    first_run = True
 
     for line in pales_out:
         if re.match("REMARK \d+ couplings", line):
@@ -864,11 +892,11 @@ def avgPalesRDCs(pales_out, my_RDC_type):
                 model_data_dict = {}
 
         elif re.match("\s+ \d+", line):
-            resnum  = int(line.split()[0])
+            resnum = int(line.split()[0])
             resnum2 = int(line.split()[3])
-            atom    = line.split()[2]
-            atom2   = line.split()[5]
-            D       = float(line.split()[8])    # D coloumn of pales output
+            atom = line.split()[2]
+            atom2 = line.split()[5]
+            D = float(line.split()[8])    # D coloumn of pales output
             RDCtype = str(abs(resnum2 - resnum)) + "_" + atom + "_" + atom2
 
             # skip non relevant RDC data in the pales output file
@@ -957,24 +985,26 @@ def calcS2(model_data, calculate_on_models,
             if atom_res == current_Resindex:
                 if atom.getName() == S2_type:
                     has_second = True
-                    N_coords = Vec_3D(atom.getCoords())
+                    N_coords = csx_obj.Vec_3D(atom.getCoords())
 
                 elif atom.getName() == s2_pairs[S2_type]:
                     has_first = True
-                    H_coords = Vec_3D(atom.getCoords())
+                    H_coords = csx_obj.Vec_3D(atom.getCoords())
 
                 if has_first and has_second:
                     has_first, has_second = False, False
-                    vectors[atom_res] = Vec_3D(N_coords -
-                                               H_coords).normalize()
+                    vectors[atom_res] = csx_obj.Vec_3D(
+                        N_coords - H_coords
+                    ).normalize()
 
         vector_data.append(vectors)
 
     te = time.time()
 
-    print('\x1b[31m%r -> %2.2f sec\x1b[0m' % ("getCoords", te-ts),
-              file=sys.stderr)
-
+    print(
+        '\x1b[31m%r -> %2.2f sec\x1b[0m' % ("getCoords", te-ts),
+        file=sys.stderr
+    )
 
     S2_calced = {}
 
@@ -1016,7 +1046,7 @@ def calcS2(model_data, calculate_on_models,
 def calcDihedAngles(model_data):
     """Calculates backbone diherdral angles
        note: all returned angle values are in radian"""
-    model_data = PDB_model.model_data
+    model_data = csx_obj.PDB_model.model_data
 
     JCoup_dicts = []
 
@@ -1038,13 +1068,15 @@ def calcDihedAngles(model_data):
                     CN_vec = prev_C - my_N
                     CCA_vec = my_C - my_CA
 
-                    first_cross  = Vec_3D.cross(CN_vec, NCA_vec)
-                    second_cross = Vec_3D.cross(CCA_vec, NCA_vec)
+                    first_cross = csx_obj.Vec_3D.cross(CN_vec, NCA_vec)
+                    second_cross = csx_obj.Vec_3D.cross(CCA_vec, NCA_vec)
 
-                    angle = Vec_3D.dihedAngle(first_cross, second_cross)
+                    angle = csx_obj.Vec_3D.dihedAngle(
+                        first_cross, second_cross
+                    )
 
                     # reference for setting sign of angle
-                    reference = Vec_3D.cross(first_cross, second_cross)
+                    reference = csx_obj.Vec_3D.cross(first_cross, second_cross)
 
                     r1 = reference.normalize()
                     r2 = NCA_vec.normalize()
@@ -1060,11 +1092,11 @@ def calcDihedAngles(model_data):
 
             if atom_res == current_Resindex:
                 if atom.getName() == 'N':
-                    my_N = Vec_3D(atom.getCoords())
+                    my_N = csx_obj.Vec_3D(atom.getCoords())
                 elif atom.getName() == 'CA':
-                    my_CA = Vec_3D(atom.getCoords())
+                    my_CA = csx_obj.Vec_3D(atom.getCoords())
                 elif atom.getName() == 'C':
-                    my_C = Vec_3D(atom.getCoords())
+                    my_C = csx_obj.Vec_3D(atom.getCoords())
 
         JCoup_dicts.append(JCoup_dict)
 
@@ -1073,13 +1105,13 @@ def calcDihedAngles(model_data):
 
 def calcPeptideBonds(PDB_file):
     """Calculates backbone diherdral angles (OMEGA) CA-N-C'-CA"""
-    model_list = PDB_model.model_list
+    model_list = csx_obj.PDB_model.model_list
     dihedral_angles = {"<2":    0, "2-5": 0, "5-10": 0,
                        "10-20": 0, ">20": 0}
 
     for model_num, model in enumerate(model_list):
         current_Resindex = 1
-        prev_CA, my_N, my_CA, my_C = None, None, None, None
+        prev_C, prev_CA, my_N, my_CA, my_C = None, None, None, None, None
 
         for atom in model:
             atom_res = atom.getResindex() + 1
@@ -1090,16 +1122,18 @@ def calcPeptideBonds(PDB_file):
                         my_CA is not None and prev_C is not None):
 
                     NCA_vec = my_N - my_CA
-                    CN_vec  = prev_CA - my_N
+                    CN_vec = prev_CA - my_N
                     CCA_vec = prev_C - my_CA
 
-                    first_cross  = Vec_3D.cross(CN_vec, NCA_vec)
-                    second_cross = Vec_3D.cross(CCA_vec, NCA_vec)
+                    first_cross = csx_obj.Vec_3D.cross(CN_vec, NCA_vec)
+                    second_cross = csx_obj.Vec_3D.cross(CCA_vec, NCA_vec)
 
-                    angle = Vec_3D.dihedAngle(first_cross, second_cross)
+                    angle = csx_obj.Vec_3D.dihedAngle(
+                        first_cross, second_cross
+                    )
 
                     # reference for setting sign of angle
-                    reference = Vec_3D.cross(first_cross, second_cross)
+                    reference = csx_obj.Vec_3D.cross(first_cross, second_cross)
 
                     r1 = reference.normalize()
                     r2 = NCA_vec.normalize()
@@ -1120,16 +1154,16 @@ def calcPeptideBonds(PDB_file):
 
                 current_Resindex = atom_res
                 prev_CA = my_CA
-                prev_C =  my_C
+                prev_C = my_C
                 my_N, my_CA, my_C = None, None, None
 
             if atom_res == current_Resindex:
                 if atom.getName() == 'N':
-                    my_N = Vec_3D(atom.getCoords())
+                    my_N = csx_obj.Vec_3D(atom.getCoords())
                 elif atom.getName() == 'CA':
-                    my_CA = Vec_3D(atom.getCoords())
+                    my_CA = csx_obj.Vec_3D(atom.getCoords())
                 elif atom.getName() == 'C':
-                    my_C = Vec_3D(atom.getCoords())
+                    my_C = csx_obj.Vec_3D(atom.getCoords())
 
     print("Peptide (CA-N-C'-CA) bond angle distribution:")
     print("   <2 -> " + str(dihedral_angles["<2"]))
@@ -1141,13 +1175,14 @@ def calcPeptideBonds(PDB_file):
 
 def calcNH_Angles(PDB_file):
     """Calculates backbone diherdral angles (OMEGA) H-N-C=O"""
-    model_list = PDB_model.model_list
+    model_list = csx_obj.PDB_model.model_list
     dihedral_angles = {"<2":    0, "2-5": 0, "5-10": 0,
                        "10-20": 0, ">20": 0}
 
     for model_num, model in enumerate(model_list):
         current_Resindex = 1
-        prev_O, prev_C, my_N, my_H = None, None, None, None
+        prev_O, prev_C,  = None, None
+        my_N, my_H, my_O, my_C = None, None, None, None
 
         for atom in model:
             atom_res = atom.getResindex() + 1
@@ -1161,13 +1196,15 @@ def calcNH_Angles(PDB_file):
                     CN_vec = my_N - prev_C
                     OC_vec = prev_C - prev_O
 
-                    first_cross  = Vec_3D.cross(NH_vec, CN_vec)
-                    second_cross = Vec_3D.cross(OC_vec, CN_vec)
+                    first_cross = csx_obj.Vec_3D.cross(NH_vec, CN_vec)
+                    second_cross = csx_obj.Vec_3D.cross(OC_vec, CN_vec)
 
-                    angle = Vec_3D.dihedAngle(first_cross, second_cross)
+                    angle = csx_obj.Vec_3D.dihedAngle(
+                        first_cross, second_cross
+                    )
 
                     # reference for setting sign of angle
-                    reference = Vec_3D.cross(first_cross, second_cross)
+                    reference = csx_obj.Vec_3D.cross(first_cross, second_cross)
 
                     r1 = reference.normalize()
                     r2 = NH_vec.normalize()
@@ -1193,13 +1230,13 @@ def calcNH_Angles(PDB_file):
 
             if atom_res == current_Resindex:
                 if atom.getName() == 'N':
-                    my_N = Vec_3D(atom.getCoords())
+                    my_N = csx_obj.Vec_3D(atom.getCoords())
                 elif atom.getName() == 'H':
-                    my_H = Vec_3D(atom.getCoords())
+                    my_H = csx_obj.Vec_3D(atom.getCoords())
                 elif atom.getName() == 'C':
-                    my_C = Vec_3D(atom.getCoords())
+                    my_C = csx_obj.Vec_3D(atom.getCoords())
                 elif atom.getName() == 'O':
-                    my_O = Vec_3D(atom.getCoords())
+                    my_O = csx_obj.Vec_3D(atom.getCoords())
 
     print("Peptide (H-N-C=O) bond angle distribution:")
     print("   <2 -> " + str(dihedral_angles["<2"]))
@@ -1212,7 +1249,7 @@ def calcNH_Angles(PDB_file):
 def calcJCoup(param_set, calced, experimental, Jcoup_type):
     """Calculates J-coupling values from dihedral angles
        note: all angles must be in radian"""
-    JCoup_calced    = {}
+    JCoup_calced = {}
 
     if param_set == 1:
         my_karplus = Jcoup_dict1
@@ -1221,9 +1258,9 @@ def calcJCoup(param_set, calced, experimental, Jcoup_type):
     elif param_set == 3:
         my_karplus = Jcoup_dict3
 
-    A     = my_karplus['A']
-    B     = my_karplus['B']
-    C     = my_karplus['C']
+    A = my_karplus['A']
+    B = my_karplus['B']
+    C = my_karplus['C']
     THETA = my_karplus['THETA']
 
     for record in experimental:  # resnums
@@ -1267,7 +1304,7 @@ def calcCorrel(calced, experimental):
     match_count = 0
 
     for i in experimental:
-        exp  = i.value
+        exp = i.value
         try:
             calc = calced[i.resnum]
         except KeyError:
@@ -1284,14 +1321,14 @@ def calcCorrel(calced, experimental):
     M[2] /= match_count
 
     for i in experimental:
-        exp  = i.value
+        exp = i.value
         try:
             calc = calced[i.resnum]
         except KeyError:
             continue
 
         D[0] += (calc - M[0]) ** 2
-        D[1] += (exp  - M[1]) ** 2
+        D[1] += (exp - M[1]) ** 2
 
     D[0] /= match_count
     D[0] = math.sqrt(D[0])
@@ -1311,7 +1348,7 @@ def calcQValue(calced, experimental):
     D2, E2 = 0, 0
 
     for i in experimental:
-        exp  = i.value
+        exp = i.value
         try:
             calc = calced[i.resnum]
         except KeyError:
@@ -1332,7 +1369,7 @@ def calcRMSD(calced, experimental):
     match_count = 0
 
     for i in experimental:
-        exp  = i.value
+        exp = i.value
         try:
             calc = calced[i.resnum]
         except KeyError:
@@ -1348,7 +1385,7 @@ def calcRMSD(calced, experimental):
 
 def pdb2coords(PDB_file):
     """Loads PDB coordinates into a dictonary, per model"""
-    model_data = PDB_model.model_data
+    model_data = csx_obj.PDB_model.model_data
 
     prev_resnum = -1
     PDB_coords = {}
@@ -1360,14 +1397,14 @@ def pdb2coords(PDB_file):
 
         for atom in model_data.atomgroup:
             resnum = int(atom.getResnum())
-            name   = str(atom.getName())
+            name = str(atom.getName())
 
             if resnum == prev_resnum:
-                PDB_coords[i][resnum][name] = Vec_3D(atom.getCoords())
+                PDB_coords[i][resnum][name] = csx_obj.Vec_3D(atom.getCoords())
 
             else:
                 PDB_coords[i][resnum] = {}
-                PDB_coords[i][resnum][name] = Vec_3D(atom.getCoords())
+                PDB_coords[i][resnum][name] = csx_obj.Vec_3D(atom.getCoords())
                 prev_resnum = resnum
 
     return PDB_coords
@@ -1378,19 +1415,6 @@ def makeGraph(my_path, calced, my_experimental, graph_name):
        "calced" is a dict containing values for residues (as keys)
        "experimental" is a list containing STR record objects"""
     experimental = copy.deepcopy(my_experimental)
-
-    min_calc = min(calced.values())
-    max_calc = max(calced.values())
-
-    exp_values = []
-
-    for record in experimental:
-        exp_values.append(record.value)
-
-    min_exp = min(exp_values)
-    max_exp = max(exp_values)
-    miny = min(min_calc, min_exp)               # get minimum value
-    maxy = max(max_calc, max_exp)               # get maximum value
 
     exp_line, calc_line = [], []
 
@@ -1425,9 +1449,7 @@ def makeGraph(my_path, calced, my_experimental, graph_name):
     # calculated values with 'None' values masked
     plt.plot(xs[calc_mask], calc_line[calc_mask],
              linewidth=2.0, color='blue', marker='o', label='calc', alpha=.7)
-    # setting axis limits
-    # plt.axis([min(calced.keys()), max(calced.keys()),
-    #           miny, maxy])
+
     plt.legend(loc='lower left')
     plt.xlabel('residue number')
     plt.ylabel('value')
@@ -1451,14 +1473,14 @@ def makeCorrelGraph(my_path, calced, experimental, graph_name):
 
     min_exp = min(exp_values)
     max_exp = max(exp_values)
-    miny    = min(min_calc, min_exp)             # get minimum value
-    maxy    = max(max_calc, max_exp)             # get maximum value
+    miny = min(min_calc, min_exp)             # get minimum value
+    maxy = max(max_calc, max_exp)             # get maximum value
 
     exp_line, calc_line = [], []
 
     for i, j in enumerate(calced.keys()):        # fetch data from arguments
         calc = calced[j]
-        exp  = experimental[i].value
+        exp = experimental[i].value
 
         exp_line.append(exp)
         calc_line.append(calc)
@@ -1495,14 +1517,16 @@ def modCorrelGraph(my_path, correl, avg_corr, model_corrs, corr_graph_name):
     """Y axis -> correlation values
        X axis -> ensemble correlation, model avg. correlation,
                  per modeel correlation
-       parameter 'model_corrs' is a list containing per model correlation values
+       parameter 'model_corrs' is a list containing per model
+       correlation values
        """
     plt.figure(figsize=(6, 5), dpi=80)
 
     plt.plot(list(range(0, len(model_corrs))), [correl] * len(model_corrs),
              linewidth=2.0, color='green', label='Ensemble corr.', alpha=.7)
     plt.plot(list(range(0, len(model_corrs))), [avg_corr] * len(model_corrs),
-             linewidth=2.0, color='red', label='Avg. corr. per model', alpha=.7)
+             linewidth=2.0, color='red', label='Avg. corr. per model',
+             alpha=.7)
     plt.plot(list(range(0, len(model_corrs))), sorted(model_corrs),
              linewidth=2.0, color='blue', label='Corr. per model', alpha=.7)
 
