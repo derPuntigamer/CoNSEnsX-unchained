@@ -21,8 +21,8 @@ RUN python3 setup.py build && python3 setup.py install
 
 WORKDIR /usr/src/app
 
-RUN wget users.itk.ppke.hu/~dudda/progs_consensx.tar.xz \
-    && tar -zxvf progs_consensx.tar.xz
+RUN wget users.itk.ppke.hu/~dudda/progs_consensx.tar.gz \
+    && tar -zxvf progs_consensx.tar.gz
 
 # add this and below command will run without cache
 # this is because you don't have to reinstall everything upon a GIT push event
@@ -32,6 +32,6 @@ ARG CACHEBUST=1
 RUN git clone -b master https://github.com/PPKE-Bioinf/consensx.itk.ppke.hu
 WORKDIR /usr/src/app/consensx.itk.ppke.hu
 
-CMD ./docker_cmd.sh
+CMD [/docker_cmd.sh]
 
 EXPOSE 8000
