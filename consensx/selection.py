@@ -664,7 +664,9 @@ def run_selection(my_path, original_values, user_selection_JSON):
     in_selection, iter_data, iter_all = selection_on(
         working_dir, measure, user_sel,
         min_size=min_size, max_size=max_size, overdrive=overdrive
-        )
+    )
+
+    print("ITER ALL", iter_all)
 
     for key, val in iter_data.items():
         print("CALCED ", key, '{0:.3f}'.format(val))
