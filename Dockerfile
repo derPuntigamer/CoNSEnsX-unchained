@@ -32,6 +32,6 @@ ARG CACHEBUST=1
 RUN git clone -b master https://github.com/PPKE-Bioinf/consensx.itk.ppke.hu
 WORKDIR /usr/src/app/consensx.itk.ppke.hu
 
-CMD [/docker_cmd.sh]
+CMD ["bash", "docker_cmd.sh"]
 
 EXPOSE 8000
