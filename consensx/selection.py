@@ -160,35 +160,6 @@ def getUserSel(sel_dict):
     return user_sel
 
 
-def get_best_S2_pair(measure, S2_dict, S2_type, args):
-    model_list = csx_obj.PDB_model.model_list
-    scores = {}
-
-    for i in range(len(model_list)):
-        for j in range(i + 1, len(model_list)):
-
-            csx_obj.PDB_model.is_fitted = False
-
-            my_models = [model_list[i], model_list[j]]
-
-            my_S2 = csx_func.calcS2(my_models, S2_dict[S2_type], S2_type,
-                                    args.fit, args.fit_range)
-
-            if measure == "correlation":
-                calced = csx_func.calcCorrel(my_S2, S2_dict[S2_type])
-            elif measure == "q-value":
-                calced = csx_func.calcQValue(my_S2, S2_dict[S2_type])
-            elif measure == "rmsd":
-                calced = csx_func.calcRMSD(my_S2, S2_dict[S2_type])
-
-            scores[calced] = [i, j]
-
-    if measure == "correlation":
-        scores[max(scores.keys())]
-    elif measure == "q-value":
-        scores[min(scores.keys())]
-
-
 def averageRDCs_on(models, my_data):
     """Returns a dictonary with the average RDCs for the given RDC type:
        averageRDC[residue] = value"""
@@ -273,6 +244,11 @@ def averageS2_on(models, PDB_data, S2_dict, S2_type, fit, fit_range):
 
     return my_S2
 
+def get_two_random_from(models):
+    from numpy import random
+    random.shuffle(models)
+    return models[0:2]
+
 
 def selection_on(my_path, measure, user_sel,
                  min_size=None, max_size=None, overdrive=None):
@@ -308,9 +284,9 @@ def selection_on(my_path, measure, user_sel,
             ChemShifts = DumpedData.ChemShift_lists
             ChemShift_model_data = DumpedData.ChemShift_model_data
 
-    in_selection = []
+    in_selection = get_two_random_from(list(range(0, len(pdb_models))))
 
-    print("STARTING WITH MODEL:", in_selection)
+    print("STARTING WITH MODEL(S):", in_selection)
 
     first_run = True
     first_try = True
@@ -327,13 +303,13 @@ def selection_on(my_path, measure, user_sel,
         iter_scores = {}
 
         # iterate on all PDB models
-        for num, pdb in enumerate(pdb_models):
+        for num in range(0, len(pdb_models)):
 
             # skip models already included in selection
             if num in in_selection:
                 continue
 
-            divide_by = 0.0                   # variable for storing weight sum
+            divide_by = 0.0                 # variable for storing weight sum
             pdb_sel = [num] + in_selection  # creating test ensemble
 
             for sel_data in user_sel:
@@ -374,7 +350,7 @@ def selection_on(my_path, measure, user_sel,
                         pdb_sel, PDB_data,
                         S2_dict, S2_type,
                         fit, fit_range
-                        )
+                    )
                     experimental = S2_dict[S2_type]
 
                     if measure == "correlation":
