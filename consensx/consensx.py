@@ -75,13 +75,13 @@ def run_calculation(request, calc_id):
         my_NOE = my_path + DB_entry.NOE_file
         saveShifts = csx_func.getNOE(my_NOE)
         NOE_n = saveShifts[-1][0] + " distance restraints found"
-        NOE_violations = str(csx_calc.calcNOEviolations(
-            my_NOE, saveShifts, my_path, DB_entry.r3average
-        ))
+        NOE_violations = csx_calc.calcNOEviolations(
+            my_PDB, saveShifts, my_path, DB_entry.r3average
+        )
         PRIDE_data = csx_calc.calcNMR_Pride(pdb_models, my_path)
 
         NOE_PRIDE_data = {
-            "NOE_violations": NOE_violations,
+            "NOE_violations": str(NOE_violations),
             "NOE_hist": my_id + "/NOE_hist.svg",
             "best_score": PRIDE_data[0],
             "worst_score": PRIDE_data[1],
