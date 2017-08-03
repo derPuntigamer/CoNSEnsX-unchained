@@ -174,12 +174,12 @@ def pdb_cleaner(my_path, PDB_file, my_CSV_buffer):
                 except ValueError:
                     chars.append(i)
 
-            try:
-                # _ = int(name[0])
-                name = (''.join(str(i) for i in chars) +    # characters
-                        ''.join(str(i) for i in reversed(numbers)))   # numbers
-            except ValueError:
-                pass
+            # try:
+            #     # _ = int(name[0])
+            #     name = (''.join(str(i) for i in chars) +    # characters
+            #             ''.join(str(i) for i in reversed(numbers)))   # numbers
+            # except ValueError:
+            #     pass
 
             if len(name) == 1:
                 name = " " + name + "  "
