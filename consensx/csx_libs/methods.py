@@ -1043,7 +1043,7 @@ def calcS2(model_data, calculate_on_models,
 
 
 @timeit
-def calcDihedAngles(model_data):
+def calcDihedAngles():
     """Calculates backbone diherdral angles
        note: all returned angle values are in radian"""
     model_data = csx_obj.PDB_model.model_data
@@ -1103,17 +1103,20 @@ def calcDihedAngles(model_data):
     return JCoup_dicts
 
 
-def calcPeptideBonds(PDB_file):
+def calcPeptideBonds():
     """Calculates backbone diherdral angles (OMEGA) CA-N-C'-CA"""
-    model_list = csx_obj.PDB_model.model_list
+    # model_list = csx_obj.PDB_model.model_list
     dihedral_angles = {"<2":    0, "2-5": 0, "5-10": 0,
                        "10-20": 0, ">20": 0}
 
-    for model_num, model in enumerate(model_list):
+    model_data = csx_obj.PDB_model.model_data
+
+    for i in range(model_data.coordsets):
+        model_data.atomgroup.setACSIndex(i)
         current_Resindex = 1
         prev_C, prev_CA, my_N, my_CA, my_C = None, None, None, None, None
 
-        for atom in model:
+        for atom in model_data.atomgroup:
             atom_res = atom.getResindex() + 1
 
             if atom_res != current_Resindex:
@@ -1173,18 +1176,19 @@ def calcPeptideBonds(PDB_file):
     print("  >20 -> " + str(dihedral_angles[">20"]))
 
 
-def calcNH_Angles(PDB_file):
+def calcNH_Angles():
     """Calculates backbone diherdral angles (OMEGA) H-N-C=O"""
-    model_list = csx_obj.PDB_model.model_list
+    model_data = csx_obj.PDB_model.model_data
     dihedral_angles = {"<2":    0, "2-5": 0, "5-10": 0,
                        "10-20": 0, ">20": 0}
 
-    for model_num, model in enumerate(model_list):
+    for i in range(model_data.coordsets):
+        model_data.atomgroup.setACSIndex(i)
         current_Resindex = 1
-        prev_O, prev_C,  = None, None
+        prev_O, prev_C, = None, None
         my_N, my_H, my_O, my_C = None, None, None, None
 
-        for atom in model:
+        for atom in model_data.atomgroup:
             atom_res = atom.getResindex() + 1
 
             if atom_res != current_Resindex:
