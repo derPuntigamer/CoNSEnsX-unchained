@@ -135,6 +135,14 @@ def getUserSel(sel_dict):
                 my_type = "0_CA_HA"
             elif my_type == "0CACB":
                 my_type = "0_CA_CB"
+            elif my_type == "0CH":
+                my_type = "0_C_H"
+            elif my_type == "0CN":
+                my_type = "0_C_N"
+            elif my_type == "0HAC":
+                my_type = "0_HA_C"
+            elif my_type == "0HAN":
+                my_type = "0_HA_N"
 
             my_weight = float(value)
             user_sel.append(["RDC", my_list, my_type, my_weight])
