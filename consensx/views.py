@@ -26,14 +26,16 @@ def handle_uploaded_file(f, path, filename):
 
 
 def db(request, my_id):
-    DB_entry = CSX_calculation.objects.get(id_code=my_id)
+    db_entry = CSX_calculation.objects.get(id_code=my_id)
     print("PATH", request.path)
-    return HttpResponse(DB_entry.returnHTML())
+    res = db_entry.returnHTML()
+    res = res[8:].replace("\\n", "\n")
+    return HttpResponse(res)
 
 
 def home(request):
     if request.method == 'POST':  # if the form has been submitted...
-        # generate ID for calcilation
+        # generate ID for calculation
         my_id = ''.join(random.choice(chars) for _ in range(6))
         my_path = os.path.join(BASE_DIR, 'media', my_id)
         os.mkdir(my_path)
@@ -43,24 +45,22 @@ def home(request):
             # IMPLEMENT TEST CALC HERE!
             return run_calculation(request, my_id)
 
-        PDB_file = request.FILES['pdb_upload']  # get PDB file
-        handle_uploaded_file(PDB_file, my_path, PDB_file.name)
+        pdb_file = request.FILES['pdb_upload']  # get PDB file
+        handle_uploaded_file(pdb_file, my_path, pdb_file.name)
 
         try:                                    # get restraint file if any
             restraint_file = request.FILES['bmrb_upload']
             restraint_file_name = restraint_file.name
             handle_uploaded_file(restraint_file, my_path, restraint_file_name)
         except KeyError:
-            restraint_file = None
             restraint_file_name = None
 
         try:                                    # get NOE file if any
-            NOE_file = request.FILES['xplor_upload']
-            NOE_file_name = NOE_file.name
-            handle_uploaded_file(NOE_file, my_path, NOE_file_name)
+            noe_file = request.FILES['xplor_upload']
+            noe_file_name = noe_file.name
+            handle_uploaded_file(noe_file, my_path, noe_file_name)
         except KeyError:
-            NOE_file = None
-            NOE_file_name = None
+            noe_file_name = None
 
         try:                                    # check if fitting is enabled
             fit_enable = bool(request.POST['superimpose'])
@@ -84,8 +84,8 @@ def home(request):
 
         post_data = CSX_upload(
             id_code=my_id,
-            PDB_file=PDB_file.name,
-            NOE_file=NOE_file_name,
+            PDB_file=pdb_file.name,
+            NOE_file=noe_file_name,
             STR_file=restraint_file_name,
             karplus=request.POST['KARPLUS'],
             superimpose=fit_enable,
@@ -110,19 +110,17 @@ def selection(request, my_id):
 
     original_values = pickle.load(open(my_path + "/calced_values.p", "rb"))
 
-    # GYULA!
-    if request.method == 'POST':  # if the AJAX request has been received...
-        num_coordsets, sel_values, pca_image_names = run_selection(
-            my_path, original_values, user_selection
-        )
+    num_coordsets, sel_values, pca_image_names = run_selection(
+        my_path, original_values, user_selection
+    )
 
     measure = user_selection["MEASURE"]
 
-    return_dict = {}
-
-    return_dict["measure"] = measure
-    return_dict["num_coordsets"] = num_coordsets
-    return_dict["pca_image_names"] = pca_image_names
+    return_dict = {
+        "measure": measure,
+        "num_coordsets": num_coordsets,
+        "pca_image_names": pca_image_names
+}
 
     if measure == "correlation":
         measure = "corr"
@@ -143,4 +141,7 @@ def selection(request, my_id):
 
     return_dict["values"] = values_dict
 
-    return HttpResponse(json.dumps(return_dict), content_type='application/json')
+    return HttpResponse(
+        json.dumps(return_dict),
+        content_type='application/json'
+    )
