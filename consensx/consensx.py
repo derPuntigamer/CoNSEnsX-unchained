@@ -212,7 +212,7 @@ def run_calculation(request, calc_id):
 
         print("RENDERED PAGE ---------------- START")
         post_data = CSX_calculation(
-            html_content=str(rendered_page.content),
+            html_content=rendered_page.content,
             id_code=my_id
         )
         post_data.save()
