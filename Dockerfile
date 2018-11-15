@@ -31,7 +31,8 @@ RUN wget users.itk.ppke.hu/~dudda/progs_consensx.tar.gz \
 ARG CACHEBUST=1
 
 # let's get down to business
-RUN git clone -b master https://github.com/PPKE-Bioinf/consensx.itk.ppke.hu
+# RUN git clone -b master https://github.com/PPKE-Bioinf/consensx.itk.ppke.hu
+COPY . /usr/src/app/consensx.itk.ppke.hu
 WORKDIR /usr/src/app/consensx.itk.ppke.hu
 
 CMD ["bash", "docker_cmd.sh"]
