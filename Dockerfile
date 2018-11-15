@@ -1,5 +1,7 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 MAINTAINER Daniel Dudola "dudola.daniel@itk.ppke.hu"
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 # add i386 archutecture (pales dependency) and install software used by CoNSEnsX
 RUN dpkg --add-architecture i386 \
