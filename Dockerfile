@@ -1,5 +1,7 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 MAINTAINER Daniel Dudola "dudola.daniel@itk.ppke.hu"
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 # add i386 archutecture (pales dependency) and install software used by CoNSEnsX
 RUN dpkg --add-architecture i386 \
@@ -29,7 +31,8 @@ RUN wget users.itk.ppke.hu/~dudda/progs_consensx.tar.gz \
 ARG CACHEBUST=1
 
 # let's get down to business
-RUN git clone -b master https://github.com/PPKE-Bioinf/consensx.itk.ppke.hu
+# RUN git clone -b master https://github.com/PPKE-Bioinf/consensx.itk.ppke.hu
+COPY . /usr/src/app/consensx.itk.ppke.hu
 WORKDIR /usr/src/app/consensx.itk.ppke.hu
 
 CMD ["bash", "docker_cmd.sh"]

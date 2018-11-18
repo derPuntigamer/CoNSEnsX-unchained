@@ -1,0 +1,1 @@
+docker run --rm --name consensx-db -e POSTGRES_PASSWORD=password -e POSTGRES_USER=consensxuser -e POSTGRES_DB=consensx   postgres:11.1
