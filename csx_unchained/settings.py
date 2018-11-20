@@ -25,7 +25,8 @@ SECRET_KEY = '9)9x+v4_p%jjas67@9p8_9vhv+eztm556+ebalia^8v!k6^&$3'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["consensx.itk.ppke.hu", "127.0.0.1", "localhost"]
+# ALLOWED_HOSTS = ["consensx.itk.ppke.hu", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["*"]
 
 SITE_ID = 1
 # Application definition
