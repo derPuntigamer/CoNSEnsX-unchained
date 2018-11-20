@@ -1,12 +1,13 @@
 FROM ubuntu:18.04
-MAINTAINER Daniel Dudola "dudola.daniel@itk.ppke.hu"
+LABEL maintainer="dudola.daniel@itk.ppke.hu"
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PGPASSWORD=password
 
 # add i386 archutecture (pales dependency) and install software used by CoNSEnsX
 RUN dpkg --add-architecture i386 \
     && apt-get update && apt-get install -y \
-    git libc6:i386 libncurses5:i386 libstdc++6:i386 libx11-6:i386 \
+    git postgresql-client libc6:i386 libncurses5:i386 libstdc++6:i386 libx11-6:i386 \
     wget python3 python3-django python3-numpy \
     python3-scipy python3-matplotlib python3-dev python3-psycopg2 \
     && rm -rf /var/lib/apt/lists/*
