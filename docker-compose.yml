@@ -2,7 +2,7 @@ version: '3'
 
 services:
   consensx-server:
-    image: consensx-test
+    image: derpuntigamer/consensx
     ports:
       - 8080:8000
     depends_on:
@@ -10,7 +10,7 @@ services:
     links:
       - consensx-db
     volumes:
-      - ./online_app://usr/src/app/consensx.itk.ppke.hu/media
+      - /usr/src/app/consensx.itk.ppke.hu/media
 
   consensx-db:
     image: postgres:11.1
