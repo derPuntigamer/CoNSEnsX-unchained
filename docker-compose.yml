@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  consensx-server:
+    image: consensx-test
+    ports:
+      - 8080:8000
+    depends_on:
+      - consensx-db
+    links:
+      - consensx-db
+    volumes:
+      - ./online_app://usr/src/app/consensx.itk.ppke.hu/media
+
+  consensx-db:
+    image: postgres:11.1
+    environment:
+    - POSTGRES_PASSWORD=password
+    - POSTGRES_USER=consensxuser
+    - POSTGRES_DB=consensx
