@@ -12,6 +12,7 @@ biopython = "*"
 scipy = "*"
 matplotlib = "*"
 prody = "*"
+progress = "*"
 
 [dev-packages]
 
