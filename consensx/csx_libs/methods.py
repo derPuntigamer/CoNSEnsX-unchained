@@ -920,14 +920,14 @@ def avgPalesRDCs(pales_out, my_RDC_type):
     return averageRDC, model_data_list
 
 
-@timeit
+# @timeit
 def calcS2(model_data, calculate_on_models,
            S2_records, S2_type, fit, fit_range):
     """Returns a dictonary with the average S2 values:
     S2_calced[residue] = value"""
 
     if fit:
-        print("Start FITTING")
+        # print("Start FITTING")
         reference = model_data.atomgroup[:]
         ts = time.time()
 
@@ -958,10 +958,10 @@ def calcS2(model_data, calculate_on_models,
 
         te = time.time()
 
-        print(
-            '\x1b[31m%r -> %2.2f sec\x1b[0m' % ("FITTING", te-ts),
-            file=sys.stderr
-        )
+        # print(
+        #     '\x1b[31m%r -> %2.2f sec\x1b[0m' % ("FITTING", te-ts),
+        #     file=sys.stderr
+        # )
 
     # get NH vectors from models (model_data[] -> vectors{resnum : vector})
     vector_data = []
@@ -1001,10 +1001,10 @@ def calcS2(model_data, calculate_on_models,
 
     te = time.time()
 
-    print(
-        '\x1b[31m%r -> %2.2f sec\x1b[0m' % ("getCoords", te-ts),
-        file=sys.stderr
-    )
+    # print(
+    #     '\x1b[31m%r -> %2.2f sec\x1b[0m' % ("getCoords", te-ts),
+    #     file=sys.stderr
+    # )
 
     S2_calced = {}
 
