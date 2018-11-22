@@ -3,6 +3,7 @@
 import os
 import pickle
 import prody
+from progress.bar import Bar
 
 # own modules
 import consensx.csx_libs.methods as csx_func
@@ -292,7 +293,7 @@ def selection_on(my_path, measure, user_sel,
             ChemShifts = DumpedData.ChemShift_lists
             ChemShift_model_data = DumpedData.ChemShift_model_data
 
-    in_selection = get_two_random_from(list(range(0, len(pdb_models))))
+    in_selection = []
 
     print("STARTING WITH MODEL(S):", in_selection)
 
@@ -300,21 +301,25 @@ def selection_on(my_path, measure, user_sel,
     first_try = True
     above_best = 0
     iter_data = []
+    num_models = len(pdb_models)
 
     if measure == "correlation":
         prev_best = -2
     else:
         prev_best = 1000
 
+    iter_count = 1
+
     while True:
         model_scores = {}
         iter_scores = {}
+        bar = Bar('Processing', max=num_models)
 
         # iterate on all PDB models
-        for num in range(0, len(pdb_models)):
-
+        for num in range(num_models):
             # skip models already included in selection
             if num in in_selection:
+                bar.next()
                 continue
 
             divide_by = 0.0                 # variable for storing weight sum
@@ -434,6 +439,10 @@ def selection_on(my_path, measure, user_sel,
 
                     iter_scores["CS_" + sel_data[1]] = calced
 
+            bar.next()
+
+        bar.finish()
+
         iter_data.append(iter_scores)
 
         best_num = -1
@@ -459,7 +468,7 @@ def selection_on(my_path, measure, user_sel,
             else:
                 best_val = 1000
 
-        print("\nNEW ITERATION\n")
+        print("ITERATION     #" + str(iter_count))
         print("prev best:    " + str(prev_best))
         print("current best: " + str(best_val))
 
@@ -609,6 +618,8 @@ def selection_on(my_path, measure, user_sel,
 
             print("EXIT -> selection got a worse score, no override")
             return in_selection, iter_data[-1], iter_data
+
+        iter_count += 1
 
 
 def run_selection(my_path, original_values, user_selection_JSON):
