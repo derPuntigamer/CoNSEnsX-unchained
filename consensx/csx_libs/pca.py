@@ -1,6 +1,5 @@
 import matplotlib
 matplotlib.use('Agg')
-matplotlib.verbose.set_level('silent')
 
 import random  # ID generation
 import string  # ID generation
