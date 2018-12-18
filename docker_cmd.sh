@@ -9,8 +9,8 @@ done
 
 echo "Postgres is ready, running the migrations..."
 
-pipenv run python manage.py makemigrations consensx
-pipenv run python manage.py migrate
+python3 manage.py makemigrations consensx
+python3 manage.py migrate
 echo "Database migration complete."
 echo "Starting CoNSEnsX..."
-pipenv run python manage.py runserver 0.0.0.0:8000
+python3 manage.py runserver 0.0.0.0:8000
