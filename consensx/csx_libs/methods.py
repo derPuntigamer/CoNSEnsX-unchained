@@ -878,7 +878,7 @@ def avgPalesRDCs(pales_out, my_RDC_type):
     first_run = True
 
     for line in pales_out:
-        if re.match("REMARK \d+ couplings", line):
+        if re.match(r"REMARK \d+ couplings", line):
             if first_run:
                 first_run = False
                 continue
@@ -890,7 +890,7 @@ def avgPalesRDCs(pales_out, my_RDC_type):
             if model_data_dict:
                 model_data_dict = {}
 
-        elif re.match("\s+ \d+", line):
+        elif re.match(r"\s+ \d+", line):
             resnum = int(line.split()[0])
             resnum2 = int(line.split()[3])
             atom = line.split()[2]
