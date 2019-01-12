@@ -49,9 +49,6 @@ class DumpedData():
         DumpedData.RDC_lists = pickle.load(open(RDC_lists_path, 'rb'))
         model_data_path = path + "/RDC_model_data.pickle"
         DumpedData.RDC_model_data = pickle.load(open(model_data_path, 'rb'))
-        RDC_obj_attr_path = path + "/RDC_obj_attr.pickle"
-        RDC_obj_attr = pickle.load(open(RDC_obj_attr_path, 'rb'))
-        DumpedData.RDC_model_data.RDC_data = RDC_obj_attr
         DumpedData.RDC_isloaded = True
 
     @staticmethod
@@ -331,7 +328,7 @@ def selection_on(my_path, measure, user_sel,
                     RDC_type = sel_data[2]
                     RDC_weight = sel_data[3]
 
-                    my_data = RDC_model_data.RDC_data[RDC_num][RDC_type]
+                    my_data = RDC_model_data.rdc_data[RDC_num][RDC_type]
                     averageRDC = averageRDCs_on(pdb_sel, my_data)
                     my_RDC = RDC_lists[RDC_num - 1][RDC_type]
 
