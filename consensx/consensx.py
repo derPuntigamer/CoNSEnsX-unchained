@@ -22,6 +22,7 @@ import pickle
 import consensx.csx_libs.calc as csx_calc
 import consensx.csx_libs.methods as csx_func
 import consensx.csx_libs.objects as csx_obj
+import consensx.calc as calc
 
 # Django server
 from django.shortcuts import render
@@ -114,11 +115,13 @@ def run_calculation(request, calc_id):
         if rdc_lists:
             svd_enabled = db_entry.svd_enable
             lc_model = db_entry.rdc_lc
-            rdc_data = csx_calc.calcRDC(my_csv_buffer, rdc_lists, pdb_models,
-                                        my_path, svd_enabled, lc_model)
+            rdc_calced_data = calc.rdc(
+                my_csv_buffer, rdc_lists, pdb_models, my_path, svd_enabled,
+                lc_model
+            )
             data_found = True
         else:
-            rdc_data = None
+            rdc_calced_data = None
 
         # ----------------------------  S2 calc  ---------------------------- #
         s2_dict = csx_func.parseS2_STR(parsed.value)
@@ -179,7 +182,7 @@ def run_calculation(request, calc_id):
             chemshift_data = None
     else:
         str_name = "[NOT PRESENT]"
-        rdc_data = None
+        rdc_calced_data = None
         s2_data = None
         s2_sc_data = None
         jcoup_data = None
@@ -202,7 +205,7 @@ def run_calculation(request, calc_id):
             "n_NOE": noe_n,
             "my_STR": str_name,
             "NOE_PRIDE_data": noe_pride_data,
-            "RDC_data": rdc_data,
+            "RDC_data": rdc_calced_data,
             "S2_data": s2_data,
             "S2_sc_data": s2_sc_data,
             "Jcoup_data": jcoup_data,
