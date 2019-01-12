@@ -785,7 +785,6 @@ def callShiftxOn(my_path, pdb_files):
 
     for some_file in natural_sort(os.listdir(my_path)):
         if some_file.startswith("modell") and some_file.endswith(".out"):
-            print(".OUT FILE NAME", some_file)
             out_file = open(my_path + some_file)
             part = 0
 
