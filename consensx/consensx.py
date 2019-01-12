@@ -1,6 +1,4 @@
-#!/usr/bin/python3
-
-"""
+r"""
 This is the Django webapp implementation of
               _____      _   _  _____ ______          __   __
              / ____|    | \ | |/ ____|  ____|         \ \ / /
@@ -65,6 +63,9 @@ def run_calculation(request, calc_id):
 
     pdb_models = csx_func.natural_sort(pdb_models)
     data_found = False
+    noe_name = "[NOT PRESENT]"
+    noe_n = ""
+    noe_pride_data = None
 
     # ---------------------  Read  and parse NOE file   --------------------- #
     if db_entry.NOE_file:
@@ -90,103 +91,98 @@ def run_calculation(request, calc_id):
             "deviation": '{0:.3f}'.format(pride_data[3]),
             "PRIDE_hist": my_id + "/PRIDE-NMR_score.svg"
         }
+
         data_found = True
-    else:
-        noe_name = "[NOT PRESENT]"
-        noe_n = ""
-        noe_pride_data = None
+        
+    str_name = "[NOT PRESENT]"
+    rdc_calced_data = None
+    s2_data = None
+    s2_sc_data = None
+    jcoup_data = None
+    chemshift_data = None
+
 
     # ---------------------  Read  and parse STR file   --------------------- #
-    if db_entry.STR_file:
-        str_name = db_entry.STR_file
-        my_str = my_path + db_entry.STR_file
+    assert db_entry.STR_file
 
-        try:
-            parsed = csx_func.parseSTR(my_str)
-        except Exception as e:
-            print("EXCEPTION", e)
-            return HttpResponse(e)
+    str_name = db_entry.STR_file
+    my_str = my_path + db_entry.STR_file
 
-        # ------------------------  RDC calculation  ------------------------ #
-        rdc_lists = csx_func.get_RDC_lists(parsed.value)
-        rdc_lists_path = my_path + "/RDC_lists.pickle"
-        pickle.dump(rdc_lists, open(rdc_lists_path, "wb"))
+    try:
+        parsed = csx_func.parseSTR(my_str)
+    except Exception as e:
+        print("EXCEPTION", e)
+        return HttpResponse(e)
 
-        if rdc_lists:
-            svd_enabled = db_entry.svd_enable
-            lc_model = db_entry.rdc_lc
-            rdc_calced_data = calc.rdc(
-                my_csv_buffer, rdc_lists, pdb_models, my_path, svd_enabled,
-                lc_model
-            )
-            data_found = True
-        else:
-            rdc_calced_data = None
+    # ------------------------  RDC calculation  ------------------------ #
+    rdc_lists = csx_func.get_RDC_lists(parsed.value)
+    rdc_lists_path = my_path + "/RDC_lists.pickle"
+    pickle.dump(rdc_lists, open(rdc_lists_path, "wb"))
 
-        # ----------------------------  S2 calc  ---------------------------- #
-        s2_dict = csx_func.parseS2_STR(parsed.value)
-        s2_dump = [s2_dict, db_entry.superimpose, db_entry.fit_range]
-        s2_dict_path = my_path + "/S2_dict.pickle"
-        pickle.dump(s2_dump, open(s2_dict_path, "wb"))
+    rdc_calced_data = None
 
-        if s2_dict:
-            s2_data = csx_calc.calcS2(
-                           my_csv_buffer, s2_dict, my_path,
-                           fit=db_entry.superimpose,
-                           fit_range=db_entry.fit_range)
+    if rdc_lists:
+        svd_enabled = db_entry.svd_enable
+        lc_model = db_entry.rdc_lc
+        rdc_calced_data = calc.rdc(
+            my_csv_buffer, rdc_lists, pdb_models, my_path, svd_enabled,
+            lc_model
+        )
+        data_found = True
 
-            data_found = True
-        else:
-            s2_data = None
+    # ----------------------------  S2 calc  ---------------------------- #
+    s2_dict = csx_func.parseS2_STR(parsed.value)
+    s2_dump = [s2_dict, db_entry.superimpose, db_entry.fit_range]
+    s2_dict_path = my_path + "/S2_dict.pickle"
+    pickle.dump(s2_dump, open(s2_dict_path, "wb"))
+    s2_data = None
 
-        s2_sidechain = csx_func.parse_sidechain_S2_STR(parsed.value)
+    if s2_dict:
+        s2_data = csx_calc.calcS2(
+                        my_csv_buffer, s2_dict, my_path,
+                        fit=db_entry.superimpose,
+                        fit_range=db_entry.fit_range)
 
-        if s2_sidechain:
-            s2_sc_data = csx_calc.calcS2_sidechain(
-                my_csv_buffer, s2_sidechain, my_path, fit=db_entry.superimpose
-            )
+        data_found = True
 
-            if "error" in s2_sc_data.keys():
-                return render(request, "consensx/home.html", {
-                    "error": s2_sidechain["error"]
-                })
+    s2_sidechain = csx_func.parse_sidechain_S2_STR(parsed.value)
+    s2_sc_data = None
 
-            data_found = True
-        else:
-            s2_sc_data = None
+    if s2_sidechain:
+        s2_sc_data = csx_calc.calcS2_sidechain(
+            my_csv_buffer, s2_sidechain, my_path, fit=db_entry.superimpose
+        )
 
-        # ------------------------  J-coupling calc  ------------------------ #
-        Jcoup_dict = csx_func.parseJcoup_STR(parsed.value)
-        Jcoup_dict_path = my_path + "/Jcoup_dict.pickle"
-        pickle.dump(Jcoup_dict, open(Jcoup_dict_path, "wb"))
+        if "error" in s2_sc_data.keys():
+            return render(request, "consensx/home.html", {
+                "error": s2_sidechain["error"]
+            })
 
-        if Jcoup_dict:
-            jcoup_data = csx_calc.calcJCouplings(
-                my_csv_buffer, db_entry.karplus, Jcoup_dict, my_pdb, my_path
-            )
-            data_found = True
-        else:
-            jcoup_data = None
+        data_found = True
 
-        # -----------------------  Chemical shift calc  --------------------- #
-        chem_shift_lists = csx_func.parseChemShift_STR(parsed.value)
-        chem_shift_lists_path = my_path + "/ChemShift_lists.pickle"
-        pickle.dump(chem_shift_lists, open(chem_shift_lists_path, "wb"))
+    # ------------------------  J-coupling calc  ------------------------ #
+    Jcoup_dict = csx_func.parseJcoup_STR(parsed.value)
+    Jcoup_dict_path = my_path + "/Jcoup_dict.pickle"
+    pickle.dump(Jcoup_dict, open(Jcoup_dict_path, "wb"))
+    jcoup_data = None
 
-        if chem_shift_lists:
-            chemshift_data = csx_calc.calcChemShifts(
-                my_csv_buffer, chem_shift_lists, pdb_models, my_path
-            )
-            data_found = True
-        else:
-            chemshift_data = None
-    else:
-        str_name = "[NOT PRESENT]"
-        rdc_calced_data = None
-        s2_data = None
-        s2_sc_data = None
-        jcoup_data = None
-        chemshift_data = None
+    if Jcoup_dict:
+        jcoup_data = csx_calc.calcJCouplings(
+            my_csv_buffer, db_entry.karplus, Jcoup_dict, my_pdb, my_path
+        )
+        data_found = True
+
+    # -----------------------  Chemical shift calc  --------------------- #
+    chem_shift_lists = csx_func.parseChemShift_STR(parsed.value)
+    chem_shift_lists_path = my_path + "/ChemShift_lists.pickle"
+    pickle.dump(chem_shift_lists, open(chem_shift_lists_path, "wb"))
+    chemshift_data = None
+
+    if chem_shift_lists:
+        chemshift_data = csx_calc.calcChemShifts(
+            my_csv_buffer, chem_shift_lists, pdb_models, my_path
+        )
+        data_found = True
 
     my_csv_buffer.writeCSV()
 
