@@ -21,7 +21,6 @@ def create_PCA_comparison(my_path, original, in_selection):
     color_list = ["blue" for i in range(len(sel_ensemble1))]
 
     for i in [int(x)-1 for x in in_selection]:
-        print("I is ", i)
         color_list[i] = "red"
 
     pca = prody.PCA("PCA1")
