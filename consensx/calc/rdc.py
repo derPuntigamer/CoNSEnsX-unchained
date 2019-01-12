@@ -4,6 +4,7 @@ import pickle
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
+
 class RDC_model_data():
     """Class for containing per model RDC data"""
     def __init__(self):
@@ -16,54 +17,10 @@ class RDC_model_data():
             self.rdc_data[RDC_list_num] = {}
             self.rdc_data[RDC_list_num][RDC_type] = RDC_list_data
 
-    def get_best_RDC_model(self, measure, user_sel, RDC_lists):
-        model_scores = {}
-        divide_by = 0.0
 
-        for sel_data in user_sel:
-            if sel_data[0] != "RDC":
-                continue
-
-            my_data = self.rdc_data[sel_data[1]][sel_data[2]]
-            experimental = RDC_lists[sel_data[1] - 1][sel_data[2]]
-
-            for model_num, model in enumerate(my_data):
-                if measure == "correlation":
-                    calced = csx_func.calcCorrel(model, experimental)
-                elif measure == "q-value":
-                    calced = csx_func.calcQValue(model, experimental)
-                elif measure == "rmsd":
-                    calced = csx_func.calcRMSD(model, experimental)
-
-                if model_num in model_scores.keys():
-                    model_scores[model_num] += calced * sel_data[3]
-                else:
-                    model_scores[model_num] = calced * sel_data[3]
-
-            divide_by += sel_data[3]
-
-        max_value, max_loc = -1000, -1
-        min_value, min_loc = 1000, -1
-
-        for loc, key in enumerate(model_scores.keys()):
-            model_scores[key] /= divide_by
-
-            if model_scores[key] > max_value:
-                max_value = model_scores[key]
-                max_loc = loc
-            if model_scores[key] < min_value:
-                min_value = model_scores[key]
-                min_loc = loc
-
-        if measure == "correlation":
-            return max_loc
-        elif measure == "q-value" or measure == "rmsd":
-            return min_loc
-
-
-def rdc(my_CSV_buffer, RDC_lists, pdb_models,
-            my_path, SVD_enabled, lc_model):
+def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
     """Back calculate RDC from given RDC lists and PDB models"""
+    my_rdc_model_data = RDC_model_data()
     rdc_calced_data = {}
 
     for list_num, RDC_dict in enumerate(RDC_lists):
@@ -86,8 +43,6 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models,
                 model_corrs.append(
                     csx_func.calcCorrel(model, RDC_dict[RDC_type])
                 )
-
-            my_rdc_model_data = RDC_model_data()
 
             my_rdc_model_data.add_data(list_num + 1, RDC_type, model_data)
             csx_obj.RDC_modell_corr(model_corrs)
@@ -131,18 +86,26 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models,
             print()
 
             graph_name = str(list_num + 1) + "_RDC_" + RDC_type + ".svg"
-            csx_func.makeGraph(my_path, my_averageRDC, RDC_dict[RDC_type],
-                               graph_name)
+            csx_func.makeGraph(
+                my_path, my_averageRDC, RDC_dict[RDC_type], graph_name
+            )
 
-            corr_graph_name = (str(list_num + 1) + "_RDC_corr_" +
-                               RDC_type + ".svg")
-            csx_func.makeCorrelGraph(my_path, my_averageRDC,
-                                     RDC_dict[RDC_type], corr_graph_name)
+            corr_graph_name = (
+                str(list_num + 1) + "_RDC_corr_" + RDC_type + ".svg"
+            )
 
-            mod_corr_graph_name = (str(list_num + 1) + "_RDC_mod_corr_" +
-                                   RDC_type + ".svg")
-            csx_func.modCorrelGraph(my_path, correl, avg_model_corr,
-                                    model_corrs, mod_corr_graph_name)
+            csx_func.makeCorrelGraph(
+                my_path, my_averageRDC, RDC_dict[RDC_type], corr_graph_name
+            )
+
+            mod_corr_graph_name = (
+                str(list_num + 1) + "_RDC_mod_corr_" + RDC_type + ".svg"
+            )
+
+            csx_func.modCorrelGraph(
+                my_path, correl, avg_model_corr, model_corrs,
+                mod_corr_graph_name
+            )
 
             my_id = my_path.split('/')[-2] + '/'
 
@@ -161,8 +124,6 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models,
 
         model_data_path = my_path + "/RDC_model_data.pickle"
         pickle.dump(my_rdc_model_data, open(model_data_path, "wb"))
-        RDC_obj_attr = my_path + "/RDC_obj_attr.pickle"
-        pickle.dump(my_rdc_model_data.rdc_data, open(RDC_obj_attr, "wb"))
         os.remove(pales_out)
 
     return rdc_calced_data
