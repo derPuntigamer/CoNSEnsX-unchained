@@ -138,10 +138,11 @@ def run_calculation(request, calc_id):
     s2_data = None
 
     if s2_dict:
-        s2_data = csx_calc.calcS2(
-                        my_csv_buffer, s2_dict, my_path,
-                        fit=db_entry.superimpose,
-                        fit_range=db_entry.fit_range)
+        s2_data = calc.s2(
+            my_csv_buffer, s2_dict, my_path,
+            fit=db_entry.superimpose,
+            fit_range=db_entry.fit_range
+        )
 
         data_found = True
 
