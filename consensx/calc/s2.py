@@ -1,12 +1,9 @@
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
-def s2(
-        my_CSV_buffer, S2_dict, my_path,
-        calculate_on_models=None,
-        fit=None,
-        fit_range=None
-    ):
+
+def s2(my_CSV_buffer, S2_dict, my_path, calculate_on_models=None,
+        fit=None, fit_range=None):
     """Back calculate order paramteres from given S2 dict and PDB models"""
     S2_data = []
     model_data = csx_obj.PDB_model.model_data

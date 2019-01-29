@@ -17,7 +17,6 @@ import os
 import pickle
 
 # own modules
-import consensx.csx_libs.calc as csx_calc
 import consensx.csx_libs.methods as csx_func
 import consensx.csx_libs.objects as csx_obj
 import consensx.calc as calc
@@ -77,10 +76,10 @@ def run_calculation(request, calc_id):
         my_noe = my_path + db_entry.NOE_file
         save_shifts = csx_func.getNOE(my_noe)
         noe_n = save_shifts[-1][0] + " distance restraints found"
-        noe_violations = csx_calc.calcNOEviolations(
+        noe_violations = calc.noe_violations(
             my_pdb, save_shifts, my_path, db_entry.r3average
         )
-        pride_data = csx_calc.calcNMR_Pride(pdb_models, my_path)
+        pride_data = calc.nmr_pride(pdb_models, my_path)
 
         noe_pride_data = {
             "noe_violations": str(noe_violations),
@@ -93,14 +92,13 @@ def run_calculation(request, calc_id):
         }
 
         data_found = True
-        
+
     str_name = "[NOT PRESENT]"
     rdc_calced_data = None
     s2_data = None
     s2_sc_data = None
     jcoup_data = None
     chemshift_data = None
-
 
     # ---------------------  Read  and parse STR file   --------------------- #
     assert db_entry.STR_file
@@ -150,7 +148,7 @@ def run_calculation(request, calc_id):
     s2_sc_data = None
 
     if s2_sidechain:
-        s2_sc_data = csx_calc.calcS2_sidechain(
+        s2_sc_data = calc.s2_sidechain(
             my_csv_buffer, s2_sidechain, my_path, fit=db_entry.superimpose
         )
 
@@ -168,7 +166,7 @@ def run_calculation(request, calc_id):
     jcoup_data = None
 
     if Jcoup_dict:
-        jcoup_data = csx_calc.calcJCouplings(
+        jcoup_data = calc.jcoupling(
             my_csv_buffer, db_entry.karplus, Jcoup_dict, my_pdb, my_path
         )
         data_found = True
@@ -180,7 +178,7 @@ def run_calculation(request, calc_id):
     chemshift_data = None
 
     if chem_shift_lists:
-        chemshift_data = csx_calc.calcChemShifts(
+        chemshift_data = calc.chemshifts(
             my_csv_buffer, chem_shift_lists, pdb_models, my_path
         )
         data_found = True
