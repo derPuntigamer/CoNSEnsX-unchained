@@ -1,30 +1,29 @@
-import os
 import pickle
+
+import consensx.graph as graph
 
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
-def calcJCouplings(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):
+
+def jcoupling(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):
     """Back calculate skalar coupling from given RDC lists and PDB models"""
     Jcuop_data = []
     type_dict = {}
-    model_list = csx_obj.PDB_model.model_data
-    dihed_lists = csx_func.calcDihedAngles(model_list)
+    dihed_lists = csx_func.calcDihedAngles()
 
     for Jcoup_type in sorted(list(Jcoup_dict.keys())):
-
-        JCoup_calced, model_data = csx_func.calcJCoup(param_set,
-                                                      dihed_lists,
-                                                      Jcoup_dict[Jcoup_type],
-                                                      Jcoup_type)
+        JCoup_calced, model_data = csx_func.calcJCoup(
+            param_set, dihed_lists, Jcoup_dict[Jcoup_type], Jcoup_type
+        )
 
         type_dict[Jcoup_type] = model_data
-
         model_corrs = []
 
         for model in model_data:
-            model_corrs.append(csx_func.calcCorrel(model,
-                                                   Jcoup_dict[Jcoup_type]))
+            model_corrs.append(
+                csx_func.calcCorrel(model, Jcoup_dict[Jcoup_type])
+            )
 
         avg_model_corr = sum(model_corrs) / len(model_corrs)
 
@@ -32,7 +31,6 @@ def calcJCouplings(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):
         q_value = csx_func.calcQValue(JCoup_calced, Jcoup_dict[Jcoup_type])
         rmsd = csx_func.calcRMSD(JCoup_calced, Jcoup_dict[Jcoup_type])
 
-        # TODO
         corr_key = "JCoup_" + Jcoup_type + "_corr"
         qval_key = "JCoup_" + Jcoup_type + "_qval"
         rmsd_key = "JCoup_" + Jcoup_type + "_rmsd"
@@ -56,16 +54,19 @@ def calcJCouplings(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):
         print()
 
         graph_name = "JCoup_" + Jcoup_type + ".svg"
-        csx_func.makeGraph(my_path, JCoup_calced, Jcoup_dict[Jcoup_type],
-                           graph_name)
+        graph.values_graph(
+            my_path, JCoup_calced, Jcoup_dict[Jcoup_type], graph_name
+        )
 
         corr_graph_name = "JCoup_corr_" + Jcoup_type + ".svg"
-        csx_func.makeCorrelGraph(my_path, JCoup_calced, Jcoup_dict[Jcoup_type],
-                                 corr_graph_name)
+        graph.correl_graph(
+            my_path, JCoup_calced, Jcoup_dict[Jcoup_type], corr_graph_name
+        )
 
         mod_corr_graph_name = "JCoup_mod_corr_" + Jcoup_type + ".svg"
-        csx_func.modCorrelGraph(my_path, correl, avg_model_corr, model_corrs,
-                                mod_corr_graph_name)
+        graph.mod_correl_graph(
+            my_path, correl, avg_model_corr, model_corrs, mod_corr_graph_name
+        )
 
         my_id = my_path.split('/')[-2] + '/'
 

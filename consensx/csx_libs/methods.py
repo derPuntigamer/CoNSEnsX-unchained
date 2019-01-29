@@ -3,7 +3,6 @@ import sys
 import re
 import subprocess
 import math
-import copy
 import prody
 import time
 import pickle
@@ -176,8 +175,8 @@ def pdb_cleaner(my_path, PDB_file, my_CSV_buffer):
 
             # try:
             #     # _ = int(name[0])
-            #     name = (''.join(str(i) for i in chars) +    # characters
-            #             ''.join(str(i) for i in reversed(numbers)))   # numbers
+            #     name = (''.join(str(i) for i in chars) +
+            #             ''.join(str(i) for i in reversed(numbers)))
             # except ValueError:
             #     pass
 
@@ -422,7 +421,7 @@ def get_RDC_lists(parsed_value):
 
     # split list into dict according to RDC types
     new_RDC_list = []
-    for list_num, RDC_list in enumerate(RDC_lists):
+    for RDC_list in RDC_lists:
         prev_type = ""
         RDC_dict = {}
 
@@ -919,20 +918,16 @@ def avgPalesRDCs(pales_out, my_RDC_type):
     return averageRDC, model_data_list
 
 
-# @timeit
 def calcS2(model_data, calculate_on_models,
            S2_records, S2_type, fit, fit_range):
     """Returns a dictonary with the average S2 values:
     S2_calced[residue] = value"""
 
     if fit:
-        # print("Start FITTING")
         reference = model_data.atomgroup[:]
-        ts = time.time()
 
         model_data.atomgroup.setACSIndex(0)
         prody.alignCoordsets(model_data.atomgroup.calpha)
-        # prody.alignCoordsets(model_data.atomgroup)
 
         if fit_range:
             for model_num in calculate_on_models:
@@ -955,18 +950,9 @@ def calcS2(model_data, calculate_on_models,
                 t = prody.calcTransformation(mob_chain, ref_chain, weights)
                 t.apply(mobile)
 
-        te = time.time()
-
-        # print(
-        #     '\x1b[31m%r -> %2.2f sec\x1b[0m' % ("FITTING", te-ts),
-        #     file=sys.stderr
-        # )
-
     # get NH vectors from models (model_data[] -> vectors{resnum : vector})
     vector_data = []
     s2_pairs = {'N': 'H', 'CA': 'HA'}
-
-    ts = time.time()
 
     for model_num in calculate_on_models:
         model_data.atomgroup.setACSIndex(model_num)
@@ -997,13 +983,6 @@ def calcS2(model_data, calculate_on_models,
                     ).normalize()
 
         vector_data.append(vectors)
-
-    te = time.time()
-
-    # print(
-    #     '\x1b[31m%r -> %2.2f sec\x1b[0m' % ("getCoords", te-ts),
-    #     file=sys.stderr
-    # )
 
     S2_calced = {}
 
@@ -1411,137 +1390,6 @@ def pdb2coords(PDB_file):
                 prev_resnum = resnum
 
     return PDB_coords
-
-
-def makeGraph(my_path, calced, my_experimental, graph_name):
-    """X axis -> residue numbers, Y axis -> values
-       "calced" is a dict containing values for residues (as keys)
-       "experimental" is a list containing STR record objects"""
-    experimental = copy.deepcopy(my_experimental)
-
-    exp_line, calc_line = [], []
-
-    for k in range(0, max(calced.keys()) + 1):  # fetch data from arguments
-        if k in list(calced.keys()):
-            calc = calced[k]
-            exp = experimental.pop(0).value
-
-            exp_line.append(exp)
-            calc_line.append(calc)
-
-        else:
-            exp_line.append(None)   # append 'None' where data is missing
-            calc_line.append(None)
-
-    # connect line over missing (None) values, more info at ->
-    # http://stackoverflow.com/questions/14399689/
-    # matplotlib-drawing-lines-between-points-ignoring-missing-data
-    exp_line = np.array(exp_line).astype(np.double)
-    exp_mask = np.where(np.isfinite(exp_line))
-    calc_line = np.array(calc_line).astype(np.double)
-    calc_mask = np.where(np.isfinite(calc_line))
-
-    # x axis values as numpy array
-    xs = np.arange(max(calced.keys())+2)
-
-    plt.figure(figsize=(10, 5), dpi=80)
-
-    # experimental values with 'None' values masked
-    plt.plot(xs[exp_mask], exp_line[exp_mask],
-             linewidth=2.0, color='red', marker='o', label='exp', alpha=.7)
-    # calculated values with 'None' values masked
-    plt.plot(xs[calc_mask], calc_line[calc_mask],
-             linewidth=2.0, color='blue', marker='o', label='calc', alpha=.7)
-
-    plt.legend(loc='lower left')
-    plt.xlabel('residue number')
-    plt.ylabel('value')
-    ax = plt.axes()
-    ax.yaxis.grid()
-    plt.tight_layout(pad=1.08)
-    plt.savefig(my_path + "/" + graph_name, format="svg")
-    plt.close()
-
-
-def makeCorrelGraph(my_path, calced, experimental, graph_name):
-    """X axis -> experimental values, Y axis -> calculated values
-       "calced" is a dict containing values for residues (as keys)
-       "experimental" is a list containing STR record objects"""
-    min_calc = min(calced.values())
-    max_calc = max(calced.values())
-
-    exp_values = []
-    for record in experimental:
-        exp_values.append(record.value)
-
-    min_exp = min(exp_values)
-    max_exp = max(exp_values)
-    miny = min(min_calc, min_exp)             # get minimum value
-    maxy = max(max_calc, max_exp)             # get maximum value
-
-    exp_line, calc_line = [], []
-
-    for i, j in enumerate(calced.keys()):        # fetch data from arguments
-        calc = calced[j]
-        exp = experimental[i].value
-
-        exp_line.append(exp)
-        calc_line.append(calc)
-
-    diag = []
-
-    margin = int(abs(miny - maxy) * 0.05)
-
-    if abs(miny - maxy) < 10:
-        margin = 0.3
-    elif abs(miny - maxy) < 2:
-        margin = 0.01
-    elif abs(miny - maxy) < 1:
-        margin = 0
-
-    maxy += margin
-    miny -= margin
-
-    for i in np.arange(miny, maxy * 1.42, 0.1):  # draw graph diagonal
-        diag.append(i)
-
-    plt.figure(figsize=(6, 5), dpi=80)
-    plt.plot(diag, diag, linewidth=2.0, color='red', alpha=.7)
-    plt.plot(exp_line, calc_line, 'bo')
-    plt.axis([miny, maxy, miny, maxy])
-    plt.xlabel('experimental')
-    plt.ylabel('calculated')
-    plt.tight_layout(pad=1.08)
-    plt.savefig(my_path + "/" + graph_name, format="svg")
-    plt.close()
-
-
-def modCorrelGraph(my_path, correl, avg_corr, model_corrs, corr_graph_name):
-    """Y axis -> correlation values
-       X axis -> ensemble correlation, model avg. correlation,
-                 per modeel correlation
-       parameter 'model_corrs' is a list containing per model
-       correlation values
-       """
-    plt.figure(figsize=(6, 5), dpi=80)
-
-    plt.plot(list(range(0, len(model_corrs))), [correl] * len(model_corrs),
-             linewidth=2.0, color='green', label='Ensemble corr.', alpha=.7)
-    plt.plot(list(range(0, len(model_corrs))), [avg_corr] * len(model_corrs),
-             linewidth=2.0, color='red', label='Avg. corr. per model',
-             alpha=.7)
-    plt.plot(list(range(0, len(model_corrs))), sorted(model_corrs),
-             linewidth=2.0, color='blue', label='Corr. per model', alpha=.7)
-
-    plt.legend(loc='lower left')
-    plt.axis([-1, len(model_corrs), 0, 1])
-    plt.xlabel('models (worse to best)')
-    plt.ylabel('correlation')
-    ax = plt.axes()
-    ax.yaxis.grid()
-    plt.tight_layout(pad=1.08)
-    plt.savefig(my_path + "/" + corr_graph_name, format="svg")
-    plt.close()
 
 
 def makeNOEHist(my_path, violations):

@@ -1,6 +1,8 @@
 import os
 import pickle
 
+import consensx.graph as graph
+
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
@@ -86,7 +88,7 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
             print()
 
             graph_name = str(list_num + 1) + "_RDC_" + RDC_type + ".svg"
-            csx_func.makeGraph(
+            graph.values(
                 my_path, my_averageRDC, RDC_dict[RDC_type], graph_name
             )
 
@@ -94,7 +96,7 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
                 str(list_num + 1) + "_RDC_corr_" + RDC_type + ".svg"
             )
 
-            csx_func.makeCorrelGraph(
+            graph.correl_graph(
                 my_path, my_averageRDC, RDC_dict[RDC_type], corr_graph_name
             )
 
@@ -102,7 +104,7 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
                 str(list_num + 1) + "_RDC_mod_corr_" + RDC_type + ".svg"
             )
 
-            csx_func.modCorrelGraph(
+            graph.mod_correl_graph.modCorrelGraph(
                 my_path, correl, avg_model_corr, model_corrs,
                 mod_corr_graph_name
             )

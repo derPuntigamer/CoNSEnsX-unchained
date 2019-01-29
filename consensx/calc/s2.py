@@ -1,6 +1,8 @@
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
+import consensx.graph as graph
+
 
 def s2(my_CSV_buffer, S2_dict, my_path, calculate_on_models=None,
         fit=None, fit_range=None):
@@ -45,10 +47,10 @@ def s2(my_CSV_buffer, S2_dict, my_path, calculate_on_models=None,
         print()
 
         graph_name = "S2_" + S2_type + ".svg"
-        csx_func.makeGraph(my_path, S2_calced, S2_dict[S2_type], graph_name)
+        graph.values(my_path, S2_calced, S2_dict[S2_type], graph_name)
 
         corr_graph_name = "S2_corr_" + S2_type + ".svg"
-        csx_func.makeCorrelGraph(
+        graph.correl_graph(
             my_path, S2_calced, S2_dict[S2_type], corr_graph_name
         )
 

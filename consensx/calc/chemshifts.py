@@ -1,5 +1,7 @@
 import pickle
 
+import consensx.graph as graph
+
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
@@ -63,15 +65,15 @@ def chemshifts(my_CSV_buffer, ChemShift_lists, pdb_models, my_path):
             print()
 
             graph_name = str(n + 1) + "_CS_" + CS_type + ".svg"
-            csx_func.makeGraph(my_path, exp_dict, CS_list[CS_type],
-                               graph_name)
+            graph.values(my_path, exp_dict, CS_list[CS_type], graph_name)
 
             corr_graph_name = str(n + 1) + "_CS_corr_" + CS_type + ".svg"
-            csx_func.makeCorrelGraph(my_path, exp_dict, CS_list[CS_type],
-                                     corr_graph_name)
+            graph.correl_graph(
+                my_path, exp_dict, CS_list[CS_type], corr_graph_name
+            )
 
             mod_corr_graph_name = "CS_mod_corr_" + CS_type + ".svg"
-            csx_func.modCorrelGraph(
+            graph.mod_correl_graph(
                 my_path, correl, avg_model_corr,
                 model_corrs, mod_corr_graph_name
             )

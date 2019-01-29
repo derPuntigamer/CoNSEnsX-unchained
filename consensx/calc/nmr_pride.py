@@ -2,8 +2,8 @@ import math
 import subprocess
 import os
 
-from . import methods as csx_func
-from . import objects as csx_obj
+from consensx.csx_libs import methods as csx_func
+from consensx.csx_libs import objects as csx_obj
 
 
 def nmr_pride(pdb_models, my_path):
