@@ -1,4 +1,5 @@
 import pickle
+import math
 
 import consensx.graph as graph
 
@@ -6,14 +7,155 @@ from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
 
+# Equation and coefficients from:
+# Wang & Bax (1996) JACS 118:2483-2494. Table 1, NMR + X-ray data
+Jcoup_dict1 = {
+    'A': {"3JHNCB": 3.39,  "3JHNHA": 6.98,  "3JHNC": 4.32, "3JHAC": 3.75},
+    'B': {"3JHNCB": -0.94, "3JHNHA": -1.38, "3JHNC": 0.84, "3JHAC": 2.19},
+    'C': {"3JHNCB": 0.07,  "3JHNHA": 1.72,  "3JHNC": 0.00, "3JHAC": 1.28},
+    'THETA': {
+        "3JHNCB": math.radians(60), "3JHNHA": math.radians(-60),
+        "3JHNC":  math.radians(0),  "3JHAC":  math.radians(-60)}  # RAD!
+}
+
+# J. Am. Chem. Soc., Vol. 119, No. 27, 1997; Table 2 -> solution
+Jcoup_dict2 = {
+    'A': {"3JHNCB": 3.06,  "3JHNHA": 7.13, "3JHNC": 4.19, "3JHAC": 3.84},
+    'B': {"3JHNCB": -0.74, "3JHNHA": 1.31, "3JHNC": 0.99, "3JHAC": 2.19},
+    'C': {"3JHNCB": 0.10,  "3JHNHA": 1.56, "3JHNC": 0.03, "3JHAC": 1.20},
+    'THETA': {
+        "3JHNCB": math.radians(60),  "3JHNHA": math.radians(-60),
+        "3JHNC":  math.radians(180), "3JHAC":  math.radians(120)}  # RAD!
+}
+
+# https://x86.cs.duke.edu/~brd/Teaching/Bio/asmb/Papers/NMR/nilges-jmr05.pdf
+Jcoup_dict3 = {
+    'A': {"3JHNCB": 3.26,  "3JHNHA": 7.13,  "3JHNC": 4.19, "3JHAC": 3.84},
+    'B': {"3JHNCB": -0.87, "3JHNHA": -1.31, "3JHNC": 0.99, "3JHAC": 2.19},
+    'C': {"3JHNCB": 0.10,  "3JHNHA": 1.56,  "3JHNC": 0.03, "3JHAC": 1.20},
+    'THETA': {
+        "3JHNCB": math.radians(60), "3JHNHA": math.radians(-60),
+        "3JHNC":  math.radians(0),  "3JHAC":  math.radians(-60)}  # RAD!
+}
+
+
+def calc_dihedral_angles():
+    """Calculates backbone diherdral angles
+       note: all returned angle values are in radian"""
+    model_data = csx_obj.PDB_model.model_data
+
+    JCoup_dicts = []
+
+    for i in range(model_data.coordsets):
+        model_data.atomgroup.setACSIndex(i)
+        current_Resindex = 1
+        prev_C, my_N, my_CA, my_C = None, None, None, None
+        JCoup_dict = {}
+
+        for atom in model_data.atomgroup:
+            atom_res = atom.getResindex() + 1
+
+            if atom_res != current_Resindex:
+
+                if (prev_C is not None and my_N is not None and
+                        my_CA is not None and my_C is not None):
+
+                    NCA_vec = my_N - my_CA
+                    CN_vec = prev_C - my_N
+                    CCA_vec = my_C - my_CA
+
+                    first_cross = csx_obj.Vec_3D.cross(CN_vec, NCA_vec)
+                    second_cross = csx_obj.Vec_3D.cross(CCA_vec, NCA_vec)
+
+                    angle = csx_obj.Vec_3D.dihedAngle(
+                        first_cross, second_cross
+                    )
+
+                    # reference for setting sign of angle
+                    reference = csx_obj.Vec_3D.cross(first_cross, second_cross)
+
+                    r1 = reference.normalize()
+                    r2 = NCA_vec.normalize()
+
+                    if ((r1 - r2).magnitude() < r2.magnitude()):
+                        angle *= -1
+
+                    JCoup_dict[current_Resindex] = -1 * math.radians(angle)
+
+                current_Resindex = atom_res
+                prev_C = my_C
+                my_N, my_CA, my_C = None, None, None
+
+            if atom_res == current_Resindex:
+                if atom.getName() == 'N':
+                    my_N = csx_obj.Vec_3D(atom.getCoords())
+                elif atom.getName() == 'CA':
+                    my_CA = csx_obj.Vec_3D(atom.getCoords())
+                elif atom.getName() == 'C':
+                    my_C = csx_obj.Vec_3D(atom.getCoords())
+
+        JCoup_dicts.append(JCoup_dict)
+
+    return JCoup_dicts
+
+
+def calc_jcoupling(param_set, calced, experimental, Jcoup_type):
+    """Calculates J-coupling values from dihedral angles
+       note: all angles must be in radian"""
+    JCoup_calced = {}
+
+    if param_set == 1:
+        my_karplus = Jcoup_dict1
+    elif param_set == 2:
+        my_karplus = Jcoup_dict2
+    elif param_set == 3:
+        my_karplus = Jcoup_dict3
+
+    A = my_karplus['A']
+    B = my_karplus['B']
+    C = my_karplus['C']
+    THETA = my_karplus['THETA']
+
+    for record in experimental:  # resnums
+        J = 0
+
+        for my_dict in calced:  # lists (with models as dicts)
+            phi = my_dict[record.resnum]
+
+            J += (A[Jcoup_type] * (math.cos(phi + THETA[Jcoup_type])) ** 2 +
+                  B[Jcoup_type] * math.cos(phi + THETA[Jcoup_type]) +
+                  C[Jcoup_type])
+
+        JCoup_calced[record.resnum] = J / len(calced)
+
+    model_data_list = []
+    model_data_dict = {}
+
+    for Jcoup_dict in calced:   # model
+        for record in experimental:
+            phi = Jcoup_dict[record.resnum]
+
+            J = (
+                A[Jcoup_type] * (math.cos(phi + THETA[Jcoup_type])) ** 2 +
+                B[Jcoup_type] * math.cos(phi + THETA[Jcoup_type]) +
+                C[Jcoup_type])
+
+            model_data_dict[record.resnum] = J
+
+        model_data_list.append(model_data_dict)
+        model_data_dict = {}
+
+    return JCoup_calced, model_data_list
+
+
 def jcoupling(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):
     """Back calculate skalar coupling from given RDC lists and PDB models"""
     Jcuop_data = []
     type_dict = {}
-    dihed_lists = csx_func.calcDihedAngles()
+    dihed_lists = calc_dihedral_angles()
 
     for Jcoup_type in sorted(list(Jcoup_dict.keys())):
-        JCoup_calced, model_data = csx_func.calcJCoup(
+        JCoup_calced, model_data = calc_jcoupling(
             param_set, dihed_lists, Jcoup_dict[Jcoup_type], Jcoup_type
         )
 
