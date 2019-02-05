@@ -9,6 +9,7 @@ from progress.bar import Bar
 import consensx.csx_libs.methods as csx_func
 import consensx.csx_libs.objects as csx_obj
 import consensx.csx_libs.pca as csx_pca
+import consensx.calc as calc
 from .models import CSX_upload
 
 
@@ -232,11 +233,9 @@ def averageChemShift_on(models, my_data):
     return averageChemShift
 
 
-def averageS2_on(models, PDB_data, S2_dict, S2_type, fit, fit_range):
+def averageS2_on(models, model_data, S2_dict, S2_type, fit, fit_range):
     """Returns a dictonary with the average S2 values for the given S2 type:
        averageS2[residue] = value"""
-
-    model_data = PDB_data
     my_models = []
 
     for model_num in models:
@@ -245,10 +244,10 @@ def averageS2_on(models, PDB_data, S2_dict, S2_type, fit, fit_range):
 
     csx_obj.PDB_model.is_fitted = False
 
-    my_S2 = csx_func.calcS2(model_data, models, S2_dict[S2_type], S2_type,
-                            fit, fit_range)
+    return calc.s2_values(
+        model_data, models, S2_dict[S2_type], S2_type, fit, fit_range
+    )
 
-    return my_S2
 
 def get_two_random_from(models):
     from numpy import random

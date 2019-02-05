@@ -1,5 +1,5 @@
 from .rdc import rdc
-from .s2 import s2
+from .s2 import s2, s2_values
 from .s2_sidechain import s2_sidechain
 from .jcoupling import jcoupling
 from .chemshifts import chemshifts
@@ -9,6 +9,7 @@ from .nmr_pride import nmr_pride
 __all__ = [
     "rdc",
     "s2",
+    "s2_values",
     "s2_sidechain",
     "jcoupling",
     "chemshifts",
