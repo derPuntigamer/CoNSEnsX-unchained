@@ -1,9 +1,11 @@
 import math
 import subprocess
 import os
+import matplotlib.pyplot as plt
 
-from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
+
+plt.switch_backend('Agg')
 
 
 def nmr_pride(pdb_models, my_path):
@@ -104,6 +106,26 @@ def nmr_pride(pdb_models, my_path):
 
     os.chdir(pwd)
 
-    csx_func.makeNMRPrideGraph(my_path, scores, avg)
+    make_pride_graph(my_path, scores, avg)
 
     return PRIDE_data
+
+
+def make_pride_graph(my_path, graph_data, avg_score):
+    graph_data.sort()
+
+    plt.figure(figsize=(6, 5), dpi=80)
+    plt.plot(graph_data, linewidth=2.0, color='blue', label='Model scores',
+             alpha=.7)
+    plt.plot(list(range(0, len(graph_data))), [avg_score] * len(graph_data),
+             linewidth=2.0, color='green', label='Average score', alpha=.7)
+    plt.axis([-1, len(graph_data), 0, 1])
+    plt.xlabel('models by score (worse to best)')
+    plt.ylabel('PRIDE-NMR score')
+    plt.title("PRIDE-NMR scores")
+    plt.tight_layout()
+    plt.legend(loc='lower left')
+    ax = plt.axes()
+    ax.yaxis.grid()
+    plt.savefig(my_path + "/PRIDE-NMR_score.svg", format="svg")
+    plt.close()
