@@ -472,9 +472,11 @@ class Vec_3D(object):
 
     @staticmethod
     def dihedAngle(one, other):
-        calc_cos = (one.v[0] * other.v[0] +
-                   one.v[1] * other.v[1] +
-                   one.v[2] * other.v[2]) / (one.magnitude() * other.magnitude())
+        calc_cos = (
+            one.v[0] * other.v[0] +
+            one.v[1] * other.v[1] +
+            one.v[2] * other.v[2]
+            ) / (one.magnitude() * other.magnitude())
 
         # minor correction due to numerical issues
         if calc_cos > 1:

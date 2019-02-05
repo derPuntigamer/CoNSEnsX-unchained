@@ -1,12 +1,12 @@
 import matplotlib
-matplotlib.use('Agg')
-
 import random  # ID generation
 import string  # ID generation
 import prody
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+
+matplotlib.use('Agg')
 
 chars = string.ascii_uppercase + string.digits
 
