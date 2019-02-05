@@ -66,6 +66,13 @@ def run_calculation(request, calc_id):
     noe_n = ""
     noe_pride_data = None
 
+    str_name = "[NOT PRESENT]"
+    rdc_calced_data = None
+    s2_data = None
+    s2_sc_data = None
+    jcoup_data = None
+    chemshift_data = None
+
     # ---------------------  Read  and parse NOE file   --------------------- #
     if db_entry.NOE_file:
         # empty class variables
@@ -77,7 +84,7 @@ def run_calculation(request, calc_id):
         save_shifts = csx_func.getNOE(my_noe)
         noe_n = save_shifts[-1][0] + " distance restraints found"
         noe_violations = calc.noe_violations(
-            my_pdb, save_shifts, my_path, db_entry.r3average
+            my_pdb, save_shifts, my_path, db_entry
         )
         pride_data = calc.nmr_pride(pdb_models, my_path)
 
@@ -92,13 +99,6 @@ def run_calculation(request, calc_id):
         }
 
         data_found = True
-
-    str_name = "[NOT PRESENT]"
-    rdc_calced_data = None
-    s2_data = None
-    s2_sc_data = None
-    jcoup_data = None
-    chemshift_data = None
 
     # ---------------------  Read  and parse STR file   --------------------- #
     assert db_entry.STR_file
