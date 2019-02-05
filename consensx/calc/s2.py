@@ -153,7 +153,7 @@ def s2(my_CSV_buffer, S2_dict, my_path, calculate_on_models=None,
         print()
 
         graph_name = "S2_" + S2_type + ".svg"
-        graph.values(my_path, S2_calced, S2_dict[S2_type], graph_name)
+        graph.values_graph(my_path, S2_calced, S2_dict[S2_type], graph_name)
 
         corr_graph_name = "S2_corr_" + S2_type + ".svg"
         graph.correl_graph(

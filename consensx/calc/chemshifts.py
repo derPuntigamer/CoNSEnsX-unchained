@@ -160,7 +160,7 @@ def chemshifts(my_CSV_buffer, ChemShift_lists, pdb_models, my_path):
             print()
 
             graph_name = str(n + 1) + "_CS_" + CS_type + ".svg"
-            graph.values(my_path, exp_dict, cs_list[CS_type], graph_name)
+            graph.values_graph(my_path, exp_dict, cs_list[CS_type], graph_name)
 
             corr_graph_name = str(n + 1) + "_CS_corr_" + CS_type + ".svg"
             graph.correl_graph(

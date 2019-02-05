@@ -275,7 +275,7 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
             print()
 
             graph_name = str(list_num + 1) + "_RDC_" + RDC_type + ".svg"
-            graph.values(
+            graph.values_graph(
                 my_path, my_averageRDC, RDC_dict[RDC_type], graph_name
             )
 
@@ -291,7 +291,7 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
                 str(list_num + 1) + "_RDC_mod_corr_" + RDC_type + ".svg"
             )
 
-            graph.mod_correl_graph.modCorrelGraph(
+            graph.mod_correl_graph(
                 my_path, correl, avg_model_corr, model_corrs,
                 mod_corr_graph_name
             )
