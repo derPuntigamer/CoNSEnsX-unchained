@@ -1,12 +1,10 @@
 import os
 import sys
 import re
-import subprocess
 import math
 import prody
 import time
 import pickle
-import numpy as np
 
 import matplotlib.pyplot as plt
 # installed modules
@@ -15,13 +13,6 @@ from . import objects as csx_obj
 
 
 plt.switch_backend('Agg')
-
-shortcodes = {
-    'ALA': 'A', 'ASP': 'D', 'ASN': 'N', 'ARG': 'R', 'CYS': 'C', 'GLY': 'G',
-    'GLU': 'E', 'GLN': 'Q', 'HIS': 'H', 'ILE': 'I', 'LEU': 'L', 'LYS': 'K',
-    'MET': 'M', 'PHE': 'F', 'PRO': 'P', 'SER': 'S', 'THR': 'T', 'TRP': 'W',
-    'TYR': 'Y', 'VAL': 'V'
-}
 
 
 def timeit(method):
@@ -237,14 +228,14 @@ def pdb_splitter(my_path, PDB_file):
 def parseSTR(STR_file):
     """Parse BMRB file into a python object"""
 
-    star_file = open(STR_file)         # open STR file
+    star_file = open(STR_file)  # open STR file
     myString = ""
     parse_exception = (
         "ERROR during STR parsing, please check your STAR-NMR file!"
     )
 
     try:
-        for line in star_file:                  # rean STR file into a string
+        for line in star_file:  # read STR file into a string
             myString += line
     except UnicodeDecodeError:
         raise Exception(
@@ -254,9 +245,9 @@ def parseSTR(STR_file):
     star_file.close()
 
     try:
-        parsed = nmrpystar.parse(myString)    # parsing -> parsed.value
+        parsed = nmrpystar.parse(myString)  # parsing -> parsed.value
 
-        if parsed.status != 'success':        # check if parsing was successful
+        if parsed.status != 'success':  # check if parsing was successful
             raise Exception(parse_exception)
     except KeyError:
         raise Exception(parse_exception)
@@ -552,235 +543,12 @@ def parseChemShift_STR(parsed_value):
     return new_CS_list
 
 
-@timeit
-def callPalesOn(my_path, pdb_files, RDC_dict, lc_model, SVD_enable):
-    """Writes pales dummy from the given RDC values, and call Pales with the
-    given parameters"""
-
-    pwd = os.getcwd()
-    os.chdir(my_path)
-
-    for o, pdb_file in enumerate(pdb_files):
-        # ------------------  Open file and read PDB data  -------------------#
-        try:
-            input_pdb = open(pdb_file)
-        except IOError:
-            print("Input file " + pdb_file + " was not found")
-            raise SystemExit                    # exit if input file not found
-
-        seg = []                                # list storing sequence data
-
-        for line in input_pdb:
-            if line.startswith("ATOM") and line.split()[2] == "CA":
-                resname = line.split()[3]       # get residue name
-                seg.append(resname)             # append new segname to list
-
-        input_pdb.close()
-
-        # ----------------------  Write sequence data  -----------------------#
-        short_seg = ""
-
-        for i in range(len(seg)):
-            short_seg += shortcodes[seg[i]]
-
-        my_line = "DATA SEQUENCE "
-        char_counter = 0
-        row_counter = 0
-        pales_dummy = open('pales_dummy.txt', 'w')
-
-        for char in short_seg:
-            if char_counter == 10:          # write aa output in 10 wide blocks
-                my_line += " "
-                char_counter = 0
-                row_counter += 1
-
-                if row_counter == 5:        # write 5 block per line
-                    pales_dummy.write(my_line + "\n")
-                    char_counter = 0
-                    row_counter = 0
-                    my_line = "DATA SEQUENCE "
-
-            my_line += char
-            char_counter += 1
-
-        pales_dummy.write(my_line + "\n")    # write last line of aa output
-
-        # ----------------------  Write dummy dipoles  -----------------------#
-        pales_dummy.write(
-            "\nVARS RESID_I RESNAME_I ATOMNAME_I " +
-            "RESID_J RESNAME_J ATOMNAME_J D DD W\n" +
-            "FORMAT %5d  %6s  %6s  %5d  %6s  %6s  %9.3f  %9.3f  %.2f \n\n"
-        )
-
-        lists = []
-        for RDC_list in list(RDC_dict.keys()):
-            lists.append(RDC_dict[RDC_list])
-
-        for RDC_set in lists:
-            for RDC_record in RDC_set:
-
-                pales_dummy.write(
-                    "%5s  %6s  %6s  %5s  %6s  %6s  %9.3f  %9.3f  %.2f\n" % (
-                        str(RDC_record.resnum) + 'A',
-                        seg[RDC_record.resnum - 1],
-                        str(RDC_record.atom),
-                        str(RDC_record.resnum2) + 'A',
-                        seg[RDC_record.resnum2 - 1],
-                        str(RDC_record.atom2),
-                        RDC_record.value, 1.000,  1.00
-                    )
-                )
-
-        pales_dummy.close()
-
-        outfile = open("pales.out", 'a')
-        DEVNULL = open(os.devnull, 'w')
-
-        print("call Pales on model: " +
-              str(o + 1) + '/' + str(len(pdb_files)), end="\r")
-        sys.stdout.flush()
-
-        try:
-            if SVD_enable:                          # if SVD is enabled
-                p = subprocess.Popen(
-                    [
-                        csx_obj.ThirdParty.pales,
-                        "-inD", "pales_dummy.txt",
-                        "-pdb", pdb_file,           # pdb file
-                        '-' + lc_model,             # rdc lc model
-                        "-bestFit"                  # SVD
-                    ],
-                    stdout=outfile,
-                    stderr=DEVNULL
-                )
-                p.wait()                        # now wait
-            else:                               # if SVD is disabled (default)
-                subprocess.call(
-                    [
-                        csx_obj.ThirdParty.pales,
-                        "-inD", "pales_dummy.txt",
-                        "-pdb", pdb_file,           # pdb file
-                        '-' + lc_model              # rdc lc model
-                    ],
-                    stdout=outfile,
-                    stderr=DEVNULL
-                )
-        except OSError as e:
-            print("Execution failed:", e, file=sys.stderr)
-        outfile.close()
-        DEVNULL.close()
-
-    print()
-    os.chdir(pwd)
-
-
-def calcS2(model_data, calculate_on_models,
-           S2_records, S2_type, fit, fit_range):
-    """Returns a dictonary with the average S2 values:
-    S2_calced[residue] = value"""
-
-    if fit:
-        reference = model_data.atomgroup[:]
-
-        model_data.atomgroup.setACSIndex(0)
-        prody.alignCoordsets(model_data.atomgroup.calpha)
-
-        if fit_range:
-            for model_num in calculate_on_models:
-                model_data.atomgroup.setACSIndex(model_num)
-
-                mobile = model_data.atomgroup[:]
-                matches = prody.matchChains(reference, mobile)
-                match = matches[0]
-                ref_chain = match[0]
-                mob_chain = match[1]
-
-                # if fit_range:
-                weights = np.zeros((len(ref_chain), 1), dtype=np.int)
-
-                fit_start, fit_end = fit_range.split('-')
-
-                for i in range(int(fit_start) - 1, int(fit_end) - 1):
-                    weights[i] = 1
-
-                t = prody.calcTransformation(mob_chain, ref_chain, weights)
-                t.apply(mobile)
-
-    # get NH vectors from models (model_data[] -> vectors{resnum : vector})
-    vector_data = []
-    s2_pairs = {'N': 'H', 'CA': 'HA'}
-
-    for model_num in calculate_on_models:
-        model_data.atomgroup.setACSIndex(model_num)
-        current_Resindex = 1
-        has_first, has_second = False, False
-        vectors = {}
-
-        for atom in model_data.atomgroup:
-            atom_res = atom.getResnum()
-
-            if atom_res != current_Resindex:
-                current_Resindex = atom_res
-                has_first, has_second = False, False
-
-            if atom_res == current_Resindex:
-                if atom.getName() == S2_type:
-                    has_second = True
-                    N_coords = csx_obj.Vec_3D(atom.getCoords())
-
-                elif atom.getName() == s2_pairs[S2_type]:
-                    has_first = True
-                    H_coords = csx_obj.Vec_3D(atom.getCoords())
-
-                if has_first and has_second:
-                    has_first, has_second = False, False
-                    vectors[atom_res] = csx_obj.Vec_3D(
-                        N_coords - H_coords
-                    ).normalize()
-
-        vector_data.append(vectors)
-
-    S2_calced = {}
-
-    # iterating over STR records
-    for resnum in [int(s2rec.resnum) for s2rec in S2_records]:
-
-        x2, y2, z2, xy, xz, yz = 0, 0, 0, 0, 0, 0
-
-        # iterating over PDB models
-        for m in vector_data:
-
-            # coordinates in model at a given resnum
-            x, y, z = m[resnum].v[0], m[resnum].v[1], m[resnum].v[2]
-
-            x2 += x ** 2
-            y2 += y ** 2
-            z2 += z ** 2
-            xy += x * y
-            xz += x * z
-            yz += y * z
-
-        x2 /= len(vector_data)
-        y2 /= len(vector_data)
-        z2 /= len(vector_data)
-        xy /= len(vector_data)
-        xz /= len(vector_data)
-        yz /= len(vector_data)
-
-        # S2 calcuation
-        s2 = 3 / 2.0 * (x2 ** 2 + y2 ** 2 + z2 ** 2 +
-                        2 * xy ** 2 + 2 * xz ** 2 + 2 * yz ** 2) - 0.5
-
-        S2_calced[resnum] = s2
-
-    return S2_calced
-
-
 def calcPeptideBonds():
     """Calculates backbone diherdral angles (OMEGA) CA-N-C'-CA"""
     # model_list = csx_obj.PDB_model.model_list
-    dihedral_angles = {"<2":    0, "2-5": 0, "5-10": 0,
-                       "10-20": 0, ">20": 0}
+    dihedral_angles = {
+        "<2": 0, "2-5": 0, "5-10": 0, "10-20": 0, ">20": 0
+    }
 
     model_data = csx_obj.PDB_model.model_data
 
