@@ -56,6 +56,7 @@ def run_calculation(request, calc_id):
         })
 
     pdb_models = []
+
     for file in os.listdir(my_path):
         if file.startswith("model_") and file.endswith(".pdb"):
             pdb_models.append(file)
@@ -75,16 +76,8 @@ def run_calculation(request, calc_id):
 
     # ---------------------  Read  and parse NOE file   --------------------- #
     if db_entry.NOE_file:
-        # empty class variables
-        csx_obj.Restraint_Record.all_restraints = []
-        csx_obj.Restraint_Record.resolved_restraints = []
-
-        noe_name = db_entry.NOE_file
-        my_noe = my_path + db_entry.NOE_file
-        save_shifts = csx_func.getNOE(my_noe)
-        noe_n = save_shifts[-1][0] + " distance restraints found"
-        noe_violations = calc.noe_violations(
-            my_pdb, save_shifts, my_path, db_entry
+        noe_n, noe_violations = calc.noe_violations(
+            my_pdb, my_path, db_entry
         )
         pride_data = calc.nmr_pride(pdb_models, my_path)
 
@@ -116,7 +109,6 @@ def run_calculation(request, calc_id):
     rdc_lists = csx_func.get_RDC_lists(parsed.value)
     rdc_lists_path = my_path + "/RDC_lists.pickle"
     pickle.dump(rdc_lists, open(rdc_lists_path, "wb"))
-
     rdc_calced_data = None
 
     if rdc_lists:

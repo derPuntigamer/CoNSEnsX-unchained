@@ -123,7 +123,7 @@ def get_noe_from_file(NOE_file):
     return NOE_data
 
 
-def noe_violations(PDB_file, saveShifts, my_path, db_entry):
+def noe_violations(PDB_file, my_path, db_entry):
     """Back calculate NOE distance violations from given RDC lists and PDB
     models"""
 
@@ -141,9 +141,11 @@ def noe_violations(PDB_file, saveShifts, my_path, db_entry):
     # parse data to restraint objects returned from pypy process
     csx_id = 1
     prev_id = 1
-    for data in saveShifts:
-        csx_obj.Restraint_Record(csx_id, data[0], data[1], data[2], data[3],
-                                 data[4], data[5], data[6], data[7])
+    for data in save_shifts:
+        csx_obj.Restraint_Record(
+            csx_id, data[0], data[1], data[2], data[3],
+            data[4], data[5], data[6], data[7]
+        )
 
         if prev_id != data[0]:
             prev_id = data[0]
@@ -277,4 +279,4 @@ def noe_violations(PDB_file, saveShifts, my_path, db_entry):
     print("Total # of violations:", viol_count)
     make_noe_hist(my_path, violations)
 
-    return viol_count
+    return noe_n, viol_count
