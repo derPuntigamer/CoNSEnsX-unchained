@@ -1,5 +1,6 @@
 import os
 import pickle
+import re
 
 import consensx.graph as graph
 
@@ -20,6 +21,60 @@ class RDC_model_data():
             self.rdc_data[RDC_list_num][RDC_type] = RDC_list_data
 
 
+def average_pales_output(pales_out, my_RDC_type):
+    """Returns a dictonary with the average RDCs for a given RDC type:
+       averageRDC[residue] = value
+       and calculated model data as a list of dictonaries
+       model_data_list[{1: value}, ...]"""
+    pales_out = open(pales_out)
+    n_of_structures = 0
+    averageRDC = {}
+    model_data_list = []
+    model_data_dict = {}
+    first_run = True
+
+    for line in pales_out:
+        if re.match(r"REMARK \d+ couplings", line):
+            if first_run:
+                first_run = False
+                continue
+
+            n_of_structures += 1  # n_of_structures to divide by
+
+            model_data_list.append(model_data_dict)
+
+            if model_data_dict:
+                model_data_dict = {}
+
+        elif re.match(r"\s+ \d+", line):
+            resnum = int(line.split()[0])
+            resnum2 = int(line.split()[3])
+            atom = line.split()[2]
+            atom2 = line.split()[5]
+            D = float(line.split()[8])  # D coloumn of pales output
+            RDCtype = str(abs(resnum2 - resnum)) + "_" + atom + "_" + atom2
+
+            # skip non relevant RDC data in the pales output file
+            if my_RDC_type != RDCtype:
+                continue
+
+            if resnum in list(averageRDC.keys()):
+                averageRDC[resnum] += D
+            else:
+                averageRDC[resnum] = D
+
+            model_data_dict[resnum] = D
+
+    model_data_list.append(model_data_dict)
+    n_of_structures += 1
+    pales_out.close()
+
+    for res_num in list(averageRDC.keys()):
+        averageRDC[res_num] /= n_of_structures
+
+    return averageRDC, model_data_list
+
+
 def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
     """Back calculate RDC from given RDC lists and PDB models"""
     my_rdc_model_data = RDC_model_data()
@@ -37,7 +92,7 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
 
             # get averaged RDC values -> averageRDC[residue] = value
             pales_out = my_path + "pales.out"
-            averageRDC, model_data = csx_func.avgPalesRDCs(pales_out, RDC_type)
+            averageRDC, model_data = average_pales_output(pales_out, RDC_type)
 
             model_corrs = []
 
