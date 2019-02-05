@@ -1,12 +1,143 @@
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 
-from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
 
-def noe_violations(PDB_file, saveShifts, my_path, r3_averaging):
+def make_noe_hist(my_path, violations):
+    plt.figure(figsize=(6, 5), dpi=80)
+    n_groups = len(violations)
+
+    means_men = [
+        violations['0-0.5'], violations['0.5-1'], violations['1-1.5'],
+        violations['1.5-2'], violations['2-2.5'], violations['2.5-3'],
+        violations['3<']
+    ]
+
+    ticks = ['0-0.5', '0.5-1', '1-1.5', '1.5-2', '2-2.5', '2.5-3', '3<']
+    index = np.arange(n_groups)
+    bar_width = 0.7
+    plt.bar(index, means_men, bar_width, alpha=.7, color='b')
+
+    plt.xlabel("Violation (Å)")
+    plt.ylabel("# of NOE distance violations")
+    plt.title("NOE distance violations")
+    plt.xticks(index + bar_width / 2, ticks)
+    ax = plt.axes()
+    ax.yaxis.grid()
+
+    plt.tight_layout()
+    plt.savefig(my_path + "/NOE_hist.svg", format="svg")
+    plt.close()
+
+
+def pdb2coords(PDB_file):
+    """Loads PDB coordinates into a dictonary, per model"""
+    model_data = csx_obj.PDB_model.model_data
+
+    prev_resnum = -1
+    PDB_coords = {}
+
+    for i in range(model_data.coordsets):
+        model_data.atomgroup.setACSIndex(i)
+
+        PDB_coords[i] = {}
+
+        for atom in model_data.atomgroup:
+            resnum = int(atom.getResnum())
+            name = str(atom.getName())
+
+            if resnum == prev_resnum:
+                PDB_coords[i][resnum][name] = csx_obj.Vec_3D(atom.getCoords())
+
+            else:
+                PDB_coords[i][resnum] = {}
+                PDB_coords[i][resnum][name] = csx_obj.Vec_3D(atom.getCoords())
+                prev_resnum = resnum
+
+    return PDB_coords
+
+
+def get_noe_from_file(NOE_file):
+    NOE_key = "_Gen_dist_constraint_list.Constraint_type"
+    NOE_value = "NOE"
+    in_frame = False
+    in_loop = False
+    loops = []
+    NOE_data = []
+
+    for line in open(NOE_file, encoding="utf-8"):
+        tok = line.strip().split()
+
+        if not tok:
+            continue
+
+        if tok[0] == NOE_key and tok[1] == NOE_value:
+            in_frame = True
+            continue
+
+        if in_frame and tok[0] == "save_":
+            # break
+            in_frame = False
+
+        if tok[0] == "loop_":
+            loop_keys = []
+            loop_data = []
+            in_loop = True
+            continue
+
+        if in_loop is True and in_frame is True and tok[0] == "stop_":
+            in_loop = False
+            loops.append([loop_keys, loop_data])
+
+        if in_loop:
+            if tok[0].startswith('_'):
+                loop_keys.append(tok[0])
+            else:
+                loop_data.append(tok)
+
+    for loop in loops:
+        try:
+            ind_ID = loop[0].index("_Gen_dist_constraint.ID")
+            ind_seg1 = loop[0].index("_Gen_dist_constraint.PDB_residue_no_1")
+            ind_seg2 = loop[0].index("_Gen_dist_constraint.PDB_residue_no_2")
+            ind_comp1 = loop[0].index("_Gen_dist_constraint.Comp_ID_1")
+            ind_comp2 = loop[0].index("_Gen_dist_constraint.Comp_ID_2")
+            ind_atom1 = loop[0].index("_Gen_dist_constraint.Atom_ID_1")
+            ind_atom2 = loop[0].index("_Gen_dist_constraint.Atom_ID_2")
+            ind_bnd = loop[0].index(
+                "_Gen_dist_constraint.Distance_upper_bound_val")
+        except ValueError:
+            continue
+
+        for data in loop[1]:
+            NOE_data.append([
+                data[ind_ID],
+                data[ind_seg1], data[ind_seg2],
+                data[ind_comp1], data[ind_comp2],
+                data[ind_atom1], data[ind_atom2],
+                data[ind_bnd]
+            ])
+
+    return NOE_data
+
+
+def noe_violations(PDB_file, saveShifts, my_path, db_entry):
     """Back calculate NOE distance violations from given RDC lists and PDB
     models"""
+
+    r3_averaging = db_entry.r3average
+
+    # empty class variables
+    csx_obj.Restraint_Record.all_restraints = []
+    csx_obj.Restraint_Record.resolved_restraints = []
+
+    noe_name = db_entry.NOE_file
+    noe_file_path = my_path + noe_name
+    save_shifts = get_noe_from_file(noe_file_path)
+    noe_n = save_shifts[-1][0] + " distance restraints found"
+
     # parse data to restraint objects returned from pypy process
     csx_id = 1
     prev_id = 1
@@ -21,7 +152,7 @@ def noe_violations(PDB_file, saveShifts, my_path, r3_averaging):
     # fetch all restraint from class
     restraints = csx_obj.Restraint_Record.getNOERestraints()
 
-    PDB_coords = csx_func.pdb2coords(PDB_file)
+    PDB_coords = pdb2coords(PDB_file)
     prev_id = -1
     avg_distances = {}
     all_distances = {}
@@ -144,6 +275,6 @@ def noe_violations(PDB_file, saveShifts, my_path, r3_averaging):
                 violations["3<"] += 1
 
     print("Total # of violations:", viol_count)
-    csx_func.makeNOEHist(my_path, violations)
+    make_noe_hist(my_path, violations)
 
     return viol_count
