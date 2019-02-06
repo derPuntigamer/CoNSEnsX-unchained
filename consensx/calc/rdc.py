@@ -95,17 +95,17 @@ def callPalesOn(my_path, pdb_files, RDC_dict, lc_model, SVD_enable):
             lists.append(RDC_dict[RDC_list])
 
         for RDC_set in lists:
-            for RDC_record in RDC_set:
+            for rdc_record in RDC_set:
 
                 pales_dummy.write(
                     "%5s  %6s  %6s  %5s  %6s  %6s  %9.3f  %9.3f  %.2f\n" % (
-                        str(RDC_record.resnum) + 'A',
-                        seg[RDC_record.resnum - 1],
-                        str(RDC_record.atom),
-                        str(RDC_record.resnum2) + 'A',
-                        seg[RDC_record.resnum2 - 1],
-                        str(RDC_record.atom2),
-                        RDC_record.value, 1.000,  1.00
+                        str(rdc_record.resnum) + 'A',
+                        seg[rdc_record.resnum - 1],
+                        str(rdc_record.atom),
+                        str(rdc_record.resnum2) + 'A',
+                        seg[rdc_record.resnum2 - 1],
+                        str(rdc_record.atom2),
+                        rdc_record.value, 1.000,  1.00
                     )
                 )
 

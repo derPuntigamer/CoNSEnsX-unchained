@@ -81,59 +81,6 @@ class CSV_buffer(object):
             output_csv.write("\n")
 
 
-class RDC_Record(object):
-
-    """Class for storing RDC data"""
-    def __init__(self, resnum1, atom1, resnum2, atom2, RDC_value):
-        self.RDC_type = (str(int(resnum1) - int(resnum2))
-                         + '_' + atom1 + '_' + atom2)
-        self.resnum = int(resnum1)
-        self.atom = atom1
-        self.resnum2 = int(resnum2)
-        self.atom2 = atom2
-        self.value = float(RDC_value)
-
-
-class S2_Record(object):
-
-    """Class for storing S2 data"""
-    def __init__(self, resnum, S2_type, S2_value):
-        self.resnum = int(resnum)
-        self.type = S2_type
-        self.value = float(S2_value)
-        self.calced = None
-
-
-class JCoup_Record(object):
-
-    """Class for storing J-Coupling data"""
-    def __init__(self, resnum, jcoup_type, JCoup_value):
-        self.resnum = int(resnum)
-        self.type = jcoup_type
-        self.value = float(JCoup_value)
-
-
-class ChemShift_Record(object):
-
-    """Class for storing chemical shift data"""
-    def __init__(self, resnum, res_name, atom_name, ChemShift_value):
-        self.resnum = int(resnum)
-        self.res_name = res_name
-        self.atom_name = atom_name
-        self.value = float(ChemShift_value)
-
-    def __str__(self):
-        return (
-            "resnum: " + str(self.resnum) + "," +
-            "res_name: " + self.res_name + "," +
-            "atom_name: " + self.atom_name + "," +
-            "value: " + str(self.value) + "\n"
-        )
-
-    def __repr__(self):
-        return self.__str__()
-
-
 class ChemShift_modell_data(object):
 
     """Class for per model chemical shift data"""

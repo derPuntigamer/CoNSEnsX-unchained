@@ -20,6 +20,7 @@ import pickle
 import consensx.csx_libs.methods as csx_func
 import consensx.csx_libs.objects as csx_obj
 import consensx.calc as calc
+import consensx.parse as parse
 
 # Django server
 from django.shortcuts import render
@@ -97,16 +98,16 @@ def run_calculation(request, calc_id):
     assert db_entry.STR_file
 
     str_name = db_entry.STR_file
-    my_str = my_path + db_entry.STR_file
+    nmr_file_path = my_path + db_entry.STR_file
 
     try:
-        parsed = csx_func.parseSTR(my_str)
+        star_nmr_data = parse.StarNMR(nmr_file_path)
     except Exception as e:
         print("EXCEPTION", e)
         return HttpResponse(e)
 
     # ------------------------  RDC calculation  ------------------------ #
-    rdc_lists = csx_func.get_RDC_lists(parsed.value)
+    rdc_lists = star_nmr_data.parse_rdc()
     rdc_lists_path = my_path + "/RDC_lists.pickle"
     pickle.dump(rdc_lists, open(rdc_lists_path, "wb"))
     rdc_calced_data = None
@@ -121,7 +122,7 @@ def run_calculation(request, calc_id):
         data_found = True
 
     # ----------------------------  S2 calc  ---------------------------- #
-    s2_dict = csx_func.parseS2_STR(parsed.value)
+    s2_dict = star_nmr_data.parse_s2()
     s2_dump = [s2_dict, db_entry.superimpose, db_entry.fit_range]
     s2_dict_path = my_path + "/S2_dict.pickle"
     pickle.dump(s2_dump, open(s2_dict_path, "wb"))
@@ -136,7 +137,7 @@ def run_calculation(request, calc_id):
 
         data_found = True
 
-    s2_sidechain = csx_func.parse_sidechain_S2_STR(parsed.value)
+    s2_sidechain = star_nmr_data.parse_s2_sidechain()
     s2_sc_data = None
 
     if s2_sidechain:
@@ -152,7 +153,7 @@ def run_calculation(request, calc_id):
         data_found = True
 
     # ------------------------  J-coupling calc  ------------------------ #
-    Jcoup_dict = csx_func.parseJcoup_STR(parsed.value)
+    Jcoup_dict = star_nmr_data.parse_jcoup()
     Jcoup_dict_path = my_path + "/Jcoup_dict.pickle"
     pickle.dump(Jcoup_dict, open(Jcoup_dict_path, "wb"))
     jcoup_data = None
@@ -164,7 +165,7 @@ def run_calculation(request, calc_id):
         data_found = True
 
     # -----------------------  Chemical shift calc  --------------------- #
-    chem_shift_lists = csx_func.parseChemShift_STR(parsed.value)
+    chem_shift_lists = star_nmr_data.parse_chemshift()
     chem_shift_lists_path = my_path + "/ChemShift_lists.pickle"
     pickle.dump(chem_shift_lists, open(chem_shift_lists_path, "wb"))
     chemshift_data = None

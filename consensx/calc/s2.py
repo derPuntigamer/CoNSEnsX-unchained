@@ -29,7 +29,6 @@ def s2_values(
                 ref_chain = match[0]
                 mob_chain = match[1]
 
-                # if fit_range:
                 weights = np.zeros((len(ref_chain), 1), dtype=np.int)
 
                 fit_start, fit_end = fit_range.split('-')
@@ -110,8 +109,10 @@ def s2_values(
     return S2_calced
 
 
-def s2(my_CSV_buffer, S2_dict, my_path, calculate_on_models=None,
-        fit=None, fit_range=None):
+def s2(
+        my_CSV_buffer, S2_dict, my_path, calculate_on_models=None,
+        fit=None, fit_range=None
+        ):
     """Back calculate order paramteres from given S2 dict and PDB models"""
     S2_data = []
     model_data = csx_obj.PDB_model.model_data
