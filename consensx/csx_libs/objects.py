@@ -8,27 +8,6 @@ class CalcPickle(dict):
     data = dict()
 
 
-class RDC_modell_corr(object):
-
-    """Class for per model RDC correlation"""
-    RDC_lists = []
-
-    def __init__(self, RDC_list_permodel):
-        RDC_modell_corr.RDC_lists.append(RDC_list_permodel)
-
-    @staticmethod
-    def get_best_model(RDC_list_num):
-        best_value = -1
-        best_num = -1
-
-        for num, value in enumerate(RDC_modell_corr.RDC_lists[RDC_list_num]):
-            if value > best_value:
-                best_value = value
-                best_num = num
-
-        return best_num, best_value
-
-
 class ThirdParty(object):
 
     """Class to store 3rd party software information"""

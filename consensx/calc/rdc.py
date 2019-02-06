@@ -234,8 +234,6 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
                 )
 
             my_rdc_model_data.add_data(list_num + 1, RDC_type, model_data)
-            csx_obj.RDC_modell_corr(model_corrs)
-
             avg_model_corr = sum(model_corrs) / len(model_corrs)
 
             # removing records from other RDC types
