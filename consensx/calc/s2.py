@@ -110,12 +110,11 @@ def s2_values(
 
 
 def s2(
-        my_CSV_buffer, S2_dict, my_path, calculate_on_models=None,
-        fit=None, fit_range=None
+        my_CSV_buffer, S2_dict, my_path, model_data,
+        calculate_on_models=None, fit=None, fit_range=None
         ):
     """Back calculate order paramteres from given S2 dict and PDB models"""
     S2_data = []
-    model_data = csx_obj.PDB_model.model_data
 
     if not calculate_on_models:
         calculate_on_models = range(model_data.model_count)

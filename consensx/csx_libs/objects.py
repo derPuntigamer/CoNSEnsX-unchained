@@ -96,23 +96,23 @@ class ChemShift_modell_data(object):
         return type_data
 
 
-class PDB_model(object):
+# class PDB_model(object):
 
-    """Class for storing PDB model data"""
-    is_fitted = False
-    model_data = None
+#     """Class for storing PDB model data"""
+#     is_fitted = False
+#     model_data = None
 
-    def __init__(self, atomgroup, model_count):
-        self.atomgroup = atomgroup
-        self.model_count = model_count
-        try:
-            self.elements = atomgroup.getElements()
-        except AttributeError:
-            print("ERROR -> PDB parsing failed. Please check your PDB file!")
-            raise SystemExit
-        self.names = atomgroup.getNames()
-        self.coordsets = atomgroup.numCoordsets()
-        PDB_model.model_data = self
+#     def __init__(self, atomgroup, model_count):
+#         self.atomgroup = atomgroup
+#         self.model_count = model_count
+#         try:
+#             self.elements = atomgroup.getElements()
+#         except AttributeError:
+#             print("ERROR -> PDB parsing failed. Please check your PDB file!")
+#             raise SystemExit
+#         self.names = atomgroup.getNames()
+#         self.coordsets = atomgroup.numCoordsets()
+#         PDB_model.model_data = self
 
 
 class Restraint_Record(object):
@@ -141,7 +141,7 @@ class Restraint_Record(object):
         return Restraint_Record.all_restraints[-1].csx_id
 
     @staticmethod
-    def getNOERestraints():
+    def getNOERestraints(model_data):
         # avoid repeated resolution of pseudo atom names
         if Restraint_Record.resolved_restraints:
             return Restraint_Record.resolved_restraints
@@ -153,7 +153,6 @@ class Restraint_Record(object):
         # load atom names from PDB data into a dict, residue IDs as keys
         NOE_dict = {}
         PDB_atom_names = {}
-        model_data = PDB_model.model_data
 
         for atom in model_data.atomgroup:
             atom_res = atom.getResnum()

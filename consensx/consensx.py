@@ -50,7 +50,9 @@ def run_calculation(request, calc_id):
     csx_func.pdb_cleaner(my_path, my_pdb, my_csv_buffer)
     model_count = csx_func.pdb_splitter(my_path, my_pdb)
 
-    if not csx_func.get_model_list(my_pdb, my_path, model_count):
+    model_data = csx_func.get_model_list(my_pdb, my_path, model_count)
+
+    if not model_data:
         return render(request, "consensx/home.html", {
             "error": "DISCARDED MODELS FOUND, CHECK IF ALL MODELS HAVE THE SAME\
             NUMBER OF ATOMS"
@@ -78,7 +80,7 @@ def run_calculation(request, calc_id):
     # ---------------------  Read  and parse NOE file   --------------------- #
     if db_entry.NOE_file:
         noe_n, noe_violations = calc.noe_violations(
-            my_pdb, my_path, db_entry
+            my_pdb, model_data, my_path, db_entry
         )
         pride_data = calc.nmr_pride(pdb_models, my_path)
 
@@ -130,7 +132,7 @@ def run_calculation(request, calc_id):
 
     if s2_dict:
         s2_data = calc.s2(
-            my_csv_buffer, s2_dict, my_path,
+            my_csv_buffer, s2_dict, my_path, model_data,
             fit=db_entry.superimpose,
             fit_range=db_entry.fit_range
         )
@@ -178,8 +180,8 @@ def run_calculation(request, calc_id):
 
     my_csv_buffer.writeCSV()
 
-    csx_func.calcPeptideBonds()
-    csx_func.calcNH_Angles()
+    csx_func.calcPeptideBonds(model_data)
+    csx_func.calcNH_Angles(model_data)
 
     if data_found:
         print(csx_obj.CalcPickle.data)

@@ -123,7 +123,7 @@ def get_noe_from_file(NOE_file):
     return NOE_data
 
 
-def noe_violations(PDB_file, my_path, db_entry):
+def noe_violations(PDB_file, model_data, my_path, db_entry):
     """Back calculate NOE distance violations from given RDC lists and PDB
     models"""
 
@@ -152,7 +152,7 @@ def noe_violations(PDB_file, my_path, db_entry):
             csx_id += 1
 
     # fetch all restraint from class
-    restraints = csx_obj.Restraint_Record.getNOERestraints()
+    restraints = csx_obj.Restraint_Record.getNOERestraints(model_data)
 
     PDB_coords = pdb2coords(PDB_file)
     prev_id = -1

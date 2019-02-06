@@ -7,8 +7,9 @@ import time
 import pickle
 
 import matplotlib.pyplot as plt
-# installed modules
+
 from . import objects as csx_obj
+from consensx.parse import Pdb
 
 
 plt.switch_backend('Agg')
@@ -72,11 +73,11 @@ def get_model_list(PDB_file, my_path, model_count):
             print("DISCARDED MODEL FOUND")
             return False
 
-    csx_obj.PDB_model(atomgroup, model_count)
+    pdb_data = Pdb(atomgroup, model_count)
 
     PDB_model_path = my_path + "/PDB_model.pickle"
-    pickle.dump(csx_obj.PDB_model.model_data, open(PDB_model_path, 'wb'))
-    return True
+    pickle.dump(pdb_data, open(PDB_model_path, 'wb'))
+    return pdb_data
 
 
 @timeit
@@ -213,14 +214,12 @@ def pdb_splitter(my_path, PDB_file):
     return len(model_names)
 
 
-def calcPeptideBonds():
+def calcPeptideBonds(model_data):
     """Calculates backbone diherdral angles (OMEGA) CA-N-C'-CA"""
     # model_list = csx_obj.PDB_model.model_list
     dihedral_angles = {
         "<2": 0, "2-5": 0, "5-10": 0, "10-20": 0, ">20": 0
     }
-
-    model_data = csx_obj.PDB_model.model_data
 
     for i in range(model_data.coordsets):
         model_data.atomgroup.setACSIndex(i)
@@ -287,9 +286,9 @@ def calcPeptideBonds():
     print("  >20 -> " + str(dihedral_angles[">20"]))
 
 
-def calcNH_Angles():
+def calcNH_Angles(model_data):
     """Calculates backbone diherdral angles (OMEGA) H-N-C=O"""
-    model_data = csx_obj.PDB_model.model_data
+
     dihedral_angles = {"<2":    0, "2-5": 0, "5-10": 0,
                        "10-20": 0, ">20": 0}
 

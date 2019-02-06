@@ -242,7 +242,7 @@ def averageS2_on(models, model_data, S2_dict, S2_type, fit, fit_range):
         model_data.atomgroup.setACSIndex(model_num)
         my_models.append(model_data.atomgroup[:])
 
-    csx_obj.PDB_model.is_fitted = False
+    # csx_obj.PDB_model.is_fitted = False
 
     return calc.s2_values(
         model_data, models, S2_dict[S2_type], S2_type, fit, fit_range
