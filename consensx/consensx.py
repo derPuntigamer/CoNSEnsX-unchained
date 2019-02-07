@@ -50,7 +50,7 @@ def run_calculation(request, calc_id):
     csx_func.pdb_cleaner(my_path, my_pdb, my_csv_buffer)
     model_count = csx_func.pdb_splitter(my_path, my_pdb)
 
-    model_data = csx_func.get_model_list(my_pdb, my_path, model_count)
+    model_data = parse.Pdb(my_pdb, my_path, model_count)
 
     if not model_data:
         return render(request, "consensx/home.html", {
