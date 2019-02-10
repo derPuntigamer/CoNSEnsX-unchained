@@ -39,20 +39,19 @@ Jcoup_dict3 = {
 }
 
 
-def calc_dihedral_angles():
+def calc_dihedral_angles(pdb_model_data):
     """Calculates backbone diherdral angles
        note: all returned angle values are in radian"""
-    model_data = csx_obj.PDB_model.model_data
 
     JCoup_dicts = []
 
-    for i in range(model_data.coordsets):
-        model_data.atomgroup.setACSIndex(i)
+    for i in range(pdb_model_data.coordsets):
+        pdb_model_data.atomgroup.setACSIndex(i)
         current_Resindex = 1
         prev_C, my_N, my_CA, my_C = None, None, None, None
         JCoup_dict = {}
 
-        for atom in model_data.atomgroup:
+        for atom in pdb_model_data.atomgroup:
             atom_res = atom.getResindex() + 1
 
             if atom_res != current_Resindex:
@@ -148,11 +147,13 @@ def calc_jcoupling(param_set, calced, experimental, Jcoup_type):
     return JCoup_calced, model_data_list
 
 
-def jcoupling(my_CSV_buffer, param_set, Jcoup_dict, my_PDB, my_path):
+def jcoupling(
+        my_CSV_buffer, pdb_model_data, param_set, Jcoup_dict, my_PDB, my_path
+        ):
     """Back calculate skalar coupling from given RDC lists and PDB models"""
     Jcuop_data = []
     type_dict = {}
-    dihed_lists = calc_dihedral_angles()
+    dihed_lists = calc_dihedral_angles(pdb_model_data)
 
     for Jcoup_type in sorted(list(Jcoup_dict.keys())):
         JCoup_calced, model_data = calc_jcoupling(

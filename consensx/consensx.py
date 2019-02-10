@@ -162,7 +162,8 @@ def run_calculation(request, calc_id):
 
     if Jcoup_dict:
         jcoup_data = calc.jcoupling(
-            my_csv_buffer, db_entry.karplus, Jcoup_dict, my_pdb, my_path
+            my_csv_buffer, model_data, db_entry.karplus, Jcoup_dict,
+            my_pdb, my_path
         )
         data_found = True
 
