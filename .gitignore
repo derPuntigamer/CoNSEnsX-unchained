@@ -1,3 +1,4 @@
+.vscode
 consensx/.config
 db.sqlite3
 *.pyc
@@ -5,3 +6,5 @@ csx_unchained/__pycache__/*
 consensx/csx_libs/__pycache__/*
 consensx/migrations/
 media/*
+consensx/.config
+csx_unchained/settings.py

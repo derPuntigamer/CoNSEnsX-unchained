@@ -9,6 +9,7 @@ from progress.bar import Bar
 import consensx.csx_libs.methods as csx_func
 import consensx.csx_libs.objects as csx_obj
 import consensx.csx_libs.pca as csx_pca
+import consensx.calc as calc
 from .models import CSX_upload
 
 
@@ -49,9 +50,6 @@ class DumpedData():
         DumpedData.RDC_lists = pickle.load(open(RDC_lists_path, 'rb'))
         model_data_path = path + "/RDC_model_data.pickle"
         DumpedData.RDC_model_data = pickle.load(open(model_data_path, 'rb'))
-        RDC_obj_attr_path = path + "/RDC_obj_attr.pickle"
-        RDC_obj_attr = pickle.load(open(RDC_obj_attr_path, 'rb'))
-        DumpedData.RDC_model_data.RDC_data = RDC_obj_attr
         DumpedData.RDC_isloaded = True
 
     @staticmethod
@@ -235,23 +233,21 @@ def averageChemShift_on(models, my_data):
     return averageChemShift
 
 
-def averageS2_on(models, PDB_data, S2_dict, S2_type, fit, fit_range):
+def averageS2_on(models, model_data, S2_dict, S2_type, fit, fit_range):
     """Returns a dictonary with the average S2 values for the given S2 type:
        averageS2[residue] = value"""
-
-    model_data = PDB_data
     my_models = []
 
     for model_num in models:
         model_data.atomgroup.setACSIndex(model_num)
         my_models.append(model_data.atomgroup[:])
 
-    csx_obj.PDB_model.is_fitted = False
+    # csx_obj.PDB_model.is_fitted = False
 
-    my_S2 = csx_func.calcS2(model_data, models, S2_dict[S2_type], S2_type,
-                            fit, fit_range)
+    return calc.s2_values(
+        model_data, models, S2_dict[S2_type], S2_type, fit, fit_range
+    )
 
-    return my_S2
 
 def get_two_random_from(models):
     from numpy import random
@@ -331,7 +327,7 @@ def selection_on(my_path, measure, user_sel,
                     RDC_type = sel_data[2]
                     RDC_weight = sel_data[3]
 
-                    my_data = RDC_model_data.RDC_data[RDC_num][RDC_type]
+                    my_data = RDC_model_data.rdc_data[RDC_num][RDC_type]
                     averageRDC = averageRDCs_on(pdb_sel, my_data)
                     my_RDC = RDC_lists[RDC_num - 1][RDC_type]
 

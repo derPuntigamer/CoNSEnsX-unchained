@@ -1,12 +1,12 @@
 import matplotlib
-matplotlib.use('Agg')
-
 import random  # ID generation
 import string  # ID generation
 import prody
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+
+matplotlib.use('Agg')
 
 chars = string.ascii_uppercase + string.digits
 
@@ -21,7 +21,6 @@ def create_PCA_comparison(my_path, original, in_selection):
     color_list = ["blue" for i in range(len(sel_ensemble1))]
 
     for i in [int(x)-1 for x in in_selection]:
-        print("I is ", i)
         color_list[i] = "red"
 
     pca = prody.PCA("PCA1")

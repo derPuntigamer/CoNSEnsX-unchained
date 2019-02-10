@@ -8,27 +8,6 @@ class CalcPickle(dict):
     data = dict()
 
 
-class RDC_modell_corr(object):
-
-    """Class for per model RDC correlation"""
-    RDC_lists = []
-
-    def __init__(self, RDC_list_permodel):
-        RDC_modell_corr.RDC_lists.append(RDC_list_permodel)
-
-    @staticmethod
-    def get_best_model(RDC_list_num):
-        best_value = -1
-        best_num = -1
-
-        for num, value in enumerate(RDC_modell_corr.RDC_lists[RDC_list_num]):
-            if value > best_value:
-                best_value = value
-                best_num = num
-
-        return best_num, best_value
-
-
 class ThirdParty(object):
 
     """Class to store 3rd party software information"""
@@ -102,59 +81,6 @@ class CSV_buffer(object):
             output_csv.write("\n")
 
 
-class RDC_Record(object):
-
-    """Class for storing RDC data"""
-    def __init__(self, resnum1, atom1, resnum2, atom2, RDC_value):
-        self.RDC_type = (str(int(resnum1) - int(resnum2))
-                         + '_' + atom1 + '_' + atom2)
-        self.resnum = int(resnum1)
-        self.atom = atom1
-        self.resnum2 = int(resnum2)
-        self.atom2 = atom2
-        self.value = float(RDC_value)
-
-
-class S2_Record(object):
-
-    """Class for storing S2 data"""
-    def __init__(self, resnum, S2_type, S2_value):
-        self.resnum = int(resnum)
-        self.type = S2_type
-        self.value = float(S2_value)
-        self.calced = None
-
-
-class JCoup_Record(object):
-
-    """Class for storing J-Coupling data"""
-    def __init__(self, resnum, jcoup_type, JCoup_value):
-        self.resnum = int(resnum)
-        self.type = jcoup_type
-        self.value = float(JCoup_value)
-
-
-class ChemShift_Record(object):
-
-    """Class for storing chemical shift data"""
-    def __init__(self, resnum, res_name, atom_name, ChemShift_value):
-        self.resnum = int(resnum)
-        self.res_name = res_name
-        self.atom_name = atom_name
-        self.value = float(ChemShift_value)
-
-    def __str__(self):
-        return (
-            "resnum: " + str(self.resnum) + "," +
-            "res_name: " + self.res_name + "," +
-            "atom_name: " + self.atom_name + "," +
-            "value: " + str(self.value) + "\n"
-        )
-
-    def __repr__(self):
-        return self.__str__()
-
-
 class ChemShift_modell_data(object):
 
     """Class for per model chemical shift data"""
@@ -170,23 +96,23 @@ class ChemShift_modell_data(object):
         return type_data
 
 
-class PDB_model(object):
+# class PDB_model(object):
 
-    """Class for storing PDB model data"""
-    is_fitted = False
-    model_data = None
+#     """Class for storing PDB model data"""
+#     is_fitted = False
+#     model_data = None
 
-    def __init__(self, atomgroup, model_count):
-        self.atomgroup = atomgroup
-        self.model_count = model_count
-        try:
-            self.elements = atomgroup.getElements()
-        except AttributeError:
-            print("ERROR -> PDB parsing failed. Please check your PDB file!")
-            raise SystemExit
-        self.names = atomgroup.getNames()
-        self.coordsets = atomgroup.numCoordsets()
-        PDB_model.model_data = self
+#     def __init__(self, atomgroup, model_count):
+#         self.atomgroup = atomgroup
+#         self.model_count = model_count
+#         try:
+#             self.elements = atomgroup.getElements()
+#         except AttributeError:
+#             print("ERROR -> PDB parsing failed. Please check your PDB file!")
+#             raise SystemExit
+#         self.names = atomgroup.getNames()
+#         self.coordsets = atomgroup.numCoordsets()
+#         PDB_model.model_data = self
 
 
 class Restraint_Record(object):
@@ -215,7 +141,7 @@ class Restraint_Record(object):
         return Restraint_Record.all_restraints[-1].csx_id
 
     @staticmethod
-    def getNOERestraints():
+    def getNOERestraints(model_data):
         # avoid repeated resolution of pseudo atom names
         if Restraint_Record.resolved_restraints:
             return Restraint_Record.resolved_restraints
@@ -227,7 +153,6 @@ class Restraint_Record(object):
         # load atom names from PDB data into a dict, residue IDs as keys
         NOE_dict = {}
         PDB_atom_names = {}
-        model_data = PDB_model.model_data
 
         for atom in model_data.atomgroup:
             atom_res = atom.getResnum()
@@ -472,9 +397,11 @@ class Vec_3D(object):
 
     @staticmethod
     def dihedAngle(one, other):
-        calc_cos = (one.v[0] * other.v[0] +
-                   one.v[1] * other.v[1] +
-                   one.v[2] * other.v[2]) / (one.magnitude() * other.magnitude())
+        calc_cos = (
+            one.v[0] * other.v[0] +
+            one.v[1] * other.v[1] +
+            one.v[2] * other.v[2]
+            ) / (one.magnitude() * other.magnitude())
 
         # minor correction due to numerical issues
         if calc_cos > 1:
