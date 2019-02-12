@@ -100,7 +100,8 @@ def calc_dihedral_angles(pdb_model_data):
 
 
 def calc_jcoupling(
-        param_set, calced, experimental, Jcoup_type, my_path, exp_dat_file_name
+        param_set, calced, experimental, Jcoup_type, my_path,
+        exp_dat_file_name, bme_weights
         ):
     """Calculates J-coupling values from dihedral angles
        note: all angles must be in radian"""
@@ -134,9 +135,17 @@ def calc_jcoupling(
             )
 
             jcoup_values_list.append(str(jcoup))
+
+            # if bme_weights:
+            #     J += bme_weights[record.resnum + 1] * jcoup
+            # else:
             J += jcoup
 
         jcoup_values_store.append(jcoup_values_list)
+
+        # if bme_weights:
+        #     JCoup_calced[record.resnum] = J / sum(bme_weights)
+        # else:
         JCoup_calced[record.resnum] = J / len(calced)
 
     calc_dat_file_name = my_path + "jcoup_" + Jcoup_type + "_calc.dat"
@@ -174,7 +183,7 @@ def calc_jcoupling(
     model_data_list = []
     model_data_dict = {}
 
-    for Jcoup_dict in calced:   # model
+    for Jcoup_dict in calced: # model
         for record in experimental:
             phi = Jcoup_dict[record.resnum]
 
@@ -193,9 +202,11 @@ def calc_jcoupling(
 
 
 def jcoupling(
-        my_CSV_buffer, pdb_model_data, param_set, Jcoup_dict, my_PDB, my_path
+        my_CSV_buffer, pdb_model_data, db_entry, Jcoup_dict, my_PDB, my_path,
+        bme_weights
         ):
     """Back calculate skalar coupling from given RDC lists and PDB models"""
+    param_set = db_entry.karplus
     Jcuop_data = []
     type_dict = {}
     dihed_lists = calc_dihedral_angles(pdb_model_data)
@@ -217,7 +228,7 @@ def jcoupling(
 
         JCoup_calced, model_data = calc_jcoupling(
             param_set, dihed_lists, Jcoup_dict[Jcoup_type], Jcoup_type,
-            my_path, exp_dat_file_name
+            my_path, exp_dat_file_name, bme_weights
         )
 
         type_dict[Jcoup_type] = model_data

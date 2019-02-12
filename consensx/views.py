@@ -62,6 +62,15 @@ def home(request):
         except KeyError:
             noe_file_name = None
 
+        try:                                    # get BME weights if any
+            bme_weights_file = request.FILES['bme_weights_upload']
+            bme_weights_name = bme_weights_file.name
+            handle_uploaded_file(bme_weights_file, my_path, bme_weights_name)
+        except KeyError:
+            bme_weights_name = None
+
+        print("--- bme_weights_name", bme_weights_name)
+
         try:                                    # check if fitting is enabled
             fit_enable = bool(request.POST['superimpose'])
         except KeyError:
@@ -87,6 +96,7 @@ def home(request):
             PDB_file=pdb_file.name,
             NOE_file=noe_file_name,
             STR_file=restraint_file_name,
+            bme_weights_file=bme_weights_name,
             karplus=request.POST['KARPLUS'],
             superimpose=fit_enable,
             fit_range=fit_range,

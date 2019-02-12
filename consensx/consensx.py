@@ -108,6 +108,15 @@ def run_calculation(request, calc_id):
         print("EXCEPTION", e)
         return HttpResponse(e)
 
+    # --------------------  Read  and parse BME weights   ------------------- #
+    bme_weights = None
+
+    if db_entry.bme_weights_file:
+        print("db_entry.bme_weights_file", db_entry.bme_weights_file)
+        f = open(my_path + "jcoup_3JHNHA_weights.dat").read().split()
+        f = [float(i) for i in f]
+        bme_weights = f
+
     # ------------------------  RDC calculation  ------------------------ #
     rdc_lists = star_nmr_data.parse_rdc()
     rdc_lists_path = my_path + "/RDC_lists.pickle"
@@ -162,8 +171,8 @@ def run_calculation(request, calc_id):
 
     if Jcoup_dict:
         jcoup_data = calc.jcoupling(
-            my_csv_buffer, model_data, db_entry.karplus, Jcoup_dict,
-            my_pdb, my_path
+            my_csv_buffer, model_data, db_entry, Jcoup_dict,
+            my_pdb, my_path, bme_weights
         )
         data_found = True
 
