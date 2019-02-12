@@ -6,6 +6,7 @@ import consensx.graph as graph
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
+from consensx.bme_reweight import Reweight
 
 # Equation and coefficients from:
 # Wang & Bax (1996) JACS 118:2483-2494. Table 1, NMR + X-ray data
@@ -98,7 +99,9 @@ def calc_dihedral_angles(pdb_model_data):
     return JCoup_dicts
 
 
-def calc_jcoupling(param_set, calced, experimental, Jcoup_type):
+def calc_jcoupling(
+        param_set, calced, experimental, Jcoup_type, my_path, exp_dat_file_name
+        ):
     """Calculates J-coupling values from dihedral angles
        note: all angles must be in radian"""
     JCoup_calced = {}
@@ -115,17 +118,58 @@ def calc_jcoupling(param_set, calced, experimental, Jcoup_type):
     C = my_karplus['C']
     THETA = my_karplus['THETA']
 
+    jcoup_values_store = []
+
     for record in experimental:  # resnums
         J = 0
+        jcoup_values_list = []
 
         for my_dict in calced:  # lists (with models as dicts)
             phi = my_dict[record.resnum]
 
-            J += (A[Jcoup_type] * (math.cos(phi + THETA[Jcoup_type])) ** 2 +
-                  B[Jcoup_type] * math.cos(phi + THETA[Jcoup_type]) +
-                  C[Jcoup_type])
+            jcoup = (
+                A[Jcoup_type] * (math.cos(phi + THETA[Jcoup_type])) ** 2 +
+                B[Jcoup_type] * math.cos(phi + THETA[Jcoup_type]) +
+                C[Jcoup_type]
+            )
 
+            jcoup_values_list.append(str(jcoup))
+            J += jcoup
+
+        jcoup_values_store.append(jcoup_values_list)
         JCoup_calced[record.resnum] = J / len(calced)
+
+    calc_dat_file_name = my_path + "jcoup_" + Jcoup_type + "_calc.dat"
+
+    with open(calc_dat_file_name, "w") as jcoup_calc_file:
+        for mod in range(len(jcoup_values_store[0])):
+            mod_str = str(mod) + " "
+
+            for exp in range(len(jcoup_values_store)):
+                mod_str += jcoup_values_store[exp][mod] + " "
+
+            jcoup_calc_file.write(
+                mod_str + "\n"
+            )
+
+    rew = Reweight()
+    rew.load(exp_dat_file_name, calc_dat_file_name)
+    chi2_before, chi2_after, srel = rew.optimize(theta=40)
+
+    print("# CHI2 before minimization:     %8.4f" % (chi2_before))
+    print("# CHI2 after minimization:      %8.4f" % (chi2_after))
+    # print("# Fraction of effective frames: %8.4f" % (np.exp(srel)))
+
+    # returns the optimized weights
+    w_opt = rew.get_weights()
+
+    print("jcoup_" + Jcoup_type, "WEIGHTS")
+    print(w_opt)
+
+    weights_file_name = my_path + "jcoup_" + Jcoup_type + "_weights.dat"
+
+    with open (weights_file_name, "w") as weights_file:
+        weights_file.write(" ".join([str(i) for i in w_opt]))
 
     model_data_list = []
     model_data_dict = {}
@@ -137,7 +181,8 @@ def calc_jcoupling(param_set, calced, experimental, Jcoup_type):
             J = (
                 A[Jcoup_type] * (math.cos(phi + THETA[Jcoup_type])) ** 2 +
                 B[Jcoup_type] * math.cos(phi + THETA[Jcoup_type]) +
-                C[Jcoup_type])
+                C[Jcoup_type]
+            )
 
             model_data_dict[record.resnum] = J
 
@@ -156,8 +201,23 @@ def jcoupling(
     dihed_lists = calc_dihedral_angles(pdb_model_data)
 
     for Jcoup_type in sorted(list(Jcoup_dict.keys())):
+        exp_dat_file_name = my_path + "jcoup_" + Jcoup_type + "_exp.dat"
+        jcoup_exp_file = open(exp_dat_file_name, "w")
+
+        jcoup_exp_file.write("# DATA=JCOUPLINGS PRIOR=GAUSS\n")
+
+        for i in Jcoup_dict[Jcoup_type]:
+            jcoup_exp_file.write(
+                str(i.resnum) + "-" +
+                str(i.type) + "\t" +
+                str(i.value) + "\t0.1\n"
+            )
+
+        jcoup_exp_file.close()
+
         JCoup_calced, model_data = calc_jcoupling(
-            param_set, dihed_lists, Jcoup_dict[Jcoup_type], Jcoup_type
+            param_set, dihed_lists, Jcoup_dict[Jcoup_type], Jcoup_type,
+            my_path, exp_dat_file_name
         )
 
         type_dict[Jcoup_type] = model_data
@@ -225,6 +285,7 @@ def jcoupling(
             "input_id": "JCoup_" + Jcoup_type
         })
 
+    jcoup_exp_file.close()
     Jcoup_model_data_path = my_path + "/Jcoup_model.pickle"
     pickle.dump(type_dict, open(Jcoup_model_data_path, 'wb'))
     return Jcuop_data
