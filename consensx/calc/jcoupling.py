@@ -125,7 +125,7 @@ def calc_jcoupling(
         J = 0
         jcoup_values_list = []
 
-        for my_dict in calced:  # lists (with models as dicts)
+        for i, my_dict in enumerate(calced):  # lists (with models as dicts)
             phi = my_dict[record.resnum]
 
             jcoup = (
@@ -136,17 +136,17 @@ def calc_jcoupling(
 
             jcoup_values_list.append(str(jcoup))
 
-            # if bme_weights:
-            #     J += bme_weights[record.resnum + 1] * jcoup
-            # else:
-            J += jcoup
+            if bme_weights:
+                J += bme_weights[i] * jcoup
+            else:
+                J += jcoup
 
         jcoup_values_store.append(jcoup_values_list)
 
-        # if bme_weights:
-        #     JCoup_calced[record.resnum] = J / sum(bme_weights)
-        # else:
-        JCoup_calced[record.resnum] = J / len(calced)
+        if bme_weights:
+            JCoup_calced[record.resnum] = J / sum(bme_weights)
+        else:
+            JCoup_calced[record.resnum] = J / len(calced)
 
     calc_dat_file_name = my_path + "jcoup_" + Jcoup_type + "_calc.dat"
 
@@ -161,29 +161,24 @@ def calc_jcoupling(
                 mod_str + "\n"
             )
 
+    # BME reweighting ingetration, might DELETE later
     rew = Reweight()
     rew.load(exp_dat_file_name, calc_dat_file_name)
     chi2_before, chi2_after, srel = rew.optimize(theta=40)
 
     print("# CHI2 before minimization:     %8.4f" % (chi2_before))
     print("# CHI2 after minimization:      %8.4f" % (chi2_after))
-    # print("# Fraction of effective frames: %8.4f" % (np.exp(srel)))
 
-    # returns the optimized weights
     w_opt = rew.get_weights()
-
-    print("jcoup_" + Jcoup_type, "WEIGHTS")
-    print(w_opt)
-
     weights_file_name = my_path + "jcoup_" + Jcoup_type + "_weights.dat"
 
-    with open (weights_file_name, "w") as weights_file:
+    with open(weights_file_name, "w") as weights_file:
         weights_file.write(" ".join([str(i) for i in w_opt]))
 
     model_data_list = []
     model_data_dict = {}
 
-    for Jcoup_dict in calced: # model
+    for Jcoup_dict in calced:  # model
         for record in experimental:
             phi = Jcoup_dict[record.resnum]
 
