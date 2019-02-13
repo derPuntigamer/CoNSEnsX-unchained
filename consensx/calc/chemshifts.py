@@ -8,105 +8,123 @@ from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
 
-def call_shiftx_on(my_path, pdb_files):
+def call_shiftx_on(my_path, pdb_files, bme_weights=None):
     """Call ShiftX on PDB models. Each output is appended to 'out_name'"""
     for i, pdb_file in enumerate(pdb_files):
         pdb_file = my_path + pdb_file
         out_name = my_path + "/modell_" + str(i+1) + ".out"
         subprocess.call([csx_obj.ThirdParty.shiftx, '1', pdb_file, out_name])
 
+    shiftx_output_files = []
     averageHA, averageH, averageN = {}, {}, {}
     averageCA, averageCB, averageC = {}, {}, {}
     modHA, modH, modN, modCA, modCB, modC = {}, {}, {}, {}, {}, {}
     model_data_list = []
+    model_weight = 1
+    model_weight_sum = len(pdb_files)
+
+    if bme_weights:
+        model_weight_sum = sum(bme_weights)
 
     for some_file in csx_func.natural_sort(os.listdir(my_path)):
         if some_file.startswith("modell") and some_file.endswith(".out"):
-            out_file = open(my_path + some_file)
-            part = 0
+            shiftx_output_files.append(some_file)
 
-            for line in out_file:
-                if line.strip().startswith("NUM"):
-                    part += 1
+    for i, shiftx_output in enumerate(shiftx_output_files):
+        if bme_weights:
+            model_weight = bme_weights[i]
 
-                    if part == 2:
-                        break
+        out_file = open(my_path + shiftx_output)
+        part = 0
 
-                    continue
+        for line in out_file:
+            if line.strip().startswith("NUM"):
+                part += 1
 
-                if line.strip().startswith("---"):
-                    continue
+                if part == 2:
+                    break
 
-                if line.strip():
-                    line_values = line.split()
-                    try:
-                        resnum = int(line_values[0])
-                    except ValueError:
-                        resnum = int(line_values[0][1:])
-                    HA = float(line_values[2])
-                    H = float(line_values[3])
-                    N = float(line_values[4])
-                    CA = float(line_values[5])
-                    CB = float(line_values[6])
-                    C = float(line_values[7])
+                continue
 
-                    modHA[resnum] = HA
-                    modH[resnum] = H
-                    modN[resnum] = N
-                    modCA[resnum] = CA
-                    modCB[resnum] = CB
-                    modC[resnum] = C
+            if line.strip().startswith("---"):
+                continue
 
-                    if resnum in list(averageHA.keys()):
-                        averageHA[resnum] += HA
-                    else:
-                        averageHA[resnum] = HA
+            if line.strip():
+                line_values = line.split()
+                try:
+                    resnum = int(line_values[0])
+                except ValueError:
+                    resnum = int(line_values[0][1:])
+                HA = float(line_values[2])
+                H = float(line_values[3])
+                N = float(line_values[4])
+                CA = float(line_values[5])
+                CB = float(line_values[6])
+                C = float(line_values[7])
 
-                    if resnum in list(averageH.keys()):
-                        averageH[resnum] += H
-                    else:
-                        averageH[resnum] = H
+                modHA[resnum] = HA * model_weight
+                modH[resnum] = H * model_weight
+                modN[resnum] = N * model_weight
+                modCA[resnum] = CA * model_weight
+                modCB[resnum] = CB * model_weight
+                modC[resnum] = C * model_weight
 
-                    if resnum in list(averageN.keys()):
-                        averageN[resnum] += N
-                    else:
-                        averageN[resnum] = N
+                if resnum in list(averageHA.keys()):
+                    averageHA[resnum] += HA * model_weight
+                else:
+                    averageHA[resnum] = HA * model_weight
 
-                    if resnum in list(averageCA.keys()):
-                        averageCA[resnum] += CA
-                    else:
-                        averageCA[resnum] = CA
+                if resnum in list(averageH.keys()):
+                    averageH[resnum] += H * model_weight
+                else:
+                    averageH[resnum] = H * model_weight
 
-                    if resnum in list(averageCB.keys()):
-                        averageCB[resnum] += CB
-                    else:
-                        averageCB[resnum] = CB
+                if resnum in list(averageN.keys()):
+                    averageN[resnum] += N * model_weight
+                else:
+                    averageN[resnum] = N * model_weight
 
-                    if resnum in list(averageC.keys()):
-                        averageC[resnum] += C
-                    else:
-                        averageC[resnum] = C
+                if resnum in list(averageCA.keys()):
+                    averageCA[resnum] += CA * model_weight
+                else:
+                    averageCA[resnum] = CA * model_weight
 
-            out_file.close()
-            model_data_list.append({"HA": modHA, "H": modH, "N":  modN,
-                                    "CA": modCA, "CB": modCB, "C": modC})
-            modHA, modH, modN, modCA, modCB, modC = {}, {}, {}, {}, {}, {}
+                if resnum in list(averageCB.keys()):
+                    averageCB[resnum] += CB * model_weight
+                else:
+                    averageCB[resnum] = CB * model_weight
+
+                if resnum in list(averageC.keys()):
+                    averageC[resnum] += C * model_weight
+                else:
+                    averageC[resnum] = C * model_weight
+
+        out_file.close()
+
+        model_data_list.append({
+            "HA": modHA, "H": modH, "N":  modN,
+            "CA": modCA, "CB": modCB, "C": modC
+        })
+
+        modHA, modH, modN, modCA, modCB, modC = {}, {}, {}, {}, {}, {}
 
     averages = [averageHA, averageH, averageN, averageCA, averageCB, averageC]
 
     for avg_dict in averages:
         for key in avg_dict:
-            avg_dict[key] /= len(pdb_files)
+            avg_dict[key] /= model_weight_sum
 
     return {"HA": averageHA, "H":  averageH, "N":  averageN,  "CA": averageCA,
             "CB": averageCB, "C": averageC}, model_data_list
 
 
-def chemshifts(my_CSV_buffer, ChemShift_lists, pdb_models, my_path):
+def chemshifts(
+        my_CSV_buffer, ChemShift_lists, pdb_models, my_path, bme_weights
+        ):
     """Back calculate chemical shifts from given chemical shift list and PDB
        models"""
     cs_data = []
-    cs_calced, model_data = call_shiftx_on(my_path, pdb_models)
+    cs_calced, model_data = call_shiftx_on(my_path, pdb_models, bme_weights)
 
     csx_obj.ChemShift_modell_data.type_dict = model_data
 
@@ -123,8 +141,11 @@ def chemshifts(my_CSV_buffer, ChemShift_lists, pdb_models, my_path):
                 for record in cs_list[CS_type]:
                     inner_exp[record.resnum] = model[CS_type][record.resnum]
 
-                model_corrs.append(csx_func.calcCorrel(inner_exp,
-                                                       cs_list[CS_type]))
+                model_corrs.append(
+                    csx_func.calcCorrel(
+                        inner_exp, cs_list[CS_type]
+                    )
+                )
 
             avg_model_corr = sum(model_corrs) / len(model_corrs)
 

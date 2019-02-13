@@ -113,7 +113,7 @@ def run_calculation(request, calc_id):
 
     if db_entry.bme_weights_file:
         print("db_entry.bme_weights_file", db_entry.bme_weights_file)
-        f = open(my_path + "jcoup_3JHNHA_weights.dat").read().split()
+        f = open(my_path + db_entry.bme_weights_file).read().split()
         f = [float(i) for i in f]
         bme_weights = f
 
@@ -184,7 +184,7 @@ def run_calculation(request, calc_id):
 
     if chem_shift_lists:
         chemshift_data = calc.chemshifts(
-            my_csv_buffer, chem_shift_lists, pdb_models, my_path
+            my_csv_buffer, chem_shift_lists, pdb_models, my_path, bme_weights
         )
         data_found = True
 
