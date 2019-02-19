@@ -69,8 +69,6 @@ def home(request):
         except KeyError:
             bme_weights_name = None
 
-        print("--- bme_weights_name", bme_weights_name)
-
         try:                                    # check if fitting is enabled
             fit_enable = bool(request.POST['superimpose'])
         except KeyError:
@@ -130,7 +128,7 @@ def selection(request, my_id):
         "measure": measure,
         "num_coordsets": num_coordsets,
         "pca_image_names": pca_image_names
-}
+    }
 
     if measure == "correlation":
         measure = "corr"
