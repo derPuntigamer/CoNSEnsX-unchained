@@ -224,7 +224,8 @@ def run_calculation(request, calc_id):
             "S2_sc_data": s2_sc_data,
             "Jcoup_data": jcoup_data,
             "chemshift_data": chemshift_data,
-            "SVD_calc": db_entry.svd_enable
+            "SVD_calc": db_entry.svd_enable,
+            "bme_zf": bool(bme_zf)
         })
 
         print("RENDERED PAGE ---------------- START")
