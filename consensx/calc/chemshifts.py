@@ -7,6 +7,8 @@ import consensx.graph as graph
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
+chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
+
 
 def call_shiftx_on(my_path, pdb_files, bme_weights=None):
     """Call ShiftX on PDB models. Each output is appended to 'out_name'"""
@@ -132,6 +134,32 @@ def chemshifts(
     pickle.dump(model_data, open(cs_model_data_path, 'wb'))
 
     for n, cs_list in enumerate(ChemShift_lists):
+        bme_exp_filename = "chemshift_" + str(n) + "_exp.dat"
+        bme_calc_filename = "chemshift_" + str(n) + "_calc.dat"
+
+        with open(my_path + bme_exp_filename, "w") as exp_dat_file:
+            exp_dat_file.write("# DATA=CS PRIOR=GAUSS\n")
+
+            for atom_type in chemshift_types:
+                for i in cs_list[atom_type]:
+                    exp_dat_file.write(
+                        str(i.resnum) + "_" +
+                        str(i.atom_name) + "\t" +
+                        str(i.value) + "\t0.1\n"
+                    )
+
+        with open(my_path + bme_calc_filename, "w") as calc_dat_file:
+            for index, model in enumerate(model_data):
+                calc_dat_file.write(str(index) + " ")
+
+                for atom_type in chemshift_types:
+                    for i in cs_list[atom_type]:
+                        calc_dat_file.write(
+                            str(model[atom_type][i.resnum]) + " "
+                        )
+
+                calc_dat_file.write("\n")
+
         for CS_type in sorted(list(cs_list.keys())):
             model_corrs = []
 
