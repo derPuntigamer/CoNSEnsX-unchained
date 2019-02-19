@@ -15,6 +15,7 @@ Authors: Zoltán Gáspári, Dániel Dudola
 # standard modules
 import os
 import pickle
+import zipfile
 
 # own modules
 import consensx.csx_libs.methods as csx_func
@@ -192,6 +193,19 @@ def run_calculation(request, calc_id):
 
     csx_func.calcPeptideBonds(model_data)
     csx_func.calcNH_Angles(model_data)
+
+    # pack BME input files for zipping
+    bme_zf = None
+
+    for file in os.listdir(my_path):
+        if file.endswith("_exp.dat") or file.endswith("_calc.dat"):
+            if not bme_zf:
+                bme_zf = zipfile.ZipFile(my_path + "bme_inputs.zip", mode="w")
+
+            bme_zf.write(my_path + file, file)
+
+    if bme_zf:
+        bme_zf.close()
 
     if data_found:
         print(csx_obj.CalcPickle.data)
