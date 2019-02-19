@@ -15,6 +15,7 @@ Authors: Zoltán Gáspári, Dániel Dudola
 # standard modules
 import os
 import pickle
+import zipfile
 
 # own modules
 import consensx.csx_libs.methods as csx_func
@@ -108,6 +109,15 @@ def run_calculation(request, calc_id):
         print("EXCEPTION", e)
         return HttpResponse(e)
 
+    # --------------------  Read  and parse BME weights   ------------------- #
+    bme_weights = None
+
+    if db_entry.bme_weights_file:
+        print("db_entry.bme_weights_file", db_entry.bme_weights_file)
+        f = open(my_path + db_entry.bme_weights_file).read().split()
+        f = [float(i) for i in f]
+        bme_weights = f
+
     # ------------------------  RDC calculation  ------------------------ #
     rdc_lists = star_nmr_data.parse_rdc()
     rdc_lists_path = my_path + "/RDC_lists.pickle"
@@ -162,8 +172,8 @@ def run_calculation(request, calc_id):
 
     if Jcoup_dict:
         jcoup_data = calc.jcoupling(
-            my_csv_buffer, model_data, db_entry.karplus, Jcoup_dict,
-            my_pdb, my_path
+            my_csv_buffer, model_data, db_entry, Jcoup_dict,
+            my_pdb, my_path, bme_weights
         )
         data_found = True
 
@@ -175,7 +185,7 @@ def run_calculation(request, calc_id):
 
     if chem_shift_lists:
         chemshift_data = calc.chemshifts(
-            my_csv_buffer, chem_shift_lists, pdb_models, my_path
+            my_csv_buffer, chem_shift_lists, pdb_models, my_path, bme_weights
         )
         data_found = True
 
@@ -183,6 +193,19 @@ def run_calculation(request, calc_id):
 
     csx_func.calcPeptideBonds(model_data)
     csx_func.calcNH_Angles(model_data)
+
+    # pack BME input files for zipping
+    bme_zf = None
+
+    for file in os.listdir(my_path):
+        if file.endswith("_exp.dat") or file.endswith("_calc.dat"):
+            if not bme_zf:
+                bme_zf = zipfile.ZipFile(my_path + "bme_inputs.zip", mode="w")
+
+            bme_zf.write(my_path + file, file)
+
+    if bme_zf:
+        bme_zf.close()
 
     if data_found:
         print(csx_obj.CalcPickle.data)
