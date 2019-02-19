@@ -6,7 +6,7 @@ import consensx.graph as graph
 from consensx.csx_libs import methods as csx_func
 from consensx.csx_libs import objects as csx_obj
 
-from consensx.bme_reweight import Reweight
+# from consensx.bme_reweight import Reweight
 
 # Equation and coefficients from:
 # Wang & Bax (1996) JACS 118:2483-2494. Table 1, NMR + X-ray data
@@ -162,18 +162,18 @@ def calc_jcoupling(
             )
 
     # BME reweighting ingetration, might DELETE later
-    rew = Reweight()
-    rew.load(exp_dat_file_name, calc_dat_file_name)
-    chi2_before, chi2_after, srel = rew.optimize(theta=40)
+    # rew = Reweight()
+    # rew.load(exp_dat_file_name, calc_dat_file_name)
+    # chi2_before, chi2_after, srel = rew.optimize(theta=40)
 
-    print("# CHI2 before minimization:     %8.4f" % (chi2_before))
-    print("# CHI2 after minimization:      %8.4f" % (chi2_after))
+    # print("# CHI2 before minimization:     %8.4f" % (chi2_before))
+    # print("# CHI2 after minimization:      %8.4f" % (chi2_after))
 
-    w_opt = rew.get_weights()
-    weights_file_name = my_path + "jcoup_" + Jcoup_type + "_weights.dat"
+    # w_opt = rew.get_weights()
+    # weights_file_name = my_path + "jcoup_" + Jcoup_type + "_weights.dat"
 
-    with open(weights_file_name, "w") as weights_file:
-        weights_file.write(" ".join([str(i) for i in w_opt]))
+    # with open(weights_file_name, "w") as weights_file:
+    #     weights_file.write(" ".join([str(i) for i in w_opt]))
 
     model_data_list = []
     model_data_dict = {}
