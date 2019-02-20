@@ -78,10 +78,19 @@ def run_calculation(request, calc_id):
     jcoup_data = None
     chemshift_data = None
 
+    # --------------------  Read  and parse BME weights   ------------------- #
+    bme_weights = None
+
+    if db_entry.bme_weights_file:
+        print("db_entry.bme_weights_file", db_entry.bme_weights_file)
+        f = open(my_path + db_entry.bme_weights_file).read().split()
+        f = [float(i) for i in f]
+        bme_weights = f
+
     # ---------------------  Read  and parse NOE file   --------------------- #
     if db_entry.NOE_file:
         noe_n, noe_violations = calc.noe_violations(
-            my_pdb, model_data, my_path, db_entry
+            model_data, my_path, db_entry, bme_weights
         )
         pride_data = calc.nmr_pride(pdb_models, my_path)
 
@@ -98,7 +107,40 @@ def run_calculation(request, calc_id):
         data_found = True
 
     # ---------------------  Read  and parse STR file   --------------------- #
-    assert db_entry.STR_file
+    if not db_entry.STR_file:
+        bme_zf = zipfile.ZipFile(my_path + "bme_inputs.zip", mode="w")
+
+        for file in os.listdir(my_path):
+            if file.endswith("_exp.dat") or file.endswith("_calc.dat"):
+                bme_zf.write(my_path + file, file)
+
+        if bme_zf:
+            bme_zf.close()
+
+        rendered_page = render(request, "consensx/calculation.html", {
+            "my_id": my_id,
+            "my_pdb": db_entry.PDB_file,
+            "n_model": model_count,
+            "my_NOE": noe_name,
+            "n_NOE": noe_n,
+            "my_STR": str_name,
+            "NOE_PRIDE_data": noe_pride_data,
+            "RDC_data": rdc_calced_data,
+            "S2_data": s2_data,
+            "S2_sc_data": s2_sc_data,
+            "Jcoup_data": jcoup_data,
+            "chemshift_data": chemshift_data,
+            "SVD_calc": db_entry.svd_enable,
+            "bme_zf": True
+        })
+
+        post_data = CSX_calculation(
+            html_content=rendered_page.content,
+            id_code=my_id
+        )
+        post_data.save()
+
+        return rendered_page
 
     str_name = db_entry.STR_file
     nmr_file_path = my_path + db_entry.STR_file
@@ -108,15 +150,6 @@ def run_calculation(request, calc_id):
     except Exception as e:
         print("EXCEPTION", e)
         return HttpResponse(e)
-
-    # --------------------  Read  and parse BME weights   ------------------- #
-    bme_weights = None
-
-    if db_entry.bme_weights_file:
-        print("db_entry.bme_weights_file", db_entry.bme_weights_file)
-        f = open(my_path + db_entry.bme_weights_file).read().split()
-        f = [float(i) for i in f]
-        bme_weights = f
 
     # ------------------------  RDC calculation  ------------------------ #
     rdc_lists = star_nmr_data.parse_rdc()

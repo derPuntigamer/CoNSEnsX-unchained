@@ -32,10 +32,8 @@ def make_noe_hist(my_path, violations):
     plt.close()
 
 
-def pdb2coords(PDB_file):
+def pdb2coords(model_data):
     """Loads PDB coordinates into a dictonary, per model"""
-    model_data = csx_obj.PDB_model.model_data
-
     prev_resnum = -1
     PDB_coords = {}
 
@@ -123,7 +121,7 @@ def get_noe_from_file(NOE_file):
     return NOE_data
 
 
-def noe_violations(PDB_file, model_data, my_path, db_entry):
+def noe_violations(model_data, my_path, db_entry, bme_weights=None):
     """Back calculate NOE distance violations from given RDC lists and PDB
     models"""
 
@@ -138,7 +136,6 @@ def noe_violations(PDB_file, model_data, my_path, db_entry):
     save_shifts = get_noe_from_file(noe_file_path)
     noe_n = save_shifts[-1][0] + " distance restraints found"
 
-    # parse data to restraint objects returned from pypy process
     csx_id = 1
     prev_id = 1
     for data in save_shifts:
@@ -154,7 +151,7 @@ def noe_violations(PDB_file, model_data, my_path, db_entry):
     # fetch all restraint from class
     restraints = csx_obj.Restraint_Record.getNOERestraints(model_data)
 
-    PDB_coords = pdb2coords(PDB_file)
+    PDB_coords = pdb2coords(model_data)
     prev_id = -1
     avg_distances = {}
     all_distances = {}
@@ -203,7 +200,7 @@ def noe_violations(PDB_file, model_data, my_path, db_entry):
         for model in list(PDB_coords.keys()):
             dist_str += "{0:.2f}  ".format(all_distances[model][restraint_num])
 
-        print("DISTS", dist_str)
+        # print("DISTS", dist_str)
 
     # at this point avg_distances[model][curr_id] contains distances for one
     # model and one restraint GROUP identified with "csx_id" number
@@ -241,13 +238,50 @@ def noe_violations(PDB_file, model_data, my_path, db_entry):
         curr_id = int(restraint.curr_distID)
         avg = 0.0
 
-        for model in list(PDB_coords.keys()):
-            avg += math.pow(avg_distances[model][curr_id], -6)
+        if bme_weights:
+            for model in list(PDB_coords.keys()):
+                avg += math.pow(
+                    avg_distances[model][curr_id], -6
+                ) * bme_weights[model]
 
-        avg /= len(list(PDB_coords.keys()))
+            avg /= sum(bme_weights)
+        else:
+            for model in list(PDB_coords.keys()):
+                avg += math.pow(avg_distances[model][curr_id], -6)
+
+            avg /= len(list(PDB_coords.keys()))
+
         measured_avg[curr_id] = math.pow(avg, -1.0/6)
 
-    # at this point measured_avg[curr_id] is a simple dictonary containing the
+    bme_exp_filename = "noe_exp.dat"
+    bme_calc_filename = "noe_calc.dat"
+
+    with open(my_path + bme_exp_filename, "w") as exp_dat_file:
+        exp_dat_file.write("# DATA=NOE PRIOR=GAUSS POWER=6\n")
+        prev_id = -1
+
+        for restraint in restraints:
+            if prev_id == restraint.csx_id:
+                continue
+
+            prev_id = restraint.csx_id
+
+            exp_dat_file.write(
+                str(restraint.csx_id) + "\t" +
+                str(restraint.dist_max) + "\t0.1\n"
+            )
+
+    with open(my_path + bme_calc_filename, "w") as calc_dat_file:
+        for model in list(PDB_coords.keys()):
+
+            for i in avg_distances[model]:
+                calc_dat_file.write(
+                    str(avg_distances[model][i]) + " "
+                )
+
+        calc_dat_file.write("\n")
+
+    # at this point measured_avg[curr_id] is a simple dictionary containing the
     # model averaged distances for the given "csx_id" number
 
     avg_dist_keys = list(measured_avg.keys())
