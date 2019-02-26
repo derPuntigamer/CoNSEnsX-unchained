@@ -91,6 +91,13 @@
     <div class="container">
 
       <div style="margin-left: auto; margin-right: auto; width: 520px;">
+        {% if bme_zf %}
+        <a href="{{ MEDIA_URL }}{{ my_id }}/bme_inputs.zip" download>
+        <button class="btn btn-result" id="bme_download" type="button">
+        Download BME input data (ZIP)
+        </button>
+        </a>
+        {% endif%}
 
         <a href="{{ MEDIA_URL }}{{ my_id }}/values.csv" download>
         <button class="btn btn-result" id="csv_download" type="button">
