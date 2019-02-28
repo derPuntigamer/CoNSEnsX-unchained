@@ -89,10 +89,16 @@ def run_calculation(request, calc_id):
 
     # ---------------------  Read  and parse NOE file   --------------------- #
     if db_entry.NOE_file:
-        noe_n, noe_violations = calc.noe_violations(
-            model_data, my_path, db_entry, bme_weights
+        noe_restraints = parse.RestraintRecord(
+            my_path, db_entry.NOE_file, model_data
         )
-        pride_data = calc.nmr_pride(pdb_models, my_path)
+
+        noe_n = noe_restraints.get_restraint_count()
+
+        noe_violations = calc.noe_violations(
+            model_data, my_path, db_entry, noe_restraints, bme_weights
+        )
+        pride_data = calc.nmr_pride(pdb_models, my_path, noe_restraints)
 
         noe_pride_data = {
             "noe_violations": str(noe_violations),
