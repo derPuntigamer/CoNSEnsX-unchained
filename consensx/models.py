@@ -1,5 +1,5 @@
 from django.db import models
-import datetime
+
 
 # Create your models here.
 class CSX_upload(models.Model):
@@ -38,13 +38,13 @@ class CSX_upload(models.Model):
         my_time = self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         return my_time + " --- " + self.id_code
 
+
 class CSX_calculation(models.Model):
     id_code = models.CharField(
         max_length=6, default=None, blank=True, null=True
     )
     html_content = models.TextField(default=None, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-
 
     class Meta:
         verbose_name = 'Calculation result'
