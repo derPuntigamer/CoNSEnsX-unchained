@@ -8,11 +8,10 @@ import consensx.graph as graph
 
 
 def s2_values(
-        model_data, calculate_on_models, S2_records, S2_type, fit, fit_range
-        ):
-    """Returns a dictonary with the average S2 values:
-    S2_calced[residue] = value"""
-
+    model_data, calculate_on_models, s2_records, s2_type, fit, fit_range
+):
+    """Returns a dictionary with the average S2 values:
+    s2_calced[residue] = value"""
     if fit:
         reference = model_data.atomgroup[:]
 
@@ -31,7 +30,7 @@ def s2_values(
 
                 weights = np.zeros((len(ref_chain), 1), dtype=np.int)
 
-                fit_start, fit_end = fit_range.split('-')
+                fit_start, fit_end = fit_range.split("-")
 
                 for i in range(int(fit_start) - 1, int(fit_end) - 1):
                     weights[i] = 1
@@ -41,42 +40,42 @@ def s2_values(
 
     # get NH vectors from models (model_data[] -> vectors{resnum : vector})
     vector_data = []
-    s2_pairs = {'N': 'H', 'CA': 'HA'}
+    s2_pairs = {"N": "H", "CA": "HA"}
 
     for model_num in calculate_on_models:
         model_data.atomgroup.setACSIndex(model_num)
-        current_Resindex = 1
+        current_resindex = 1
         has_first, has_second = False, False
         vectors = {}
 
         for atom in model_data.atomgroup:
             atom_res = atom.getResnum()
 
-            if atom_res != current_Resindex:
-                current_Resindex = atom_res
+            if atom_res != current_resindex:
+                current_resindex = atom_res
                 has_first, has_second = False, False
 
-            if atom_res == current_Resindex:
-                if atom.getName() == S2_type:
+            if atom_res == current_resindex:
+                if atom.getName() == s2_type:
                     has_second = True
-                    N_coords = csx_obj.Vec_3D(atom.getCoords())
+                    n_coords = csx_obj.Vec_3D(atom.getCoords())
 
-                elif atom.getName() == s2_pairs[S2_type]:
+                elif atom.getName() == s2_pairs[s2_type]:
                     has_first = True
-                    H_coords = csx_obj.Vec_3D(atom.getCoords())
+                    h_coords = csx_obj.Vec_3D(atom.getCoords())
 
                 if has_first and has_second:
                     has_first, has_second = False, False
                     vectors[atom_res] = csx_obj.Vec_3D(
-                        N_coords - H_coords
+                        n_coords - h_coords
                     ).normalize()
 
         vector_data.append(vectors)
 
-    S2_calced = {}
+    s2_calced = {}
 
     # iterating over STR records
-    for resnum in [int(s2rec.resnum) for s2rec in S2_records]:
+    for resnum in [int(s2rec.resnum) for s2rec in s2_records]:
 
         x2, y2, z2, xy, xz, yz = 0, 0, 0, 0, 0, 0
 
@@ -100,77 +99,102 @@ def s2_values(
         xz /= len(vector_data)
         yz /= len(vector_data)
 
-        # S2 calcuation
-        s2 = 3 / 2.0 * (x2 ** 2 + y2 ** 2 + z2 ** 2 +
-                        2 * xy ** 2 + 2 * xz ** 2 + 2 * yz ** 2) - 0.5
+        s2 = (
+            3
+            / 2.0
+            * (
+                x2 ** 2
+                + y2 ** 2
+                + z2 ** 2
+                + 2 * xy ** 2
+                + 2 * xz ** 2
+                + 2 * yz ** 2
+            )
+            - 0.5
+        )
 
-        S2_calced[resnum] = s2
+        s2_calced[resnum] = s2
 
-    return S2_calced
+    return s2_calced
 
 
 def s2(
-        my_CSV_buffer, S2_dict, my_path, model_data,
-        calculate_on_models=None, fit=None, fit_range=None
-        ):
-    """Back calculate order paramteres from given S2 dict and PDB models"""
-    S2_data = []
+    csv_buffer,
+    calced_data_storage,
+    s2_dict,
+    my_path,
+    model_data,
+    calculate_on_models=None,
+    fit=None,
+    fit_range=None,
+):
+    """Back calculate order parameters from given S2 dict and PDB models"""
+    s2_data = []
 
     if not calculate_on_models:
         calculate_on_models = range(model_data.model_count)
 
-    for S2_type in sorted(list(S2_dict.keys())):
-        S2_calced = s2_values(
-            model_data, calculate_on_models, S2_dict[S2_type], S2_type,
-            fit, fit_range
+    for s2_type in sorted(list(s2_dict.keys())):
+        s2_calced = s2_values(
+            model_data,
+            calculate_on_models,
+            s2_dict[s2_type],
+            s2_type,
+            fit,
+            fit_range,
         )
 
-        correl = csx_func.calcCorrel(S2_calced, S2_dict[S2_type])
-        q_value = csx_func.calcQValue(S2_calced, S2_dict[S2_type])
-        rmsd = csx_func.calcRMSD(S2_calced, S2_dict[S2_type])
+        correl = csx_func.calcCorrel(s2_calced, s2_dict[s2_type])
+        q_value = csx_func.calcQValue(s2_calced, s2_dict[s2_type])
+        rmsd = csx_func.calcRMSD(s2_calced, s2_dict[s2_type])
 
-        # TODO DB upload!
-        corr_key = "S2_" + S2_type + "_corr"
-        qval_key = "S2_" + S2_type + "_qval"
-        rmsd_key = "S2_" + S2_type + "_rmsd"
+        corr_key = "S2_" + s2_type + "_corr"
+        qval_key = "S2_" + s2_type + "_qval"
+        rmsd_key = "S2_" + s2_type + "_rmsd"
 
-        csx_obj.CalcPickle.data.update({
-            corr_key: "{0}".format('{0:.3f}'.format(correl)),
-            qval_key: "{0}".format('{0:.3f}'.format(q_value)),
-            rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
-        })
+        calced_data_storage.update(
+            {
+                corr_key: "{0}".format("{0:.3f}".format(correl)),
+                qval_key: "{0}".format("{0:.3f}".format(q_value)),
+                rmsd_key: "{0}".format("{0:.3f}".format(rmsd)),
+            }
+        )
 
-        my_CSV_buffer.add_data({
-            "name": "S2 (" + S2_type + ")",
-            "calced": S2_calced,
-            "experimental": S2_dict[S2_type]
-        })
+        csv_buffer.add_data(
+            {
+                "name": "S2 (" + s2_type + ")",
+                "calced": s2_calced,
+                "experimental": s2_dict[s2_type],
+            }
+        )
 
-        print(S2_type + " Order Parameters")
+        print(s2_type + " Order Parameters")
         print("Correl: ", correl)
         print("Q-val:  ", q_value)
         print("RMSD:   ", rmsd)
         print()
 
-        graph_name = "S2_" + S2_type + ".svg"
-        graph.values_graph(my_path, S2_calced, S2_dict[S2_type], graph_name)
+        graph_name = "S2_" + s2_type + ".svg"
+        graph.values_graph(my_path, s2_calced, s2_dict[s2_type], graph_name)
 
-        corr_graph_name = "S2_corr_" + S2_type + ".svg"
+        corr_graph_name = "S2_corr_" + s2_type + ".svg"
         graph.correl_graph(
-            my_path, S2_calced, S2_dict[S2_type], corr_graph_name
+            my_path, s2_calced, s2_dict[s2_type], corr_graph_name
         )
 
-        my_id = my_path.split('/')[-2] + '/'
+        my_id = my_path.split("/")[-2] + "/"
 
-        S2_data.append({
-            "S2_type": S2_type,
-            "S2_model_n": len(S2_dict[S2_type]),
-            "correlation": '{0:.3f}'.format(correl),
-            "q_value": '{0:.3f}'.format(q_value),
-            "rmsd": '{0:.3f}'.format(rmsd),
-            "corr_graph_name": my_id + corr_graph_name,
-            "graph_name": my_id + graph_name,
-            "input_id": "S2_" + S2_type
-        })
+        s2_data.append(
+            {
+                "s2_type": s2_type,
+                "S2_model_n": len(s2_dict[s2_type]),
+                "correlation": "{0:.3f}".format(correl),
+                "q_value": "{0:.3f}".format(q_value),
+                "rmsd": "{0:.3f}".format(rmsd),
+                "corr_graph_name": my_id + corr_graph_name,
+                "graph_name": my_id + graph_name,
+                "input_id": "S2_" + s2_type,
+            }
+        )
 
-    return S2_data
+    return s2_data

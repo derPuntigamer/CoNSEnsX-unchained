@@ -14,13 +14,13 @@ def call_shiftx_on(my_path, pdb_files, bme_weights=None):
     """Call ShiftX on PDB models. Each output is appended to 'out_name'"""
     for i, pdb_file in enumerate(pdb_files):
         pdb_file = my_path + pdb_file
-        out_name = my_path + "/modell_" + str(i+1) + ".out"
-        subprocess.call([csx_obj.ThirdParty.shiftx, '1', pdb_file, out_name])
+        out_name = my_path + "/modell_" + str(i + 1) + ".out"
+        subprocess.call([csx_obj.ThirdParty.shiftx, "1", pdb_file, out_name])
 
     shiftx_output_files = []
-    averageHA, averageH, averageN = {}, {}, {}
-    averageCA, averageCB, averageC = {}, {}, {}
-    modHA, modH, modN, modCA, modCB, modC = {}, {}, {}, {}, {}, {}
+    average_ha, average_h, average_n = {}, {}, {}
+    average_ca, average_cb, average_c = {}, {}, {}
+    mod_ha, mod_h, mod_n, mod_ca, mod_cb, mod_c = {}, {}, {}, {}, {}, {}
     model_data_list = []
     model_weight = 1
     model_weight_sum = len(pdb_files)
@@ -53,10 +53,12 @@ def call_shiftx_on(my_path, pdb_files, bme_weights=None):
 
             if line.strip():
                 line_values = line.split()
+
                 try:
                     resnum = int(line_values[0])
                 except ValueError:
                     resnum = int(line_values[0][1:])
+
                 HA = float(line_values[2])
                 H = float(line_values[3])
                 N = float(line_values[4])
@@ -64,65 +66,92 @@ def call_shiftx_on(my_path, pdb_files, bme_weights=None):
                 CB = float(line_values[6])
                 C = float(line_values[7])
 
-                modHA[resnum] = HA * model_weight
-                modH[resnum] = H * model_weight
-                modN[resnum] = N * model_weight
-                modCA[resnum] = CA * model_weight
-                modCB[resnum] = CB * model_weight
-                modC[resnum] = C * model_weight
+                mod_ha[resnum] = HA * model_weight
+                mod_h[resnum] = H * model_weight
+                mod_n[resnum] = N * model_weight
+                mod_ca[resnum] = CA * model_weight
+                mod_cb[resnum] = CB * model_weight
+                mod_c[resnum] = C * model_weight
 
-                if resnum in list(averageHA.keys()):
-                    averageHA[resnum] += HA * model_weight
+                if resnum in list(average_ha.keys()):
+                    average_ha[resnum] += HA * model_weight
                 else:
-                    averageHA[resnum] = HA * model_weight
+                    average_ha[resnum] = HA * model_weight
 
-                if resnum in list(averageH.keys()):
-                    averageH[resnum] += H * model_weight
+                if resnum in list(average_h.keys()):
+                    average_h[resnum] += H * model_weight
                 else:
-                    averageH[resnum] = H * model_weight
+                    average_h[resnum] = H * model_weight
 
-                if resnum in list(averageN.keys()):
-                    averageN[resnum] += N * model_weight
+                if resnum in list(average_n.keys()):
+                    average_n[resnum] += N * model_weight
                 else:
-                    averageN[resnum] = N * model_weight
+                    average_n[resnum] = N * model_weight
 
-                if resnum in list(averageCA.keys()):
-                    averageCA[resnum] += CA * model_weight
+                if resnum in list(average_ca.keys()):
+                    average_ca[resnum] += CA * model_weight
                 else:
-                    averageCA[resnum] = CA * model_weight
+                    average_ca[resnum] = CA * model_weight
 
-                if resnum in list(averageCB.keys()):
-                    averageCB[resnum] += CB * model_weight
+                if resnum in list(average_cb.keys()):
+                    average_cb[resnum] += CB * model_weight
                 else:
-                    averageCB[resnum] = CB * model_weight
+                    average_cb[resnum] = CB * model_weight
 
-                if resnum in list(averageC.keys()):
-                    averageC[resnum] += C * model_weight
+                if resnum in list(average_c.keys()):
+                    average_c[resnum] += C * model_weight
                 else:
-                    averageC[resnum] = C * model_weight
+                    average_c[resnum] = C * model_weight
 
         out_file.close()
 
-        model_data_list.append({
-            "HA": modHA, "H": modH, "N":  modN,
-            "CA": modCA, "CB": modCB, "C": modC
-        })
+        model_data_list.append(
+            {
+                "HA": mod_ha,
+                "H": mod_h,
+                "N": mod_n,
+                "CA": mod_ca,
+                "CB": mod_cb,
+                "C": mod_c,
+            }
+        )
 
-        modHA, modH, modN, modCA, modCB, modC = {}, {}, {}, {}, {}, {}
+        mod_ha, mod_h, mod_n, mod_ca, mod_cb, mod_c = {}, {}, {}, {}, {}, {}
 
-    averages = [averageHA, averageH, averageN, averageCA, averageCB, averageC]
+    averages = [
+        average_ha,
+        average_h,
+        average_n,
+        average_ca,
+        average_cb,
+        average_c,
+    ]
 
     for avg_dict in averages:
         for key in avg_dict:
             avg_dict[key] /= model_weight_sum
 
-    return {"HA": averageHA, "H":  averageH, "N":  averageN,  "CA": averageCA,
-            "CB": averageCB, "C": averageC}, model_data_list
+    return (
+        {
+            "HA": average_ha,
+            "H": average_h,
+            "N": average_n,
+            "CA": average_ca,
+            "CB": average_cb,
+            "C": average_c,
+        },
+        model_data_list,
+    )
 
 
 def chemshifts(
-        my_CSV_buffer, ChemShift_lists, pdb_models, my_path, bme_weights
-        ):
+    csv_buffer,
+    calced_data_storage,
+    chem_shift_lists,
+    pdb_models,
+    my_path,
+    bme_weights,
+):
     """Back calculate chemical shifts from given chemical shift list and PDB
        models"""
     cs_data = []
@@ -131,9 +160,9 @@ def chemshifts(
     csx_obj.ChemShift_modell_data.type_dict = model_data
 
     cs_model_data_path = my_path + "/ChemShift_model_data.pickle"
-    pickle.dump(model_data, open(cs_model_data_path, 'wb'))
+    pickle.dump(model_data, open(cs_model_data_path, "wb"))
 
-    for n, cs_list in enumerate(ChemShift_lists):
+    for n, cs_list in enumerate(chem_shift_lists):
         bme_exp_filename = "chemshift_" + str(n) + "_exp.dat"
         bme_calc_filename = "chemshift_" + str(n) + "_calc.dat"
 
@@ -143,9 +172,12 @@ def chemshifts(
             for atom_type in chemshift_types:
                 for i in cs_list[atom_type]:
                     exp_dat_file.write(
-                        str(i.resnum) + "_" +
-                        str(i.atom_name) + "\t" +
-                        str(i.value) + "\t0.1\n"
+                        str(i.resnum)
+                        + "_"
+                        + str(i.atom_name)
+                        + "\t"
+                        + str(i.value)
+                        + "\t0.1\n"
                     )
 
         with open(my_path + bme_calc_filename, "w") as calc_dat_file:
@@ -170,9 +202,7 @@ def chemshifts(
                     inner_exp[record.resnum] = model[CS_type][record.resnum]
 
                 model_corrs.append(
-                    csx_func.calcCorrel(
-                        inner_exp, cs_list[CS_type]
-                    )
+                    csx_func.calcCorrel(inner_exp, cs_list[CS_type])
                 )
 
             avg_model_corr = sum(model_corrs) / len(model_corrs)
@@ -190,17 +220,21 @@ def chemshifts(
             qval_key = "CS_" + CS_type + "_qval"
             rmsd_key = "CS_" + CS_type + "_rmsd"
 
-            csx_obj.CalcPickle.data.update({
-                corr_key: "{0}".format('{0:.3f}'.format(correl)),
-                qval_key: "{0}".format('{0:.3f}'.format(q_value)),
-                rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
-            })
+            calced_data_storage.update(
+                {
+                    corr_key: "{0}".format("{0:.3f}".format(correl)),
+                    qval_key: "{0}".format("{0:.3f}".format(q_value)),
+                    rmsd_key: "{0}".format("{0:.3f}".format(rmsd)),
+                }
+            )
 
-            my_CSV_buffer.add_data({
-                "name": "ChemShifts (" + CS_type + ")",
-                "calced": exp_dict,
-                "experimental": cs_list[CS_type]
-            })
+            csv_buffer.add_data(
+                {
+                    "name": "ChemShifts (" + CS_type + ")",
+                    "calced": exp_dict,
+                    "experimental": cs_list[CS_type],
+                }
+            )
 
             print("CHEM SHIFT", CS_type)
             print("Correl: ", correl)
@@ -218,22 +252,27 @@ def chemshifts(
 
             mod_corr_graph_name = "CS_mod_corr_" + CS_type + ".svg"
             graph.mod_correl_graph(
-                my_path, correl, avg_model_corr,
-                model_corrs, mod_corr_graph_name
+                my_path,
+                correl,
+                avg_model_corr,
+                model_corrs,
+                mod_corr_graph_name,
             )
 
-            my_id = my_path.split('/')[-2] + '/'
+            my_id = my_path.split("/")[-2] + "/"
 
-            cs_data.append({
-                "CS_type": CS_type,
-                "CS_model_n": len(cs_list[CS_type]),
-                "correlation": '{0:.3f}'.format(correl),
-                "q_value": '{0:.3f}'.format(q_value),
-                "rmsd": '{0:.3f}'.format(rmsd),
-                "corr_graph_name": my_id + corr_graph_name,
-                "graph_name": my_id + graph_name,
-                "mod_corr_graph_name": my_id + mod_corr_graph_name,
-                "input_id": "CS_" + CS_type
-            })
+            cs_data.append(
+                {
+                    "CS_type": CS_type,
+                    "CS_model_n": len(cs_list[CS_type]),
+                    "correlation": "{0:.3f}".format(correl),
+                    "q_value": "{0:.3f}".format(q_value),
+                    "rmsd": "{0:.3f}".format(rmsd),
+                    "corr_graph_name": my_id + corr_graph_name,
+                    "graph_name": my_id + graph_name,
+                    "mod_corr_graph_name": my_id + mod_corr_graph_name,
+                    "input_id": "CS_" + CS_type,
+                }
+            )
 
     return cs_data

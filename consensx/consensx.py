@@ -19,7 +19,6 @@ import zipfile
 
 # own modules
 import consensx.csx_libs.methods as csx_func
-import consensx.csx_libs.objects as csx_obj
 import consensx.calc as calc
 import consensx.parse as parse
 import consensx.storage as storage
@@ -38,11 +37,13 @@ def run_calculation(request, calc_id):
     dirname = os.path.dirname(abspath)
     csx_func.check_3rd_party(dirname)
 
+    calced_data_storage = dict()
     my_id = calc_id
     print("ID IS:", my_id)
 
     from django.conf import settings
-    my_path = os.path.join(settings.MEDIA_ROOT, my_id) + '/'
+
+    my_path = os.path.join(settings.MEDIA_ROOT, my_id) + "/"
     db_entry = CSX_upload.objects.get(id_code=calc_id)
 
     # ----------------  Setting up working directory and files  ------------- #
@@ -56,10 +57,14 @@ def run_calculation(request, calc_id):
     model_data = parse.Pdb(my_pdb, my_path, model_count)
 
     if not model_data:
-        return render(request, "consensx/home.html", {
-            "error": "DISCARDED MODELS FOUND, CHECK IF ALL MODELS HAVE THE SAME\
+        return render(
+            request,
+            "consensx/home.html",
+            {
+                "error": "DISCARDED MODELS FOUND, CHECK IF ALL MODELS HAVE THE SAME\
             NUMBER OF ATOMS"
-        })
+            },
+        )
 
     pdb_models = []
 
@@ -107,9 +112,9 @@ def run_calculation(request, calc_id):
             "NOE_hist": my_id + "/NOE_hist.svg",
             "best_score": pride_data[0],
             "worst_score": pride_data[1],
-            "average_score": '{0:.3f}'.format(pride_data[2]),
-            "deviation": '{0:.3f}'.format(pride_data[3]),
-            "PRIDE_hist": my_id + "/PRIDE-NMR_score.svg"
+            "average_score": "{0:.3f}".format(pride_data[2]),
+            "deviation": "{0:.3f}".format(pride_data[3]),
+            "PRIDE_hist": my_id + "/PRIDE-NMR_score.svg",
         }
 
         data_found = True
@@ -125,26 +130,29 @@ def run_calculation(request, calc_id):
         if bme_zf:
             bme_zf.close()
 
-        rendered_page = render(request, "consensx/calculation.html", {
-            "my_id": my_id,
-            "my_pdb": db_entry.PDB_file,
-            "n_model": model_count,
-            "my_NOE": noe_name,
-            "n_NOE": noe_n,
-            "my_STR": str_name,
-            "NOE_PRIDE_data": noe_pride_data,
-            "RDC_data": rdc_calced_data,
-            "S2_data": s2_data,
-            "S2_sc_data": s2_sc_data,
-            "Jcoup_data": jcoup_data,
-            "chemshift_data": chemshift_data,
-            "SVD_calc": db_entry.svd_enable,
-            "bme_zf": True
-        })
+        rendered_page = render(
+            request,
+            "consensx/calculation.html",
+            {
+                "my_id": my_id,
+                "my_pdb": db_entry.PDB_file,
+                "n_model": model_count,
+                "my_NOE": noe_name,
+                "n_NOE": noe_n,
+                "my_STR": str_name,
+                "NOE_PRIDE_data": noe_pride_data,
+                "RDC_data": rdc_calced_data,
+                "S2_data": s2_data,
+                "S2_sc_data": s2_sc_data,
+                "Jcoup_data": jcoup_data,
+                "chemshift_data": chemshift_data,
+                "SVD_calc": db_entry.svd_enable,
+                "bme_zf": True,
+            },
+        )
 
         post_data = CSX_calculation(
-            html_content=rendered_page.content,
-            id_code=my_id
+            html_content=rendered_page.content, id_code=my_id
         )
         post_data.save()
 
@@ -169,8 +177,13 @@ def run_calculation(request, calc_id):
         svd_enabled = db_entry.svd_enable
         lc_model = db_entry.rdc_lc
         rdc_calced_data = calc.rdc(
-            csv_buffer, rdc_lists, pdb_models, my_path, svd_enabled,
-            lc_model
+            csv_buffer,
+            calced_data_storage,
+            rdc_lists,
+            pdb_models,
+            my_path,
+            svd_enabled,
+            lc_model,
         )
         data_found = True
 
@@ -183,9 +196,13 @@ def run_calculation(request, calc_id):
 
     if s2_dict:
         s2_data = calc.s2(
-            csv_buffer, s2_dict, my_path, model_data,
+            csv_buffer,
+            calced_data_storage,
+            s2_dict,
+            my_path,
+            model_data,
             fit=db_entry.superimpose,
-            fit_range=db_entry.fit_range
+            fit_range=db_entry.fit_range,
         )
 
         data_found = True
@@ -195,13 +212,17 @@ def run_calculation(request, calc_id):
 
     if s2_sidechain:
         s2_sc_data = calc.s2_sidechain(
-            csv_buffer, s2_sidechain, my_path, fit=db_entry.superimpose
+            csv_buffer,
+            s2_sidechain,
+            my_path,
+            model_data,
+            fit=db_entry.superimpose,
         )
 
         if "error" in s2_sc_data.keys():
-            return render(request, "consensx/home.html", {
-                "error": s2_sidechain["error"]
-            })
+            return render(
+                request, "consensx/home.html", {"error": s2_sidechain["error"]}
+            )
 
         data_found = True
 
@@ -213,8 +234,14 @@ def run_calculation(request, calc_id):
 
     if Jcoup_dict:
         jcoup_data = calc.jcoupling(
-            csv_buffer, model_data, db_entry, Jcoup_dict,
-            my_pdb, my_path, bme_weights
+            csv_buffer,
+            calced_data_storage,
+            model_data,
+            db_entry,
+            Jcoup_dict,
+            my_pdb,
+            my_path,
+            bme_weights,
         )
         data_found = True
 
@@ -226,7 +253,12 @@ def run_calculation(request, calc_id):
 
     if chem_shift_lists:
         chemshift_data = calc.chemshifts(
-            csv_buffer, chem_shift_lists, pdb_models, my_path, bme_weights
+            csv_buffer,
+            calced_data_storage,
+            chem_shift_lists,
+            pdb_models,
+            my_path,
+            bme_weights,
         )
         data_found = True
 
@@ -249,30 +281,33 @@ def run_calculation(request, calc_id):
         bme_zf.close()
 
     if data_found:
-        print(csx_obj.CalcPickle.data)
+        print(calced_data_storage)
         calced_values = my_path + "/calced_values.p"
-        pickle.dump(csx_obj.CalcPickle.data, open(calced_values, "wb"))
-        rendered_page = render(request, "consensx/calculation.html", {
-            "my_id": my_id,
-            "my_pdb": db_entry.PDB_file,
-            "n_model": model_count,
-            "my_NOE": noe_name,
-            "n_NOE": noe_n,
-            "my_STR": str_name,
-            "NOE_PRIDE_data": noe_pride_data,
-            "RDC_data": rdc_calced_data,
-            "S2_data": s2_data,
-            "S2_sc_data": s2_sc_data,
-            "Jcoup_data": jcoup_data,
-            "chemshift_data": chemshift_data,
-            "SVD_calc": db_entry.svd_enable,
-            "bme_zf": bool(bme_zf)
-        })
+        pickle.dump(calced_data_storage, open(calced_values, "wb"))
+        rendered_page = render(
+            request,
+            "consensx/calculation.html",
+            {
+                "my_id": my_id,
+                "my_pdb": db_entry.PDB_file,
+                "n_model": model_count,
+                "my_NOE": noe_name,
+                "n_NOE": noe_n,
+                "my_STR": str_name,
+                "NOE_PRIDE_data": noe_pride_data,
+                "RDC_data": rdc_calced_data,
+                "S2_data": s2_data,
+                "S2_sc_data": s2_sc_data,
+                "Jcoup_data": jcoup_data,
+                "chemshift_data": chemshift_data,
+                "SVD_calc": db_entry.svd_enable,
+                "bme_zf": bool(bme_zf),
+            },
+        )
 
         print("RENDERED PAGE ---------------- START")
         post_data = CSX_calculation(
-            html_content=rendered_page.content,
-            id_code=my_id
+            html_content=rendered_page.content, id_code=my_id
         )
         post_data.save()
 
@@ -280,6 +315,8 @@ def run_calculation(request, calc_id):
         return rendered_page
     else:
         print("NO DATA FOUND IN STAR-NMR FILE")
-        return render(request, "consensx/home.html", {
-            "error": "NO DATA FOUND IN STAR-NMR FILE"
-        })
+        return render(
+            request,
+            "consensx/home.html",
+            {"error": "NO DATA FOUND IN STAR-NMR FILE"},
+        )
