@@ -7,7 +7,6 @@ from progress.bar import Bar
 
 # own modules
 import consensx.csx_libs.methods as csx_func
-import consensx.csx_libs.objects as csx_obj
 import consensx.csx_libs.pca as csx_pca
 import consensx.calc as calc
 from .models import CSX_upload
@@ -21,6 +20,20 @@ def getPDBModels(path):
 
     pdb_models = csx_func.natural_sort(pdb_models)
     return pdb_models
+
+
+class ChemshiftModelData():
+    """Class for per model chemical shift data"""
+    def __init__(self, type_dict):
+        self.type_dict = type_dict
+
+    def get_type_data(self, my_type):
+        type_data = []
+
+        for model in self.type_dict:
+            type_data.append(model[my_type])
+
+        return type_data
 
 
 class DumpedData():
@@ -81,14 +94,12 @@ class DumpedData():
         DumpedData.ChemShift_lists = pickle.load(open(CS_lists_path, 'rb'))
         CS_model_data_path = path + "/ChemShift_model_data.pickle"
         model_data = pickle.load(open(CS_model_data_path, 'rb'))
-        ChemShift_model_data = csx_obj.ChemShift_modell_data
-        ChemShift_model_data.type_dict = model_data
-        DumpedData.ChemShift_model_data = ChemShift_model_data
+        DumpedData.ChemShift_model_data = ChemshiftModelData(model_data)
         DumpedData.ChemShift_isloaded = True
 
 
 def getUserSel(sel_dict):
-    """Sets up user selection list from the selection dictonary"""
+    """Sets up user selection list from the selection dictionary"""
 
     user_sel = []
 

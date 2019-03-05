@@ -239,7 +239,6 @@ def run_calculation(request, calc_id):
             model_data,
             db_entry,
             Jcoup_dict,
-            my_pdb,
             my_path,
             bme_weights,
         )

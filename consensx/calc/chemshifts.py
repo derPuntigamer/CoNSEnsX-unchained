@@ -157,8 +157,6 @@ def chemshifts(
     cs_data = []
     cs_calced, model_data = call_shiftx_on(my_path, pdb_models, bme_weights)
 
-    csx_obj.ChemShift_modell_data.type_dict = model_data
-
     cs_model_data_path = my_path + "/ChemShift_model_data.pickle"
     pickle.dump(model_data, open(cs_model_data_path, "wb"))
 

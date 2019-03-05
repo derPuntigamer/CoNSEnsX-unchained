@@ -1,12 +1,6 @@
 import math
 
 
-class CalcPickle(dict):
-    pass
-    """Class for storing values for pickle generation"""
-    data = dict()
-
-
 class ThirdParty(object):
 
     """Class to store 3rd party software information"""
@@ -29,21 +23,6 @@ class ThirdParty(object):
                 ThirdParty.prideDB = line.split("'")[1]
             elif line.startswith("prideNMR"):
                 ThirdParty.prideNMR = line.split("'")[1]
-
-
-class ChemShift_modell_data(object):
-
-    """Class for per model chemical shift data"""
-    type_dict = []
-
-    @staticmethod
-    def get_type_data(my_type):
-        type_data = []
-
-        for model in ChemShift_modell_data.type_dict:
-            type_data.append(model[my_type])
-
-        return type_data
 
 
 class Vec_3D(object):
