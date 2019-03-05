@@ -22,6 +22,7 @@ import consensx.csx_libs.methods as csx_func
 import consensx.calc as calc
 import consensx.parse as parse
 import consensx.storage as storage
+from consensx import thirdparty
 
 
 # Django server
@@ -35,7 +36,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def run_calculation(request, calc_id):
     abspath = os.path.abspath(__file__)
     dirname = os.path.dirname(abspath)
-    csx_func.check_3rd_party(dirname)
+    thirdparty.check_3rd_party(dirname)
 
     calced_data_storage = dict()
     my_id = calc_id

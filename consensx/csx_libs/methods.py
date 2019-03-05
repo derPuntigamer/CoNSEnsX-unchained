@@ -39,24 +39,6 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-def check_3rd_party(install_dir):
-    config_file_name = install_dir + "/.config"
-    if os.path.isfile(config_file_name):
-        csx_obj.ThirdParty.get_thirdparty(config_file_name)
-    else:
-        init_conf = (
-            "# CoNSEnsX config file\n" +
-            "# Please provide full paths\n" +
-            "pales=''\n" + "shiftx=''\n" +
-            "prideDB=''\n" + "prideNMR=''"
-        )
-
-        init_conf_file = open(".config", "w")
-        init_conf_file.write(init_conf)
-        print("Please edit '.config' in the CoNSEnsX install directory")
-        raise SystemExit
-
-
 @timeit
 def get_model_list(PDB_file, my_path, model_count):
     """Parsing PDB file into models in the PDB_model object"""

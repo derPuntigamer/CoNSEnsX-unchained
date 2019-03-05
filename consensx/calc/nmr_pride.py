@@ -3,7 +3,7 @@ import subprocess
 import os
 import matplotlib.pyplot as plt
 
-from consensx.csx_libs import objects as csx_obj
+from consensx import thirdparty
 
 
 plt.switch_backend("Agg")
@@ -45,7 +45,7 @@ def nmr_pride(pdb_models, my_path, noe_restraints):
     hhdb_log = open("hhdb.log", "w")
     model_list = open("model_list.txt", "r")
     subprocess.call(
-        [csx_obj.ThirdParty.prideDB, "-D", "HHDB"],  # model list
+        [thirdparty.ThirdParty.prideDB, "-D", "HHDB"],  # model list
         stdin=model_list,
         stdout=devnull,
         stderr=hhdb_log,
@@ -61,7 +61,7 @@ def nmr_pride(pdb_models, my_path, noe_restraints):
     pride_output = open("pride_output.txt", "w")
     subprocess.call(
         [
-            csx_obj.ThirdParty.prideNMR,
+            thirdparty.ThirdParty.prideNMR,
             "-D",
             "HHDB",
             "-d",

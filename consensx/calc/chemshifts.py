@@ -4,8 +4,8 @@ import subprocess
 
 import consensx.graph as graph
 
+from consensx import thirdparty
 from consensx.csx_libs import methods as csx_func
-from consensx.csx_libs import objects as csx_obj
 
 chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
 
@@ -15,7 +15,7 @@ def call_shiftx_on(my_path, pdb_files, bme_weights=None):
     for i, pdb_file in enumerate(pdb_files):
         pdb_file = my_path + pdb_file
         out_name = my_path + "/modell_" + str(i + 1) + ".out"
-        subprocess.call([csx_obj.ThirdParty.shiftx, "1", pdb_file, out_name])
+        subprocess.call([thirdparty.ThirdParty.shiftx, "1", pdb_file, out_name])
 
     shiftx_output_files = []
     average_ha, average_h, average_n = {}, {}, {}

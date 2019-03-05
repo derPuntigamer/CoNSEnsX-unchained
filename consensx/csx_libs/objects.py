@@ -1,30 +1,5 @@
 import math
 
-
-class ThirdParty(object):
-
-    """Class to store 3rd party software information"""
-    pales = ""
-    shiftx = ""
-    prideDB = ""
-    prideNMR = ""
-
-    @staticmethod
-    def get_thirdparty(config_file):
-        cfg = open(config_file)
-        for line in cfg:
-            if line.startswith("#"):
-                continue
-            if line.startswith("pales"):
-                ThirdParty.pales = line.split("'")[1]
-            elif line.startswith("shiftx"):
-                ThirdParty.shiftx = line.split("'")[1]
-            elif line.startswith("prideDB"):
-                ThirdParty.prideDB = line.split("'")[1]
-            elif line.startswith("prideNMR"):
-                ThirdParty.prideNMR = line.split("'")[1]
-
-
 class Vec_3D(object):
 
     """Vector class for calculations"""

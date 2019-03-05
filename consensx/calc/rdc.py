@@ -4,6 +4,7 @@ import pickle
 import re
 import subprocess
 
+from consensx import thirdparty
 import consensx.graph as graph
 
 from consensx.csx_libs import methods as csx_func
@@ -143,7 +144,7 @@ def call_pales_on(my_path, pdb_files, rdc_dict, lc_model, svd_enable):
             if svd_enable:  # if SVD is enabled
                 p = subprocess.Popen(
                     [
-                        csx_obj.ThirdParty.pales,
+                        thirdparty.ThirdParty.pales,
                         "-inD",
                         "pales_dummy.txt",
                         "-pdb",
@@ -158,7 +159,7 @@ def call_pales_on(my_path, pdb_files, rdc_dict, lc_model, svd_enable):
             else:  # if SVD is disabled (default)
                 subprocess.call(
                     [
-                        csx_obj.ThirdParty.pales,
+                        thirdparty.ThirdParty.pales,
                         "-inD",
                         "pales_dummy.txt",
                         "-pdb",
