@@ -7,7 +7,7 @@ from progress.bar import Bar
 
 # own modules
 import consensx.csx_libs.methods as csx_func
-import consensx.csx_libs.pca as csx_pca
+import consensx.graph as graph
 import consensx.calc as calc
 from .models import CSX_upload
 
@@ -707,12 +707,12 @@ def run_selection(my_path, original_values, user_selection_JSON):
 
     calc_id = my_path.split('/')[-1]
     print('calcID', calc_id)
-    DB_entry = CSX_upload.objects.get(id_code=calc_id)
-    print(DB_entry.PDB_file)
-    print("DB_entry", DB_entry)
+    db_entry = CSX_upload.objects.get(id_code=calc_id)
+    print(db_entry.PDB_file)
+    print("db_entry", db_entry)
 
-    pca_image_names = csx_pca.create_PCA_comparison(
-        my_path, DB_entry.PDB_file, in_selection
+    pca_image_names = graph.pca.create_pca_comparison(
+        my_path, db_entry.PDB_file, in_selection
     )
 
     return num_coordsets, iter_data, pca_image_names

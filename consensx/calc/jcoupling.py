@@ -221,7 +221,7 @@ def jcoupling(
     my_path,
     bme_weights,
 ):
-    """Back calculate skalar coupling from given RDC lists and PDB models"""
+    """Back calculate scalar coupling from given RDC lists and PDB models"""
     param_set = db_entry.karplus
     jcuop_data = []
     type_dict = {}
