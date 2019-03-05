@@ -140,7 +140,7 @@ def s2(
             rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
         })
 
-        my_CSV_buffer.csv_data.append({
+        my_CSV_buffer.add_data({
             "name": "S2 (" + S2_type + ")",
             "calced": S2_calced,
             "experimental": S2_dict[S2_type]

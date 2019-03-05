@@ -250,7 +250,7 @@ def jcoupling(
             rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
         })
 
-        my_CSV_buffer.csv_data.append({
+        my_CSV_buffer.add_data({
             "name": "J-couplings (" + Jcoup_type + ")",
             "calced": JCoup_calced,
             "experimental": Jcoup_dict[Jcoup_type]

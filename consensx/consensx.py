@@ -22,6 +22,8 @@ import consensx.csx_libs.methods as csx_func
 import consensx.csx_libs.objects as csx_obj
 import consensx.calc as calc
 import consensx.parse as parse
+import consensx.storage as storage
+
 
 # Django server
 from django.shortcuts import render
@@ -44,11 +46,11 @@ def run_calculation(request, calc_id):
     db_entry = CSX_upload.objects.get(id_code=calc_id)
 
     # ----------------  Setting up working directory and files  ------------- #
-    my_csv_buffer = csx_obj.CSV_buffer(my_path)
+    csv_buffer = storage.CSVBuffer(my_path)
 
     my_pdb = my_path + db_entry.PDB_file
 
-    csx_func.pdb_cleaner(my_path, my_pdb, my_csv_buffer)
+    csx_func.pdb_cleaner(my_path, my_pdb, csv_buffer)
     model_count = csx_func.pdb_splitter(my_path, my_pdb)
 
     model_data = parse.Pdb(my_pdb, my_path, model_count)
@@ -167,7 +169,7 @@ def run_calculation(request, calc_id):
         svd_enabled = db_entry.svd_enable
         lc_model = db_entry.rdc_lc
         rdc_calced_data = calc.rdc(
-            my_csv_buffer, rdc_lists, pdb_models, my_path, svd_enabled,
+            csv_buffer, rdc_lists, pdb_models, my_path, svd_enabled,
             lc_model
         )
         data_found = True
@@ -181,7 +183,7 @@ def run_calculation(request, calc_id):
 
     if s2_dict:
         s2_data = calc.s2(
-            my_csv_buffer, s2_dict, my_path, model_data,
+            csv_buffer, s2_dict, my_path, model_data,
             fit=db_entry.superimpose,
             fit_range=db_entry.fit_range
         )
@@ -193,7 +195,7 @@ def run_calculation(request, calc_id):
 
     if s2_sidechain:
         s2_sc_data = calc.s2_sidechain(
-            my_csv_buffer, s2_sidechain, my_path, fit=db_entry.superimpose
+            csv_buffer, s2_sidechain, my_path, fit=db_entry.superimpose
         )
 
         if "error" in s2_sc_data.keys():
@@ -211,7 +213,7 @@ def run_calculation(request, calc_id):
 
     if Jcoup_dict:
         jcoup_data = calc.jcoupling(
-            my_csv_buffer, model_data, db_entry, Jcoup_dict,
+            csv_buffer, model_data, db_entry, Jcoup_dict,
             my_pdb, my_path, bme_weights
         )
         data_found = True
@@ -224,11 +226,11 @@ def run_calculation(request, calc_id):
 
     if chem_shift_lists:
         chemshift_data = calc.chemshifts(
-            my_csv_buffer, chem_shift_lists, pdb_models, my_path, bme_weights
+            csv_buffer, chem_shift_lists, pdb_models, my_path, bme_weights
         )
         data_found = True
 
-    my_csv_buffer.writeCSV()
+    csv_buffer.write_csv()
 
     csx_func.calcPeptideBonds(model_data)
     csx_func.calcNH_Angles(model_data)

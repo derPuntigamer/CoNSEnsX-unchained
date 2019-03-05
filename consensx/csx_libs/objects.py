@@ -31,55 +31,6 @@ class ThirdParty(object):
                 ThirdParty.prideNMR = line.split("'")[1]
 
 
-class CSV_buffer(object):
-
-    """Class which stores data for values.CSV"""
-
-    def __init__(self, my_path):
-        self.working_dir = my_path
-        self.max_resnum = -1
-        self.min_resnum = 100000
-        self.csv_data = []
-        # self.name = name
-        # self.calced = calced
-        # self.exp = {}
-
-        # for i in experimental:
-        #     self.exp[i.resnum] = i.value
-
-        # csv_data.append(self)
-
-    def writeCSV(self):
-        filename = self.working_dir + "values.csv"
-        output_csv = open(filename, 'w')
-        output_csv.write(',')
-        for data in self.csv_data:
-            output_csv.write(data["name"] + " EXP, " + data["name"] + " CALC,")
-        output_csv.write("\n")
-
-        # for i in experimental:
-        #     self.exp[i.resnum] = i.value
-
-        for resnum in range(self.min_resnum, self.max_resnum + 1):
-            output_csv.write(str(resnum) + ',')
-            for data in self.csv_data:
-                exp = {}
-
-                for i in data["experimental"]:
-                    exp[i.resnum] = i.value
-
-                try:
-                    # pdb.set_trace()
-                    output_csv.write(
-                        "{0:.2f}".format(exp[resnum]) + ',' +
-                        "{0:.2f}".format(data["calced"][resnum]) + ','
-                    )
-                except (IndexError, KeyError):
-                    output_csv.write(',,')
-
-            output_csv.write("\n")
-
-
 class ChemShift_modell_data(object):
 
     """Class for per model chemical shift data"""

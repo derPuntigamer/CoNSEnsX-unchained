@@ -206,7 +206,7 @@ def average_pales_output(pales_out, my_RDC_type):
     return averageRDC, model_data_list
 
 
-def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
+def rdc(csv_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
     """Back calculate RDC from given RDC lists and PDB models"""
     my_rdc_model_data = RDC_model_data()
     rdc_calced_data = {}
@@ -237,21 +237,21 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
             avg_model_corr = sum(model_corrs) / len(model_corrs)
 
             # removing records from other RDC types
-            my_averageRDC = {}
+            my_average_rdc = {}
 
             for record in RDC_dict[RDC_type]:
-                my_averageRDC[record.resnum] = averageRDC[record.resnum]
+                my_average_rdc[record.resnum] = averageRDC[record.resnum]
 
-            correl = csx_func.calcCorrel(my_averageRDC, RDC_dict[RDC_type])
-            q_value = csx_func.calcQValue(my_averageRDC, RDC_dict[RDC_type])
-            rmsd = csx_func.calcRMSD(my_averageRDC, RDC_dict[RDC_type])
+            correl = csx_func.calcCorrel(my_average_rdc, RDC_dict[RDC_type])
+            q_value = csx_func.calcQValue(my_average_rdc, RDC_dict[RDC_type])
+            rmsd = csx_func.calcRMSD(my_average_rdc, RDC_dict[RDC_type])
 
-            RDC_simple = RDC_type.replace('_', '')
+            rdc_simple = RDC_type.replace('_', '')
 
             # TODO DB upload!
-            corr_key = "RDC_" + str(list_num + 1) + "_" + RDC_simple + "_corr"
-            qval_key = "RDC_" + str(list_num + 1) + "_" + RDC_simple + "_qval"
-            rmsd_key = "RDC_" + str(list_num + 1) + "_" + RDC_simple + "_rmsd"
+            corr_key = "RDC_" + str(list_num + 1) + "_" + rdc_simple + "_corr"
+            qval_key = "RDC_" + str(list_num + 1) + "_" + rdc_simple + "_qval"
+            rmsd_key = "RDC_" + str(list_num + 1) + "_" + rdc_simple + "_rmsd"
 
             csx_obj.CalcPickle.data.update(
                 {
@@ -261,9 +261,9 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
                 }
             )
 
-            my_CSV_buffer.csv_data.append({
+            csv_buffer.add_data({
                 "name": "RDC_" + str(list_num + 1) + "(" + RDC_type + ")",
-                "calced": my_averageRDC,
+                "calced": my_average_rdc,
                 "experimental": RDC_dict[RDC_type]
             })
 
@@ -274,7 +274,7 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
 
             graph_name = str(list_num + 1) + "_RDC_" + RDC_type + ".svg"
             graph.values_graph(
-                my_path, my_averageRDC, RDC_dict[RDC_type], graph_name
+                my_path, my_average_rdc, RDC_dict[RDC_type], graph_name
             )
 
             corr_graph_name = (
@@ -282,7 +282,7 @@ def rdc(my_CSV_buffer, RDC_lists, pdb_models, my_path, SVD_enabled, lc_model):
             )
 
             graph.correl_graph(
-                my_path, my_averageRDC, RDC_dict[RDC_type], corr_graph_name
+                my_path, my_average_rdc, RDC_dict[RDC_type], corr_graph_name
             )
 
             mod_corr_graph_name = (

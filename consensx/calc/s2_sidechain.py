@@ -89,14 +89,14 @@ def s2_sidechain(my_CSV_buffer, S2_sidechain, my_path, fit=None):
             sidechain_exp2.append(record)
             sidechain_calc2[record.resnum] = record.calced
 
-    my_CSV_buffer.csv_data.append({
+    my_CSV_buffer.add_data({
         "name": "S2_meth",
         "calced": sidechain_calc1,
         "experimental": sidechain_exp1
     })
 
     if sidechain_exp2:
-        my_CSV_buffer.csv_data.append({
+        my_CSV_buffer.add_data({
             "name": "S2_meth (cont)",
             "calced": sidechain_calc2,
             "experimental": sidechain_exp2

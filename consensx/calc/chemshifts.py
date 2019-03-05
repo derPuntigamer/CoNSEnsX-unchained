@@ -196,7 +196,7 @@ def chemshifts(
                 rmsd_key: "{0}".format('{0:.3f}'.format(rmsd))
             })
 
-            my_CSV_buffer.csv_data.append({
+            my_CSV_buffer.add_data({
                 "name": "ChemShifts (" + CS_type + ")",
                 "calced": exp_dict,
                 "experimental": cs_list[CS_type]
