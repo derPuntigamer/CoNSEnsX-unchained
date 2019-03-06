@@ -8,7 +8,6 @@ from consensx import thirdparty
 import consensx.graph as graph
 
 from consensx.csx_libs import methods as csx_func
-from consensx.csx_libs import objects as csx_obj
 
 
 shortcodes = {

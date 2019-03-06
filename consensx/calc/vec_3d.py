@@ -1,7 +1,7 @@
 import math
 
-class Vec_3D(object):
 
+class Vec3D(object):
     """Vector class for calculations"""
     def __init__(self, v):
         self.v = v
@@ -15,16 +15,16 @@ class Vec_3D(object):
     def __sub__(self, other):
         v = self.v
         u = other.v
-        return Vec_3D([u[i] - v[i] for i in range(len(u))])
+        return Vec3D([u[i] - v[i] for i in range(len(u))])
 
     def __iadd__(self, other):
         v = self.v
         u = other.v
-        return Vec_3D([u[i] + v[i] for i in range(len(u))])
+        return Vec3D([u[i] + v[i] for i in range(len(u))])
 
     def __idiv__(self, divisor):
         v = self.v
-        return Vec_3D([v[i] / divisor for i in range(len(v))])
+        return Vec3D([v[i] / divisor for i in range(len(v))])
 
     def magnitude(self):
         v = self.v
@@ -33,7 +33,7 @@ class Vec_3D(object):
     def normalize(self):
         vmag = self.magnitude()
         v = self.v
-        return Vec_3D([v[i] / vmag for i in range(len(v))])
+        return Vec3D([v[i] / vmag for i in range(len(v))])
 
     @classmethod
     def cross(cls, one, other):
@@ -44,7 +44,7 @@ class Vec_3D(object):
         return cls(c)
 
     @staticmethod
-    def dihedAngle(one, other):
+    def dihed_angle(one, other):
         calc_cos = (
             one.v[0] * other.v[0] +
             one.v[1] * other.v[1] +

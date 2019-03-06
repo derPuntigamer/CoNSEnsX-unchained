@@ -2,7 +2,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-from consensx.csx_libs import objects as csx_obj
+from .vec_3d import Vec3D
 
 
 def make_noe_hist(my_path, violations):
@@ -33,28 +33,28 @@ def make_noe_hist(my_path, violations):
 
 
 def pdb2coords(model_data):
-    """Loads PDB coordinates into a dictonary, per model"""
+    """Loads PDB coordinates into a dictionary, per model"""
     prev_resnum = -1
-    PDB_coords = {}
+    pdb_coords = {}
 
     for i in range(model_data.coordsets):
         model_data.atomgroup.setACSIndex(i)
 
-        PDB_coords[i] = {}
+        pdb_coords[i] = {}
 
         for atom in model_data.atomgroup:
             resnum = int(atom.getResnum())
             name = str(atom.getName())
 
             if resnum == prev_resnum:
-                PDB_coords[i][resnum][name] = csx_obj.Vec_3D(atom.getCoords())
+                pdb_coords[i][resnum][name] = Vec3D(atom.getCoords())
 
             else:
-                PDB_coords[i][resnum] = {}
-                PDB_coords[i][resnum][name] = csx_obj.Vec_3D(atom.getCoords())
+                pdb_coords[i][resnum] = {}
+                pdb_coords[i][resnum][name] = Vec3D(atom.getCoords())
                 prev_resnum = resnum
 
-    return PDB_coords
+    return pdb_coords
 
 
 def noe_violations(model_data, my_path, db_entry, noe_restraints, bme_weights):
@@ -65,14 +65,14 @@ def noe_violations(model_data, my_path, db_entry, noe_restraints, bme_weights):
 
     restraints = noe_restraints.resolved_restraints
 
-    PDB_coords = pdb2coords(model_data)
+    pdb_coords = pdb2coords(model_data)
     prev_id = -1
     avg_distances = {}
     all_distances = {}
     measured_avg = {}
     str_distaces = {}
 
-    for model in list(PDB_coords.keys()):
+    for model in list(pdb_coords.keys()):
         avg_distances[model] = {}
         all_distances[model] = {}
 
@@ -83,8 +83,8 @@ def noe_violations(model_data, my_path, db_entry, noe_restraints, bme_weights):
             resnum2 = restraint["seq_ID2"]
             atom2 = restraint["atom_ID2"]
 
-            atom_coord1 = PDB_coords[model][resnum1][atom1]
-            atom_coord2 = PDB_coords[model][resnum2][atom2]
+            atom_coord1 = pdb_coords[model][resnum1][atom1]
+            atom_coord2 = pdb_coords[model][resnum2][atom2]
 
             distance = (atom_coord1 - atom_coord2).magnitude()
 
@@ -111,7 +111,7 @@ def noe_violations(model_data, my_path, db_entry, noe_restraints, bme_weights):
             rest_id, resnum1, atom1, resnum2, atom2
         )
 
-        for model in list(PDB_coords.keys()):
+        for model in list(pdb_coords.keys()):
             dist_str += "{0:.2f}  ".format(all_distances[model][restraint_num])
 
         # print("DISTS", dist_str)
@@ -121,7 +121,7 @@ def noe_violations(model_data, my_path, db_entry, noe_restraints, bme_weights):
 
     prev_id = -1
 
-    for model in list(PDB_coords.keys()):
+    for model in list(pdb_coords.keys()):
         for restraint in restraints:
             curr_id = int(restraint["csx_id"])
 
@@ -153,17 +153,17 @@ def noe_violations(model_data, my_path, db_entry, noe_restraints, bme_weights):
         avg = 0.0
 
         if bme_weights:
-            for model in list(PDB_coords.keys()):
+            for model in list(pdb_coords.keys()):
                 avg += math.pow(
                     avg_distances[model][curr_id], -6
                 ) * bme_weights[model]
 
             avg /= sum(bme_weights)
         else:
-            for model in list(PDB_coords.keys()):
+            for model in list(pdb_coords.keys()):
                 avg += math.pow(avg_distances[model][curr_id], -6)
 
-            avg /= len(list(PDB_coords.keys()))
+            avg /= len(list(pdb_coords.keys()))
 
         measured_avg[curr_id] = math.pow(avg, -1.0/6)
 
@@ -186,7 +186,7 @@ def noe_violations(model_data, my_path, db_entry, noe_restraints, bme_weights):
             )
 
     with open(my_path + bme_calc_filename, "w") as calc_dat_file:
-        for model in list(PDB_coords.keys()):
+        for model in list(pdb_coords.keys()):
 
             for i in avg_distances[model]:
                 calc_dat_file.write(

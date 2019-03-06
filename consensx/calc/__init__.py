@@ -5,6 +5,7 @@ from .jcoupling import jcoupling
 from .chemshifts import chemshifts
 from .noe_violations import noe_violations
 from .nmr_pride import nmr_pride
+from .vec_3d import Vec3D
 
 __all__ = [
     "rdc",
@@ -14,5 +15,6 @@ __all__ = [
     "jcoupling",
     "chemshifts",
     "noe_violations",
-    "nmr_pride"
+    "nmr_pride",
+    "Vec3D",
 ]

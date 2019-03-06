@@ -2,8 +2,7 @@ import prody
 import numpy as np
 
 from consensx.csx_libs import methods as csx_func
-from consensx.csx_libs import objects as csx_obj
-
+from .vec_3d import Vec3D
 import consensx.graph as graph
 
 
@@ -58,15 +57,15 @@ def s2_values(
             if atom_res == current_resindex:
                 if atom.getName() == s2_type:
                     has_second = True
-                    n_coords = csx_obj.Vec_3D(atom.getCoords())
+                    n_coords = Vec3D(atom.getCoords())
 
                 elif atom.getName() == s2_pairs[s2_type]:
                     has_first = True
-                    h_coords = csx_obj.Vec_3D(atom.getCoords())
+                    h_coords = Vec3D(atom.getCoords())
 
                 if has_first and has_second:
                     has_first, has_second = False, False
-                    vectors[atom_res] = csx_obj.Vec_3D(
+                    vectors[atom_res] = Vec3D(
                         n_coords - h_coords
                     ).normalize()
 

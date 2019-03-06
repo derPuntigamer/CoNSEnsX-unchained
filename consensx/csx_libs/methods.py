@@ -8,8 +8,8 @@ import pickle
 
 import matplotlib.pyplot as plt
 
-from . import objects as csx_obj
 from consensx.parse import Pdb
+from consensx.calc.vec_3d import Vec3D
 
 
 plt.switch_backend('Agg')
@@ -220,15 +220,15 @@ def calcPeptideBonds(model_data):
                     CN_vec = prev_CA - my_N
                     CCA_vec = prev_C - my_CA
 
-                    first_cross = csx_obj.Vec_3D.cross(CN_vec, NCA_vec)
-                    second_cross = csx_obj.Vec_3D.cross(CCA_vec, NCA_vec)
+                    first_cross = Vec3D.cross(CN_vec, NCA_vec)
+                    second_cross = Vec3D.cross(CCA_vec, NCA_vec)
 
-                    angle = csx_obj.Vec_3D.dihedAngle(
+                    angle = Vec3D.dihed_angle(
                         first_cross, second_cross
                     )
 
                     # reference for setting sign of angle
-                    reference = csx_obj.Vec_3D.cross(first_cross, second_cross)
+                    reference = Vec3D.cross(first_cross, second_cross)
 
                     r1 = reference.normalize()
                     r2 = NCA_vec.normalize()
@@ -254,11 +254,11 @@ def calcPeptideBonds(model_data):
 
             if atom_res == current_Resindex:
                 if atom.getName() == 'N':
-                    my_N = csx_obj.Vec_3D(atom.getCoords())
+                    my_N = Vec3D(atom.getCoords())
                 elif atom.getName() == 'CA':
-                    my_CA = csx_obj.Vec_3D(atom.getCoords())
+                    my_CA = Vec3D(atom.getCoords())
                 elif atom.getName() == 'C':
-                    my_C = csx_obj.Vec_3D(atom.getCoords())
+                    my_C = Vec3D(atom.getCoords())
 
     print("Peptide (CA-N-C'-CA) bond angle distribution:")
     print("   <2 -> " + str(dihedral_angles["<2"]))
@@ -292,15 +292,15 @@ def calcNH_Angles(model_data):
                     CN_vec = my_N - prev_C
                     OC_vec = prev_C - prev_O
 
-                    first_cross = csx_obj.Vec_3D.cross(NH_vec, CN_vec)
-                    second_cross = csx_obj.Vec_3D.cross(OC_vec, CN_vec)
+                    first_cross = Vec3D.cross(NH_vec, CN_vec)
+                    second_cross = Vec3D.cross(OC_vec, CN_vec)
 
-                    angle = csx_obj.Vec_3D.dihedAngle(
+                    angle = Vec3D.dihed_angle(
                         first_cross, second_cross
                     )
 
                     # reference for setting sign of angle
-                    reference = csx_obj.Vec_3D.cross(first_cross, second_cross)
+                    reference = Vec3D.cross(first_cross, second_cross)
 
                     r1 = reference.normalize()
                     r2 = NH_vec.normalize()
@@ -326,13 +326,13 @@ def calcNH_Angles(model_data):
 
             if atom_res == current_Resindex:
                 if atom.getName() == 'N':
-                    my_N = csx_obj.Vec_3D(atom.getCoords())
+                    my_N = Vec3D(atom.getCoords())
                 elif atom.getName() == 'H':
-                    my_H = csx_obj.Vec_3D(atom.getCoords())
+                    my_H = Vec3D(atom.getCoords())
                 elif atom.getName() == 'C':
-                    my_C = csx_obj.Vec_3D(atom.getCoords())
+                    my_C = Vec3D(atom.getCoords())
                 elif atom.getName() == 'O':
-                    my_O = csx_obj.Vec_3D(atom.getCoords())
+                    my_O = Vec3D(atom.getCoords())
 
     print("Peptide (H-N-C=O) bond angle distribution:")
     print("   <2 -> " + str(dihedral_angles["<2"]))

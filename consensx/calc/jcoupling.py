@@ -2,9 +2,9 @@ import pickle
 import math
 
 import consensx.graph as graph
+from .vec_3d import Vec3D
 
 from consensx.csx_libs import methods as csx_func
-from consensx.csx_libs import objects as csx_obj
 
 # from consensx.bme_reweight import Reweight
 
@@ -77,15 +77,15 @@ def calc_dihedral_angles(pdb_model_data):
                     cn_vec = prev_c - my_n
                     cca_vec = my_c - my_ca
 
-                    first_cross = csx_obj.Vec_3D.cross(cn_vec, nca_vec)
-                    second_cross = csx_obj.Vec_3D.cross(cca_vec, nca_vec)
+                    first_cross = Vec3D.cross(cn_vec, nca_vec)
+                    second_cross = Vec3D.cross(cca_vec, nca_vec)
 
-                    angle = csx_obj.Vec_3D.dihedAngle(
+                    angle = Vec3D.dihed_angle(
                         first_cross, second_cross
                     )
 
                     # reference for setting sign of angle
-                    reference = csx_obj.Vec_3D.cross(first_cross, second_cross)
+                    reference = Vec3D.cross(first_cross, second_cross)
 
                     r1 = reference.normalize()
                     r2 = nca_vec.normalize()
@@ -101,11 +101,11 @@ def calc_dihedral_angles(pdb_model_data):
 
             if atom_res == current_resindex:
                 if atom.getName() == "N":
-                    my_n = csx_obj.Vec_3D(atom.getCoords())
+                    my_n = Vec3D(atom.getCoords())
                 elif atom.getName() == "CA":
-                    my_ca = csx_obj.Vec_3D(atom.getCoords())
+                    my_ca = Vec3D(atom.getCoords())
                 elif atom.getName() == "C":
-                    my_c = csx_obj.Vec_3D(atom.getCoords())
+                    my_c = Vec3D(atom.getCoords())
 
         j_coup_dicts.append(j_coup_dict)
 

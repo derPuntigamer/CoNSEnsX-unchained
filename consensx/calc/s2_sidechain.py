@@ -4,11 +4,11 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-from consensx.csx_libs import objects as csx_obj
+from .vec_3d import Vec3D
 
 
 def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
-    """Back calculate order parameters from given S2 dict and PDB models"""
+    """Back-calculate order parameters from given S2 dict and PDB models"""
 
     sc_lot = {
         "VAL": {"CG1": "CB", "CG2": "CB"},
@@ -46,7 +46,7 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
                     in PDB. Please check your atom naming."
                 }
 
-            vectors.append(csx_obj.Vec_3D(coords - pair_coords).normalize())
+            vectors.append(Vec3D(coords - pair_coords).normalize())
 
         x2, y2, z2, xy, xz, yz = 0, 0, 0, 0, 0, 0
 
