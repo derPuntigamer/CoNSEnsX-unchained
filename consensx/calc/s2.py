@@ -1,8 +1,8 @@
 import prody
 import numpy as np
 
-from consensx.csx_libs import methods as csx_func
 from .vec_3d import Vec3D
+from .measure import correlation, q_value, rmsd
 import consensx.graph as graph
 
 
@@ -40,6 +40,8 @@ def s2_values(
     # get NH vectors from models (model_data[] -> vectors{resnum : vector})
     vector_data = []
     s2_pairs = {"N": "H", "CA": "HA"}
+    h_coords = None
+    n_coords = None
 
     for model_num in calculate_on_models:
         model_data.atomgroup.setACSIndex(model_num)
@@ -143,9 +145,9 @@ def s2(
             fit_range,
         )
 
-        correl = csx_func.calcCorrel(s2_calced, s2_dict[s2_type])
-        q_value = csx_func.calcQValue(s2_calced, s2_dict[s2_type])
-        rmsd = csx_func.calcRMSD(s2_calced, s2_dict[s2_type])
+        my_correl = correlation(s2_calced, s2_dict[s2_type])
+        my_q_value = q_value(s2_calced, s2_dict[s2_type])
+        my_rmsd = rmsd(s2_calced, s2_dict[s2_type])
 
         corr_key = "S2_" + s2_type + "_corr"
         qval_key = "S2_" + s2_type + "_qval"
@@ -153,9 +155,9 @@ def s2(
 
         calced_data_storage.update(
             {
-                corr_key: "{0}".format("{0:.3f}".format(correl)),
-                qval_key: "{0}".format("{0:.3f}".format(q_value)),
-                rmsd_key: "{0}".format("{0:.3f}".format(rmsd)),
+                corr_key: "{0}".format("{0:.3f}".format(my_correl)),
+                qval_key: "{0}".format("{0:.3f}".format(my_q_value)),
+                rmsd_key: "{0}".format("{0:.3f}".format(my_rmsd)),
             }
         )
 
@@ -168,9 +170,9 @@ def s2(
         )
 
         print(s2_type + " Order Parameters")
-        print("Correl: ", correl)
-        print("Q-val:  ", q_value)
-        print("RMSD:   ", rmsd)
+        print("Correl: ", my_correl)
+        print("Q-val:  ", my_q_value)
+        print("RMSD:   ", my_rmsd)
         print()
 
         graph_name = "S2_" + s2_type + ".svg"
@@ -187,9 +189,9 @@ def s2(
             {
                 "s2_type": s2_type,
                 "S2_model_n": len(s2_dict[s2_type]),
-                "correlation": "{0:.3f}".format(correl),
-                "q_value": "{0:.3f}".format(q_value),
-                "rmsd": "{0:.3f}".format(rmsd),
+                "correlation": "{0:.3f}".format(my_correl),
+                "q_value": "{0:.3f}".format(my_q_value),
+                "rmsd": "{0:.3f}".format(my_rmsd),
                 "corr_graph_name": my_id + corr_graph_name,
                 "graph_name": my_id + graph_name,
                 "input_id": "S2_" + s2_type,

@@ -6,9 +6,9 @@ import prody
 from progress.bar import Bar
 
 # own modules
-import consensx.csx_libs.methods as csx_func
 import consensx.graph as graph
 import consensx.calc as calc
+from consensx.misc.natural_sort import natural_sort
 from .models import CSX_upload
 
 
@@ -18,7 +18,7 @@ def getPDBModels(path):
         if file.endswith(".pdb") and file.startswith("model_"):
             pdb_models.append(file)
 
-    pdb_models = csx_func.natural_sort(pdb_models)
+    pdb_models = natural_sort(pdb_models)
     return pdb_models
 
 
@@ -343,11 +343,11 @@ def selection_on(my_path, measure, user_sel,
                     my_RDC = RDC_lists[RDC_num - 1][RDC_type]
 
                     if measure == "correlation":
-                        calced = csx_func.calcCorrel(averageRDC, my_RDC)
+                        calced = calc.correlation(averageRDC, my_RDC)
                     elif measure == "q-value":
-                        calced = csx_func.calcQValue(averageRDC, my_RDC)
+                        calced = calc.q_value(averageRDC, my_RDC)
                     elif measure == "rmsd":
-                        calced = csx_func.calcRMSD(averageRDC, my_RDC)
+                        calced = calc.rmsd(averageRDC, my_RDC)
 
                     if num in model_scores.keys():
                         model_scores[num] += calced * RDC_weight
@@ -374,11 +374,11 @@ def selection_on(my_path, measure, user_sel,
                     experimental = S2_dict[S2_type]
 
                     if measure == "correlation":
-                        calced = csx_func.calcCorrel(averageS2, experimental)
+                        calced = calc.correlation(averageS2, experimental)
                     elif measure == "q-value":
-                        calced = csx_func.calcQValue(averageS2, experimental)
+                        calced = calc.q_value(averageS2, experimental)
                     elif measure == "rmsd":
-                        calced = csx_func.calcRMSD(averageS2, experimental)
+                        calced = calc.rmsd(averageS2, experimental)
 
                     if num in model_scores.keys():
                         model_scores[num] += calced * S2_weight
@@ -398,11 +398,11 @@ def selection_on(my_path, measure, user_sel,
                     my_JCoup = Jcoup_dict[JCoup_type]
 
                     if measure == "correlation":
-                        calced = csx_func.calcCorrel(averageJCoup, my_JCoup)
+                        calced = calc.correlation(averageJCoup, my_JCoup)
                     elif measure == "q-value":
-                        calced = csx_func.calcQValue(averageJCoup, my_JCoup)
+                        calced = calc.q_value(averageJCoup, my_JCoup)
                     elif measure == "rmsd":
-                        calced = csx_func.calcRMSD(averageJCoup, my_JCoup)
+                        calced = calc.rmsd(averageJCoup, my_JCoup)
 
                     if num in model_scores.keys():
                         model_scores[num] += calced * JCoup_weight
@@ -425,15 +425,15 @@ def selection_on(my_path, measure, user_sel,
                     averageChemShift = averageChemShift_on(pdb_sel, my_type)
 
                     if measure == "correlation":
-                        calced = csx_func.calcCorrel(
+                        calced = calc.correlation(
                             averageChemShift, my_ChemShifts
                         )
                     elif measure == "q-value":
-                        calced = csx_func.calcQValue(
+                        calced = calc.q_value(
                             averageChemShift, my_ChemShifts
                         )
                     elif measure == "rmsd":
-                        calced = csx_func.calcRMSD(
+                        calced = calc.rmsd(
                             averageChemShift, my_ChemShifts
                         )
 
@@ -464,7 +464,7 @@ def selection_on(my_path, measure, user_sel,
             if measure == "correlation" and model_score > best_val:
                 best_val = model_score
                 best_num = num
-            elif (measure in ["q-value", "rmsd"] and model_score < best_val):
+            elif measure in ["q-value", "rmsd"] and model_score < best_val:
                 best_val = model_score
                 best_num = num
 

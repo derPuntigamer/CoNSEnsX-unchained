@@ -18,10 +18,11 @@ import pickle
 import zipfile
 
 # own modules
-import consensx.csx_libs.methods as csx_func
 import consensx.calc as calc
 import consensx.parse as parse
 import consensx.storage as storage
+import consensx.pdb
+from consensx.misc.natural_sort import natural_sort
 from consensx import thirdparty
 
 
@@ -52,8 +53,8 @@ def run_calculation(request, calc_id):
 
     my_pdb = my_path + db_entry.PDB_file
 
-    csx_func.pdb_cleaner(my_path, my_pdb, csv_buffer)
-    model_count = csx_func.pdb_splitter(my_path, my_pdb)
+    consensx.pdb.clean(my_path, my_pdb, csv_buffer)
+    model_count = consensx.pdb.split(my_path, my_pdb)
 
     model_data = parse.Pdb(my_pdb, my_path, model_count)
 
@@ -73,7 +74,7 @@ def run_calculation(request, calc_id):
         if file.startswith("model_") and file.endswith(".pdb"):
             pdb_models.append(file)
 
-    pdb_models = csx_func.natural_sort(pdb_models)
+    pdb_models = natural_sort(pdb_models)
     data_found = False
     noe_name = "[NOT PRESENT]"
     noe_n = ""
@@ -264,8 +265,8 @@ def run_calculation(request, calc_id):
 
     csv_buffer.write_csv()
 
-    csx_func.calcPeptideBonds(model_data)
-    csx_func.calcNH_Angles(model_data)
+    calc.peptide_bonds(model_data)
+    calc.nh_angles(model_data)
 
     # pack BME input files for zipping
     bme_zf = None

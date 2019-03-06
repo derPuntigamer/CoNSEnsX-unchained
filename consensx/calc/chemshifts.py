@@ -5,7 +5,9 @@ import subprocess
 import consensx.graph as graph
 
 from consensx import thirdparty
-from consensx.csx_libs import methods as csx_func
+from .measure import correlation, q_value, rmsd
+from consensx.misc.natural_sort import natural_sort
+
 
 chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
 
@@ -28,7 +30,7 @@ def call_shiftx_on(my_path, pdb_files, bme_weights=None):
     if bme_weights:
         model_weight_sum = sum(bme_weights)
 
-    for some_file in csx_func.natural_sort(os.listdir(my_path)):
+    for some_file in natural_sort(os.listdir(my_path)):
         if some_file.startswith("modell") and some_file.endswith(".out"):
             shiftx_output_files.append(some_file)
 
@@ -200,7 +202,7 @@ def chemshifts(
                     inner_exp[record.resnum] = model[CS_type][record.resnum]
 
                 model_corrs.append(
-                    csx_func.calcCorrel(inner_exp, cs_list[CS_type])
+                    correlation(inner_exp, cs_list[CS_type])
                 )
 
             avg_model_corr = sum(model_corrs) / len(model_corrs)
@@ -210,9 +212,9 @@ def chemshifts(
             for record in cs_list[CS_type]:
                 exp_dict[record.resnum] = cs_calced[CS_type][record.resnum]
 
-            correl = csx_func.calcCorrel(exp_dict, cs_list[CS_type])
-            q_value = csx_func.calcQValue(exp_dict, cs_list[CS_type])
-            rmsd = csx_func.calcRMSD(exp_dict, cs_list[CS_type])
+            my_correl = correlation(exp_dict, cs_list[CS_type])
+            my_q_value = q_value(exp_dict, cs_list[CS_type])
+            my_rmsd = rmsd(exp_dict, cs_list[CS_type])
 
             corr_key = "CS_" + CS_type + "_corr"
             qval_key = "CS_" + CS_type + "_qval"
@@ -220,9 +222,9 @@ def chemshifts(
 
             calced_data_storage.update(
                 {
-                    corr_key: "{0}".format("{0:.3f}".format(correl)),
-                    qval_key: "{0}".format("{0:.3f}".format(q_value)),
-                    rmsd_key: "{0}".format("{0:.3f}".format(rmsd)),
+                    corr_key: "{0}".format("{0:.3f}".format(my_correl)),
+                    qval_key: "{0}".format("{0:.3f}".format(my_q_value)),
+                    rmsd_key: "{0}".format("{0:.3f}".format(my_rmsd)),
                 }
             )
 
@@ -235,9 +237,9 @@ def chemshifts(
             )
 
             print("CHEM SHIFT", CS_type)
-            print("Correl: ", correl)
-            print("Q-val:  ", q_value)
-            print("RMSD:   ", rmsd)
+            print("Correl: ", my_correl)
+            print("Q-val:  ", my_q_value)
+            print("RMSD:   ", my_rmsd)
             print()
 
             graph_name = str(n + 1) + "_CS_" + CS_type + ".svg"
@@ -251,7 +253,7 @@ def chemshifts(
             mod_corr_graph_name = "CS_mod_corr_" + CS_type + ".svg"
             graph.mod_correl_graph(
                 my_path,
-                correl,
+                my_correl,
                 avg_model_corr,
                 model_corrs,
                 mod_corr_graph_name,
@@ -263,9 +265,9 @@ def chemshifts(
                 {
                     "CS_type": CS_type,
                     "CS_model_n": len(cs_list[CS_type]),
-                    "correlation": "{0:.3f}".format(correl),
-                    "q_value": "{0:.3f}".format(q_value),
-                    "rmsd": "{0:.3f}".format(rmsd),
+                    "correlation": "{0:.3f}".format(my_correl),
+                    "q_value": "{0:.3f}".format(my_q_value),
+                    "rmsd": "{0:.3f}".format(my_rmsd),
                     "corr_graph_name": my_id + corr_graph_name,
                     "graph_name": my_id + graph_name,
                     "mod_corr_graph_name": my_id + mod_corr_graph_name,

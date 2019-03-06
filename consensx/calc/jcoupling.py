@@ -4,7 +4,7 @@ import math
 import consensx.graph as graph
 from .vec_3d import Vec3D
 
-from consensx.csx_libs import methods as csx_func
+from .measure import correlation, q_value, rmsd
 
 # from consensx.bme_reweight import Reweight
 
@@ -226,6 +226,7 @@ def jcoupling(
     jcuop_data = []
     type_dict = {}
     dihed_lists = calc_dihedral_angles(pdb_model_data)
+    jcoup_exp_file = None
 
     for Jcoup_type in sorted(list(jcoup_dict.keys())):
         exp_dat_file_name = my_path + "jcoup_" + Jcoup_type + "_exp.dat"
@@ -260,14 +261,14 @@ def jcoupling(
 
         for model in model_data:
             model_corrs.append(
-                csx_func.calcCorrel(model, jcoup_dict[Jcoup_type])
+                correlation(model, jcoup_dict[Jcoup_type])
             )
 
         avg_model_corr = sum(model_corrs) / len(model_corrs)
 
-        correl = csx_func.calcCorrel(jcoup_calced, jcoup_dict[Jcoup_type])
-        q_value = csx_func.calcQValue(jcoup_calced, jcoup_dict[Jcoup_type])
-        rmsd = csx_func.calcRMSD(jcoup_calced, jcoup_dict[Jcoup_type])
+        my_correl = correlation(jcoup_calced, jcoup_dict[Jcoup_type])
+        my_q_value = q_value(jcoup_calced, jcoup_dict[Jcoup_type])
+        my_rmsd = rmsd(jcoup_calced, jcoup_dict[Jcoup_type])
 
         corr_key = "JCoup_" + Jcoup_type + "_corr"
         qval_key = "JCoup_" + Jcoup_type + "_qval"
@@ -275,9 +276,9 @@ def jcoupling(
 
         calced_data_storage.update(
             {
-                corr_key: "{0}".format("{0:.3f}".format(correl)),
-                qval_key: "{0}".format("{0:.3f}".format(q_value)),
-                rmsd_key: "{0}".format("{0:.3f}".format(rmsd)),
+                corr_key: "{0}".format("{0:.3f}".format(my_correl)),
+                qval_key: "{0}".format("{0:.3f}".format(my_q_value)),
+                rmsd_key: "{0}".format("{0:.3f}".format(my_rmsd)),
             }
         )
 
@@ -290,9 +291,9 @@ def jcoupling(
         )
 
         print("J-couplings (" + Jcoup_type + ")")
-        print("Correl: ", correl)
-        print("Q-val:  ", q_value)
-        print("RMSD:   ", rmsd)
+        print("Correl: ", my_correl)
+        print("Q-val:  ", my_q_value)
+        print("RMSD:   ", my_rmsd)
         print()
 
         graph_name = "JCoup_" + Jcoup_type + ".svg"
@@ -307,7 +308,7 @@ def jcoupling(
 
         mod_corr_graph_name = "JCoup_mod_corr_" + Jcoup_type + ".svg"
         graph.mod_correl_graph(
-            my_path, correl, avg_model_corr, model_corrs, mod_corr_graph_name
+            my_path, my_correl, avg_model_corr, model_corrs, mod_corr_graph_name
         )
 
         my_id = my_path.split("/")[-2] + "/"
@@ -316,9 +317,9 @@ def jcoupling(
             {
                 "Jcoup_type": Jcoup_type,
                 "Jcoup_model_n": len(jcoup_dict[Jcoup_type]),
-                "correlation": "{0:.3f}".format(correl),
-                "q_value": "{0:.3f}".format(q_value),
-                "rmsd": "{0:.3f}".format(rmsd),
+                "correlation": "{0:.3f}".format(my_correl),
+                "q_value": "{0:.3f}".format(my_q_value),
+                "rmsd": "{0:.3f}".format(my_rmsd),
                 "corr_graph_name": my_id + corr_graph_name,
                 "graph_name": my_id + graph_name,
                 "mod_corr_graph_name": my_id + mod_corr_graph_name,

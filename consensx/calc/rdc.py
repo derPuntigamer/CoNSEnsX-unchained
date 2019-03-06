@@ -6,9 +6,7 @@ import subprocess
 
 from consensx import thirdparty
 import consensx.graph as graph
-
-from consensx.csx_libs import methods as csx_func
-
+from .measure import correlation, q_value, rmsd
 
 shortcodes = {
     "ALA": "A",
@@ -131,7 +129,7 @@ def call_pales_on(my_path, pdb_files, rdc_dict, lc_model, svd_enable):
         pales_dummy.close()
 
         outfile = open("pales.out", "a")
-        DEVNULL = open(os.devnull, "w")
+        devnull = open(os.devnull, "w")
 
         print(
             "call Pales on model: " + str(o + 1) + "/" + str(len(pdb_files)),
@@ -152,7 +150,7 @@ def call_pales_on(my_path, pdb_files, rdc_dict, lc_model, svd_enable):
                         "-bestFit",      # SVD
                     ],
                     stdout=outfile,
-                    stderr=DEVNULL,
+                    stderr=devnull,
                 )
                 p.wait()  # now wait
             else:  # if SVD is disabled (default)
@@ -166,12 +164,12 @@ def call_pales_on(my_path, pdb_files, rdc_dict, lc_model, svd_enable):
                         "-" + lc_model,  # rdc lc model
                     ],
                     stdout=outfile,
-                    stderr=DEVNULL,
+                    stderr=devnull,
                 )
         except OSError as e:
             print("Execution failed:", e, file=sys.stderr)
         outfile.close()
-        DEVNULL.close()
+        devnull.close()
 
     print()
     os.chdir(pwd)
@@ -208,10 +206,10 @@ def average_pales_output(pales_out, my_RDC_type):
             atom = line.split()[2]
             atom2 = line.split()[5]
             D = float(line.split()[8])  # D column of pales output
-            rd_ctype = str(abs(resnum2 - resnum)) + "_" + atom + "_" + atom2
+            rdc_type = str(abs(resnum2 - resnum)) + "_" + atom + "_" + atom2
 
             # skip non relevant RDC data in the pales output file
-            if my_RDC_type != rd_ctype:
+            if my_RDC_type != rdc_type:
                 continue
 
             if resnum in list(average_rdc.keys()):
@@ -261,7 +259,7 @@ def rdc(
 
             for model in model_data:
                 model_corrs.append(
-                    csx_func.calcCorrel(model, RDC_dict[RDC_type])
+                    correlation(model, RDC_dict[RDC_type])
                 )
 
             my_rdc_model_data.add_data(list_num + 1, RDC_type, model_data)
@@ -273,9 +271,9 @@ def rdc(
             for record in RDC_dict[RDC_type]:
                 my_average_rdc[record.resnum] = average_rdc[record.resnum]
 
-            correl = csx_func.calcCorrel(my_average_rdc, RDC_dict[RDC_type])
-            q_value = csx_func.calcQValue(my_average_rdc, RDC_dict[RDC_type])
-            rmsd = csx_func.calcRMSD(my_average_rdc, RDC_dict[RDC_type])
+            my_correl = correlation(my_average_rdc, RDC_dict[RDC_type])
+            my_q_value = q_value(my_average_rdc, RDC_dict[RDC_type])
+            my_rmsd = rmsd(my_average_rdc, RDC_dict[RDC_type])
 
             rdc_simple = RDC_type.replace("_", "")
 
@@ -285,9 +283,9 @@ def rdc(
 
             calced_data_storage.update(
                 {
-                    corr_key: "{0}".format("{0:.3f}".format(correl)),
-                    qval_key: "{0}".format("{0:.3f}".format(q_value)),
-                    rmsd_key: "{0}".format("{0:.3f}".format(rmsd)),
+                    corr_key: "{0}".format("{0:.3f}".format(my_correl)),
+                    qval_key: "{0}".format("{0:.3f}".format(my_q_value)),
+                    rmsd_key: "{0}".format("{0:.3f}".format(my_rmsd)),
                 }
             )
 
@@ -299,9 +297,9 @@ def rdc(
                 }
             )
 
-            print("Correl: ", correl)
-            print("Q-val:  ", q_value)
-            print("RMSD:   ", rmsd)
+            print("Correl: ", my_correl)
+            print("Q-val:  ", my_q_value)
+            print("RMSD:   ", my_rmsd)
             print()
 
             graph_name = str(list_num + 1) + "_RDC_" + RDC_type + ".svg"
@@ -323,7 +321,7 @@ def rdc(
 
             graph.mod_correl_graph(
                 my_path,
-                correl,
+                my_correl,
                 avg_model_corr,
                 model_corrs,
                 mod_corr_graph_name,
@@ -335,9 +333,9 @@ def rdc(
                 {
                     "RDC_type": RDC_type,
                     "RDC_model_n": len(RDC_dict[RDC_type]),
-                    "correlation": "{0:.3f}".format(correl),
-                    "q_value": "{0:.3f}".format(q_value),
-                    "rmsd": "{0:.3f}".format(rmsd),
+                    "correlation": "{0:.3f}".format(my_correl),
+                    "q_value": "{0:.3f}".format(my_q_value),
+                    "rmsd": "{0:.3f}".format(my_rmsd),
                     "corr_graph_name": my_id + corr_graph_name,
                     "graph_name": my_id + graph_name,
                     "mod_corr_graph_name": my_id + mod_corr_graph_name,
