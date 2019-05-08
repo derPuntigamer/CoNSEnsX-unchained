@@ -90,7 +90,7 @@ class StarNMR():
         RDC_lists = []
 
         while True:
-            saveShiftName = 'RDC_list_' + str(list_number)
+            saveShiftName = 'CNS/XPLOR_dipolar_coupling_' + str(list_number)
             try:
                 saveShifts = self.parsed.value.saves[saveShiftName]
             except KeyError:
@@ -99,11 +99,11 @@ class StarNMR():
             RDC_records = []
 
             # STR key values recognised by this program
-            rdc_res1_keys = ["RDC.Seq_ID_1", "Atom_one_residue_seq_code"]
-            rdc_atom1_keys = ["RDC.Atom_type_1", "Atom_one_atom_name"]
-            rdc_res2_keys = ["RDC.Seq_ID_2", "Atom_two_residue_seq_code"]
-            rdc_atom2_keys = ["RDC.Atom_type_2", "Atom_two_atom_name"]
-            rdc_value_keys = ["RDC.Val", "Residual_dipolar_coupling_value"]
+            rdc_res1_keys = ["RDC.Seq_ID_1", "Atom_one_residue_seq_code", "RDC_constraint.Seq_ID_1"]
+            rdc_atom1_keys = ["RDC.Atom_type_1", "Atom_one_atom_name", "RDC_constraint.Atom_ID_1"]
+            rdc_res2_keys = ["RDC.Seq_ID_2", "Atom_two_residue_seq_code", "RDC_constraint.Seq_ID_2"]
+            rdc_atom2_keys = ["RDC.Atom_type_2", "Atom_two_atom_name", "RDC_constraint.Atom_ID_2"]
+            rdc_value_keys = ["RDC.Val", "Residual_dipolar_coupling_value", "RDC_constraint.RDC_val"]
 
             for ix in range(len(loopShifts.rows)):  # fetch values from file
                 row = loopShifts.getRowAsDict(ix)
@@ -268,7 +268,7 @@ class StarNMR():
             return None
 
     def parse_chemshift(self):
-        """Returns ChemShift lists as dictonaries containing ChemShift_Record
+        """Returns ChemShift lists as dictionaries containing ChemShift_Record
         objects, grouped by Atom_name (keys())"""
         list_number = 1
         ChemShift_lists = []
