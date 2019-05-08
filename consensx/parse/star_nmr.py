@@ -1,4 +1,5 @@
 import consensx.nmrpystar as nmrpystar
+import pynmrstar
 
 
 class RDC_Record(object):
@@ -58,28 +59,13 @@ class StarNMR():
     def __init__(self, STR_FILE):
         """Parse BMRB file into a python object"""
 
-        star_file = open(STR_FILE)  # open STR file
-        myString = ""
         parse_exception = (
             "ERROR during STR parsing, please check your STAR-NMR file!"
         )
 
         try:
-            for line in star_file:  # read STR file into a string
-                myString += line
-        except UnicodeDecodeError:
-            raise Exception(
-                "ERROR during reading STAR-NMR file, please use ASCII encoding"
-            )
-
-        star_file.close()
-
-        try:
-            self.parsed = nmrpystar.parse(myString)  # parsing -> parsed.value
-
-            if self.parsed.status != 'success':  # check if parsing was ok
-                raise Exception(parse_exception)
-        except KeyError:
+            self.parsed = pynmrstar.Entry.from_file(STR_FILE)
+        except Exception:
             raise Exception(parse_exception)
 
     def parse_rdc(self):
