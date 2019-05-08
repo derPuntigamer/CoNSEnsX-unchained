@@ -170,25 +170,31 @@ def chemshifts(
             exp_dat_file.write("# DATA=CS PRIOR=GAUSS\n")
 
             for atom_type in chemshift_types:
-                for i in cs_list[atom_type]:
-                    exp_dat_file.write(
-                        str(i.resnum)
-                        + "_"
-                        + str(i.atom_name)
-                        + "\t"
-                        + str(i.value)
-                        + "\t0.1\n"
-                    )
+                try:
+                    for i in cs_list[atom_type]:
+                        exp_dat_file.write(
+                            str(i.resnum)
+                            + "_"
+                            + str(i.atom_name)
+                            + "\t"
+                            + str(i.value)
+                            + "\t0.1\n"
+                        )
+                except KeyError:
+                    continue
 
         with open(my_path + bme_calc_filename, "w") as calc_dat_file:
             for index, model in enumerate(model_data):
                 calc_dat_file.write(str(index) + " ")
 
                 for atom_type in chemshift_types:
-                    for i in cs_list[atom_type]:
-                        calc_dat_file.write(
-                            str(model[atom_type][i.resnum]) + " "
-                        )
+                    try:
+                        for i in cs_list[atom_type]:
+                            calc_dat_file.write(
+                                str(model[atom_type][i.resnum]) + " "
+                            )
+                    except KeyError:
+                        continue
 
                 calc_dat_file.write("\n")
 
