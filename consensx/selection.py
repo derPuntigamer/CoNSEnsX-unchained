@@ -541,7 +541,7 @@ def selection_on(my_path, measure, user_sel,
             if overdrive and overdrive > above_best:
 
                 # don't overdrive until minimum ensemble size reached
-                if min_size and len(in_selection) < min_size:
+                if min_size and len(in_selection) <= min_size:
                     prev_best = best_val
                     in_selection.append(best_num)
                     continue
@@ -610,7 +610,7 @@ def selection_on(my_path, measure, user_sel,
                 continue
 
             # check if selection reached the desired minimal size (if any)
-            if min_size and len(in_selection) < min_size:
+            if min_size and len(in_selection) <= min_size:
                 print("we are over the peak!")
                 prev_best = best_val
                 in_selection.append(best_num)

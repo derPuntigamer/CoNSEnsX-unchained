@@ -290,7 +290,7 @@ def run_calculation(request, calc_id):
             "consensx/calculation.html",
             {
                 "my_id": my_id,
-                "my_pdb": db_entry.PDB_file,
+                "my_PDB": db_entry.PDB_file,
                 "n_model": model_count,
                 "my_NOE": noe_name,
                 "n_NOE": noe_n,
