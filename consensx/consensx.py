@@ -169,82 +169,82 @@ def run_calculation(request, calc_id):
         print("EXCEPTION", e)
         return HttpResponse(e)
 
-    # ------------------------  RDC calculation  ------------------------ #
-    rdc_lists = star_nmr_data.parse_rdc()
-    rdc_lists_path = my_path + "/RDC_lists.pickle"
-    pickle.dump(rdc_lists, open(rdc_lists_path, "wb"))
-    rdc_calced_data = None
-
-    if rdc_lists:
-        svd_enabled = db_entry.svd_enable
-        lc_model = db_entry.rdc_lc
-        rdc_calced_data = calc.rdc(
-            csv_buffer,
-            calced_data_storage,
-            rdc_lists,
-            pdb_models,
-            my_path,
-            svd_enabled,
-            lc_model,
-        )
-        data_found = True
-
-    # ----------------------------  S2 calc  ---------------------------- #
-    s2_dict = star_nmr_data.parse_s2()
-    s2_dump = [s2_dict, db_entry.superimpose, db_entry.fit_range]
-    s2_dict_path = my_path + "/S2_dict.pickle"
-    pickle.dump(s2_dump, open(s2_dict_path, "wb"))
-    s2_data = None
-
-    if s2_dict:
-        s2_data = calc.s2(
-            csv_buffer,
-            calced_data_storage,
-            s2_dict,
-            my_path,
-            model_data,
-            fit=db_entry.superimpose,
-            fit_range=db_entry.fit_range,
-        )
-
-        data_found = True
-
-    s2_sidechain = star_nmr_data.parse_s2_sidechain()
-    s2_sc_data = None
-
-    if s2_sidechain:
-        s2_sc_data = calc.s2_sidechain(
-            csv_buffer,
-            s2_sidechain,
-            my_path,
-            model_data,
-            fit=db_entry.superimpose,
-        )
-
-        if "error" in s2_sc_data.keys():
-            return render(
-                request, "consensx/home.html", {"error": s2_sidechain["error"]}
-            )
-
-        data_found = True
-
-    # ------------------------  J-coupling calc  ------------------------ #
-    Jcoup_dict = star_nmr_data.parse_jcoup()
-    Jcoup_dict_path = my_path + "/Jcoup_dict.pickle"
-    pickle.dump(Jcoup_dict, open(Jcoup_dict_path, "wb"))
-    jcoup_data = None
-
-    if Jcoup_dict:
-        jcoup_data = calc.jcoupling(
-            csv_buffer,
-            calced_data_storage,
-            model_data,
-            db_entry,
-            Jcoup_dict,
-            my_path,
-            bme_weights,
-        )
-        data_found = True
+    # # ------------------------  RDC calculation  ------------------------ #
+    # rdc_lists = star_nmr_data.parse_rdc()
+    # rdc_lists_path = my_path + "/RDC_lists.pickle"
+    # pickle.dump(rdc_lists, open(rdc_lists_path, "wb"))
+    # rdc_calced_data = None
+    #
+    # if rdc_lists:
+    #     svd_enabled = db_entry.svd_enable
+    #     lc_model = db_entry.rdc_lc
+    #     rdc_calced_data = calc.rdc(
+    #         csv_buffer,
+    #         calced_data_storage,
+    #         rdc_lists,
+    #         pdb_models,
+    #         my_path,
+    #         svd_enabled,
+    #         lc_model,
+    #     )
+    #     data_found = True
+    #
+    # # ----------------------------  S2 calc  ---------------------------- #
+    # s2_dict = star_nmr_data.parse_s2()
+    # s2_dump = [s2_dict, db_entry.superimpose, db_entry.fit_range]
+    # s2_dict_path = my_path + "/S2_dict.pickle"
+    # pickle.dump(s2_dump, open(s2_dict_path, "wb"))
+    # s2_data = None
+    #
+    # if s2_dict:
+    #     s2_data = calc.s2(
+    #         csv_buffer,
+    #         calced_data_storage,
+    #         s2_dict,
+    #         my_path,
+    #         model_data,
+    #         fit=db_entry.superimpose,
+    #         fit_range=db_entry.fit_range,
+    #     )
+    #
+    #     data_found = True
+    #
+    # s2_sidechain = star_nmr_data.parse_s2_sidechain()
+    # s2_sc_data = None
+    #
+    # if s2_sidechain:
+    #     s2_sc_data = calc.s2_sidechain(
+    #         csv_buffer,
+    #         s2_sidechain,
+    #         my_path,
+    #         model_data,
+    #         fit=db_entry.superimpose,
+    #     )
+    #
+    #     if "error" in s2_sc_data.keys():
+    #         return render(
+    #             request, "consensx/home.html", {"error": s2_sidechain["error"]}
+    #         )
+    #
+    #     data_found = True
+    #
+    # # ------------------------  J-coupling calc  ------------------------ #
+    # Jcoup_dict = star_nmr_data.parse_jcoup()
+    # Jcoup_dict_path = my_path + "/Jcoup_dict.pickle"
+    # pickle.dump(Jcoup_dict, open(Jcoup_dict_path, "wb"))
+    # jcoup_data = None
+    #
+    # if Jcoup_dict:
+    #     jcoup_data = calc.jcoupling(
+    #         csv_buffer,
+    #         calced_data_storage,
+    #         model_data,
+    #         db_entry,
+    #         Jcoup_dict,
+    #         my_path,
+    #         bme_weights,
+    #     )
+    #     data_found = True
 
     # -----------------------  Chemical shift calc  --------------------- #
     chem_shift_lists = star_nmr_data.parse_chemshift()
