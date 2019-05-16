@@ -256,101 +256,72 @@ class StarNMR():
     def parse_chemshift(self):
         """Returns ChemShift lists as dictionaries containing ChemShift_Record
         objects, grouped by Atom_name (keys())"""
-        list_number = 1
-        ChemShift_lists = []
-        cs_lot = [
-            {
-                "seq_code": "Residue_seq_code",
-                "label": "Residue_label",
-                "name": "Atom_name",
-                "value": "Chem_shift_value"
-            },
-            {
-                "seq_code": "Atom_chem_shift.Seq_ID",
-                "label": "Atom_chem_shift.Comp_ID",
-                "name": "Atom_chem_shift.Atom_ID",
-                "value": "Atom_chem_shift.Val"
-            }
-        ]
 
-        while True:
-            saveShiftName = 'chem_shift_list_' + str(list_number)
-            altShiftName = 'assigned_chem_shift_list_' + str(list_number)
-            try:
-                saveShifts = self.parsed.value.saves[saveShiftName]
-                str_type = 0
-            except KeyError:
-                try:
-                    saveShifts = self.parsed.value.saves[altShiftName]
-                    str_type = 1
-                except KeyError:
-                    break
+        chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
+        tag_list = ['Seq_ID', 'Comp_ID', 'Atom_ID', 'Atom_type', 'Val']
+        chemshift_records = []
+        chem_shift_lists = []
+        ha_sum = 0.0
 
-            loopShifts = saveShifts.loops[-1]
-            chemshift_records = []
-            HA_sum = 0.0
+        for cs_loop in self.parsed.get_loops_by_category("Atom_chem_shift"):
+            for row_data in cs_loop.get_tag(tag_list):
+                row = dict(zip(tag_list, row_data))
+                # ['21', 'PRO', 'HD3', 'H', '3.448']
 
-            for ix in range(len(loopShifts.rows)):   # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
+                cs_value = float("{0:.2f}".format(float(row["Val"])))
 
-                CS_value = row[cs_lot[str_type]["value"]]
-                CS_value = float("{0:.2f}".format(float(CS_value)))
-
-                if row[cs_lot[str_type]["name"]] == "HA2":
-                    HA_sum += CS_value
+                if row["Atom_ID"] == "HA2":
+                    ha_sum += cs_value
                     continue
 
-                if row[cs_lot[str_type]["name"]] == "HA3":
-                    HA_sum += CS_value
+                if row["Atom_ID"] == "HA3":
+                    ha_sum += cs_value
 
                     chemshift_records.append(
                         ChemShift_Record(
-                            row[cs_lot[str_type]["seq_code"]],
-                            row[cs_lot[str_type]["label"]],
-                            "HA", HA_sum / 2
+                            row["Seq_ID"],
+                            row["Comp_ID"],
+                            "HA", ha_sum / 2
                         )
                     )
-                    HA_sum = 0.0
+                    ha_sum = 0.0
                     continue
 
-                chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
-
-                if row[cs_lot[str_type]["name"]] in chemshift_types:
+                if row["Atom_ID"] in chemshift_types:
                     chemshift_records.append(
                         ChemShift_Record(
-                            row[cs_lot[str_type]["seq_code"]],
-                            row[cs_lot[str_type]["label"]],
-                            row[cs_lot[str_type]["name"]],
-                            CS_value
+                            row["Seq_ID"],
+                            row["Comp_ID"],
+                            row["Atom_ID"],
+                            cs_value
                         )
                     )
 
-                elif row[cs_lot[str_type]["name"]] == "HN":
+                elif row["Atom_ID"] == "HN":
                     chemshift_records.append(
                         ChemShift_Record(
-                            row[cs_lot[str_type]["seq_code"]],
-                            row[cs_lot[str_type]["label"]],
+                            row["Seq_ID"],
+                            row["Comp_ID"],
                             "H",
-                            CS_value
+                            cs_value
                         )
                     )
 
-            ChemShift_lists.append(chemshift_records)
-            list_number += 1
+            chem_shift_lists.append(chemshift_records)
 
-        new_CS_list = []
+        new_cs_list = []
 
-        for ChemShift_list in ChemShift_lists:
-            ChemShift_dict = {}
+        for chem_shift_list in chem_shift_lists:
+            chem_shift_dict = {}
 
-            for record in ChemShift_list:
+            for record in chem_shift_list:
 
-                if record.atom_name in list(ChemShift_dict.keys()):
-                    ChemShift_dict[record.atom_name].append(record)
+                if record.atom_name in list(chem_shift_dict.keys()):
+                    chem_shift_dict[record.atom_name].append(record)
                 else:
-                    ChemShift_dict[record.atom_name] = []
-                    ChemShift_dict[record.atom_name].append(record)
+                    chem_shift_dict[record.atom_name] = []
+                    chem_shift_dict[record.atom_name].append(record)
 
-            new_CS_list.append(ChemShift_dict)
+            new_cs_list.append(chem_shift_dict)
 
-        return new_CS_list
+        return new_cs_list
