@@ -52,87 +52,88 @@ def call_pales_on(my_path, pdb_files, rdc_dict, lc_model, svd_enable):
     pwd = os.getcwd()
     os.chdir(my_path)
 
-    for o, pdb_file in enumerate(pdb_files):
-        # ------------------  Open file and read PDB data  -------------------#
-        try:
-            input_pdb = open(pdb_file)
-        except IOError:
-            print("Input file " + pdb_file + " was not found")
-            raise SystemExit  # exit if input file not found
+    # ------------------  Open file and read PDB data  -------------------#
+    try:
+        input_pdb = open(pdb_files[0])
+    except IOError:
+        print("Input file " + pdb_files[0] + " was not found")
+        raise SystemExit  # exit if input file not found
 
-        seg = []  # list storing sequence data
+    seg = {}  # dict storing sequence data
 
-        for line in input_pdb:
-            if line.startswith("ATOM") and line.split()[2] == "CA":
-                resname = line.split()[3]  # get residue name
-                seg.append(resname)  # append new segname to list
+    for line in input_pdb:
+        if line.startswith("ATOM") and line.split()[2] == "CA":
+            resname = line.split()[3]  # get residue name
+            resnum = int(line.split()[5])  # get residue name
+            seg[resnum] = resname
 
-        input_pdb.close()
+    input_pdb.close()
 
-        # ----------------------  Write sequence data  -----------------------#
-        short_seg = ""
+    short_seg = ""
 
-        for i in range(len(seg)):
-            short_seg += shortcodes[seg[i]]
+    for i in seg.keys():
+        short_seg += shortcodes[seg[i]]
 
-        my_line = "DATA SEQUENCE "
-        char_counter = 0
-        row_counter = 0
-        pales_dummy = open("pales_dummy.txt", "w")
+    # ----------------------  Write sequence data  -----------------------#
+    my_line = "DATA SEQUENCE "
+    char_counter = 0
+    row_counter = 0
+    pales_dummy = open("pales_dummy.txt", "w")
 
-        for char in short_seg:
-            if char_counter == 10:  # write aa output in 10 wide blocks
-                my_line += " "
+    for char in short_seg:
+        if char_counter == 10:  # write aa output in 10 wide blocks
+            my_line += " "
+            char_counter = 0
+            row_counter += 1
+
+            if row_counter == 5:  # write 5 block per line
+                pales_dummy.write(my_line + "\n")
                 char_counter = 0
-                row_counter += 1
+                row_counter = 0
+                my_line = "DATA SEQUENCE "
 
-                if row_counter == 5:  # write 5 block per line
-                    pales_dummy.write(my_line + "\n")
-                    char_counter = 0
-                    row_counter = 0
-                    my_line = "DATA SEQUENCE "
+        my_line += char
+        char_counter += 1
 
-            my_line += char
-            char_counter += 1
+    pales_dummy.write(my_line + "\n")  # write last line of aa output
 
-        pales_dummy.write(my_line + "\n")  # write last line of aa output
+    # ----------------------  Write dummy dipoles  -----------------------#
+    pales_dummy.write(
+        "\nVARS RESID_I RESNAME_I ATOMNAME_I "
+        + "RESID_J RESNAME_J ATOMNAME_J D DD W\n"
+        + "FORMAT %5d  %6s  %6s  %5d  %6s  %6s  %9.3f  %9.3f  %.2f \n\n"
+    )
 
-        # ----------------------  Write dummy dipoles  -----------------------#
-        pales_dummy.write(
-            "\nVARS RESID_I RESNAME_I ATOMNAME_I "
-            + "RESID_J RESNAME_J ATOMNAME_J D DD W\n"
-            + "FORMAT %5d  %6s  %6s  %5d  %6s  %6s  %9.3f  %9.3f  %.2f \n\n"
-        )
+    lists = []
+    for RDC_list in list(rdc_dict.keys()):
+        lists.append(rdc_dict[RDC_list])
 
-        lists = []
-        for RDC_list in list(rdc_dict.keys()):
-            lists.append(rdc_dict[RDC_list])
-
-        for RDC_set in lists:
-            for rdc_record in RDC_set:
-
-                pales_dummy.write(
-                    "%5s  %6s  %6s  %5s  %6s  %6s  %9.3f  %9.3f  %.2f\n"
-                    % (
-                        str(rdc_record.resnum) + "A",
-                        seg[rdc_record.resnum - 1],
-                        str(rdc_record.atom),
-                        str(rdc_record.resnum2) + "A",
-                        seg[rdc_record.resnum2 - 1],
-                        str(rdc_record.atom2),
-                        rdc_record.value,
-                        1.000,
-                        1.00,
-                    )
+    for RDC_set in lists:
+        for rdc_record in RDC_set:
+            pales_dummy.write(
+                "%5s  %6s  %6s  %5s  %6s  %6s  %9.3f  %9.3f  %.2f\n"
+                % (
+                    str(rdc_record.resnum) + "A",
+                    seg[rdc_record.resnum],
+                    str(rdc_record.atom),
+                    str(rdc_record.resnum2) + "A",
+                    seg[rdc_record.resnum2],
+                    str(rdc_record.atom2),
+                    rdc_record.value,
+                    1.000,
+                    1.00,
                 )
+            )
 
-        pales_dummy.close()
+    pales_dummy.close()
 
+    for pdb_file_num, pdb_file in enumerate(pdb_files):
         outfile = open("pales.out", "a")
         devnull = open(os.devnull, "w")
 
         print(
-            "call Pales on model: " + str(o + 1) + "/" + str(len(pdb_files)),
+            "call Pales on model: " +
+            str(pdb_file_num + 1) + "/" + str(len(pdb_files)),
             end="\r",
         )
         sys.stdout.flush()

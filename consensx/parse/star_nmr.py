@@ -2,46 +2,43 @@ import consensx.nmrpystar as nmrpystar
 import pynmrstar
 
 
-class RDC_Record(object):
+class RdcRecord:
     """Class for storing RDC data"""
-
-    def __init__(self, resnum1, atom1, resnum2, atom2, RDC_value):
-        self.RDC_type = (str(int(resnum1) - int(resnum2))
-                         + '_' + atom1 + '_' + atom2)
+    def __init__(self, resnum1, atom1, resnum2, atom2, rdc_value):
+        self.RDC_type = (
+            str(int(resnum1) - int(resnum2)) + '_' + atom1 + '_' + atom2
+        )
         self.resnum = int(resnum1)
         self.atom = atom1
         self.resnum2 = int(resnum2)
         self.atom2 = atom2
-        self.value = float(RDC_value)
+        self.value = float(rdc_value)
 
 
-class S2_Record(object):
+class S2Record:
     """Class for storing S2 data"""
-
-    def __init__(self, resnum, S2_type, S2_value):
+    def __init__(self, resnum, s2_type, s2_value):
         self.resnum = int(resnum)
-        self.type = S2_type
-        self.value = float(S2_value)
+        self.type = s2_type
+        self.value = float(s2_value)
         self.calced = None
 
 
-class JCoup_Record(object):
+class JCoupRecord:
     """Class for storing J-Coupling data"""
-
-    def __init__(self, resnum, jcoup_type, JCoup_value):
+    def __init__(self, resnum, jcoup_type, jcoup_value):
         self.resnum = int(resnum)
         self.type = jcoup_type
-        self.value = float(JCoup_value)
+        self.value = float(jcoup_value)
 
 
-class ChemShift_Record(object):
+class ChemShiftRecord:
     """Class for storing chemical shift data"""
-
-    def __init__(self, resnum, res_name, atom_name, ChemShift_value):
+    def __init__(self, resnum, res_name, atom_name, chemshift_value):
         self.resnum = int(resnum)
         self.res_name = res_name
         self.atom_name = atom_name
-        self.value = float(ChemShift_value)
+        self.value = float(chemshift_value)
 
     def __str__(self):
         return (
@@ -55,103 +52,46 @@ class ChemShift_Record(object):
         return self.__str__()
 
 
-class StarNMR():
-    def __init__(self, STR_FILE):
-        """Parse BMRB file into a python object"""
-
-        parse_exception = (
-            "ERROR during STR parsing, please check your STAR-NMR file!"
-        )
-
-        self.parsed = pynmrstar.Entry.from_file(STR_FILE)
-
-        # try:
-        #     self.parsed = pynmrstar.Entry.from_file(STR_FILE)
-        # except Exception:
-        #     raise Exception(parse_exception)
+class StarNMR:
+    def __init__(self, str_file):
+        self.parsed = pynmrstar.Entry.from_file(str_file)
 
     def parse_rdc(self):
-        """Returns RDC lists as dictonaries containing RDC_Record objects,
-        grouped by RDCtype (keys())"""
+        """Returns RDC lists as dictionaries containing RDC_Record objects,
+        grouped by RDC type (keys())"""
 
-        list_number = 1
-        RDC_lists = []
+        tag_list = ["Seq_ID_1", "Atom_ID_1", "Seq_ID_2", "Atom_ID_2", "Val"]
+        rdc_lists = []
+        rdc_records = []
 
-        while True:
-            saveShiftName = 'CNS/XPLOR_dipolar_coupling_' + str(list_number)
-            try:
-                saveShifts = self.parsed.value.saves[saveShiftName]
-            except KeyError:
-                break
-            loopShifts = saveShifts.loops[-1]
-            RDC_records = []
+        for rdc_loop in self.parsed.get_loops_by_category("RDC"):
+            for row_data in rdc_loop.get_tag(tag_list):
+                # ['95', 'H', '95', 'N', '-0.823']
+                rdc_records.append(RdcRecord(*row_data))
 
-            # STR key values recognised by this program
-            rdc_res1_keys = ["RDC.Seq_ID_1", "Atom_one_residue_seq_code", "RDC_constraint.Seq_ID_1"]
-            rdc_atom1_keys = ["RDC.Atom_type_1", "Atom_one_atom_name", "RDC_constraint.Atom_ID_1"]
-            rdc_res2_keys = ["RDC.Seq_ID_2", "Atom_two_residue_seq_code", "RDC_constraint.Seq_ID_2"]
-            rdc_atom2_keys = ["RDC.Atom_type_2", "Atom_two_atom_name", "RDC_constraint.Atom_ID_2"]
-            rdc_value_keys = ["RDC.Val", "Residual_dipolar_coupling_value", "RDC_constraint.RDC_val"]
-
-            for ix in range(len(loopShifts.rows)):  # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
-
-                for my_resnum1 in rdc_res1_keys:  # fetch 1. residue number
-                    if my_resnum1 in list(row.keys()):
-                        resnum1 = row[my_resnum1]
-
-                for my_atom1 in rdc_atom1_keys:  # fetch 1. atom name
-                    if my_atom1 in list(row.keys()):
-                        atom1 = row[my_atom1]
-
-                for my_resnum2 in rdc_res2_keys:  # fetch 2. residue number
-                    if my_resnum2 in list(row.keys()):
-                        resnum2 = row[my_resnum2]
-
-                for my_atom2 in rdc_atom2_keys:  # fetch 2. atom name
-                    if my_atom2 in list(row.keys()):
-                        atom2 = row[my_atom2]
-
-                for my_RDC_value in rdc_value_keys:  # fetch RDC value
-                    if my_RDC_value in list(row.keys()):
-                        RDC_value = float(row[my_RDC_value])
-                        RDC_value = float("{0:.2f}".format(RDC_value))
-
-                # check if all parameters are fetched
-                if (resnum1 and atom1 and resnum2 and atom2 and RDC_value):
-                    # append RDC_Record object to list
-                    RDC_records.append(
-                        RDC_Record(
-                            resnum1, atom1, resnum2, atom2, RDC_value
-                        )
-                    )
-                else:
-                    print(row)
-
-            RDC_lists.append(RDC_records)
-            list_number += 1
+            rdc_lists.append(rdc_records)
 
         # split list into dict according to RDC types
-        new_RDC_list = []
-        for RDC_list in RDC_lists:
+        new_rdc_list = []
+        for RDC_list in rdc_lists:
             prev_type = ""
-            RDC_dict = {}
+            rdc_dict = {}
 
             for record in RDC_list:
                 if prev_type != record.RDC_type:
-                    RDC_dict[record.RDC_type] = []
-                    RDC_dict[record.RDC_type].append(record)
+                    rdc_dict[record.RDC_type] = []
+                    rdc_dict[record.RDC_type].append(record)
                 else:
-                    RDC_dict[record.RDC_type].append(record)
+                    rdc_dict[record.RDC_type].append(record)
 
                 prev_type = record.RDC_type
 
-            new_RDC_list.append(RDC_dict)
+            new_rdc_list.append(rdc_dict)
 
-        return new_RDC_list
+        return new_rdc_list
 
     def parse_s2(self):
-        """Returns a dictonary with the parsed S2 data"""
+        """Returns a dictionary with the parsed S2 data"""
 
         try:
             saveShifts = self.parsed.value.saves["order_param"]
@@ -165,7 +105,7 @@ class StarNMR():
                 S2_value = float("{0:.2f}".format(float(row["S2_value"])))
 
                 s2_records.append(
-                    S2_Record(
+                    S2Record(
                         row["Residue_seq_code"], row["Atom_name"], S2_value)
                 )
 
@@ -189,7 +129,7 @@ class StarNMR():
             return None
 
     def parse_s2_sidechain(self):
-        """Returns a dictonary with the parsed S2 data"""
+        """Returns a dictionary with the parsed S2 data"""
 
         sidechain_name = "side-chain_methyl_order_parameters"
         try:
@@ -204,7 +144,7 @@ class StarNMR():
                 S2_value = float("{0:.2f}".format(float(row["S2_value"])))
 
                 s2_records.append(
-                    S2_Record(
+                    S2Record(
                         row["Residue_seq_code"], row["Atom_name"], S2_value
                     )
                 )
@@ -215,7 +155,7 @@ class StarNMR():
             return None
 
     def parse_jcoup(self):
-        """Returns a dictonary with the parsed J-coupling data"""
+        """Returns a dictionary with the parsed J-coupling data"""
         try:
             saveShifts = self.parsed.value.saves["coupling_constants"]
 
@@ -229,7 +169,7 @@ class StarNMR():
                 JC_value = float("{0:.2f}".format(float(JC_value)))
 
                 jcoup_records.append(
-                    JCoup_Record(
+                    JCoupRecord(
                         row["Atom_one_residue_seq_code"],
                         row["Coupling_constant_code"],
                         JC_value
@@ -260,7 +200,7 @@ class StarNMR():
         objects, grouped by Atom_name (keys())"""
 
         chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
-        tag_list = ['Seq_ID', 'Comp_ID', 'Atom_ID', 'Atom_type', 'Val']
+        tag_list = ["Seq_ID", "Comp_ID", "Atom_ID", "Atom_type", "Val"]
         chemshift_records = []
         chem_shift_lists = []
         ha_sum = 0.0
@@ -280,7 +220,7 @@ class StarNMR():
                     ha_sum += cs_value
 
                     chemshift_records.append(
-                        ChemShift_Record(
+                        ChemShiftRecord(
                             row["Seq_ID"],
                             row["Comp_ID"],
                             "HA", ha_sum / 2
@@ -291,7 +231,7 @@ class StarNMR():
 
                 if row["Atom_ID"] in chemshift_types:
                     chemshift_records.append(
-                        ChemShift_Record(
+                        ChemShiftRecord(
                             row["Seq_ID"],
                             row["Comp_ID"],
                             row["Atom_ID"],
@@ -301,7 +241,7 @@ class StarNMR():
 
                 elif row["Atom_ID"] == "HN":
                     chemshift_records.append(
-                        ChemShift_Record(
+                        ChemShiftRecord(
                             row["Seq_ID"],
                             row["Comp_ID"],
                             "H",
