@@ -63,10 +63,12 @@ class StarNMR():
             "ERROR during STR parsing, please check your STAR-NMR file!"
         )
 
-        try:
-            self.parsed = pynmrstar.Entry.from_file(STR_FILE)
-        except Exception:
-            raise Exception(parse_exception)
+        self.parsed = pynmrstar.Entry.from_file(STR_FILE)
+
+        # try:
+        #     self.parsed = pynmrstar.Entry.from_file(STR_FILE)
+        # except Exception:
+        #     raise Exception(parse_exception)
 
     def parse_rdc(self):
         """Returns RDC lists as dictonaries containing RDC_Record objects,
