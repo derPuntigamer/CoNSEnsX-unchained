@@ -227,24 +227,24 @@ def run_calculation(request, calc_id):
     #         )
     #
     #     data_found = True
-    #
-    # # ------------------------  J-coupling calc  ------------------------ #
-    # Jcoup_dict = star_nmr_data.parse_jcoup()
-    # Jcoup_dict_path = my_path + "/Jcoup_dict.pickle"
-    # pickle.dump(Jcoup_dict, open(Jcoup_dict_path, "wb"))
-    # jcoup_data = None
-    #
-    # if Jcoup_dict:
-    #     jcoup_data = calc.jcoupling(
-    #         csv_buffer,
-    #         calced_data_storage,
-    #         model_data,
-    #         db_entry,
-    #         Jcoup_dict,
-    #         my_path,
-    #         bme_weights,
-    #     )
-    #     data_found = True
+
+    # ------------------------  J-coupling calc  ------------------------ #
+    Jcoup_dict = star_nmr_data.parse_jcoup()
+    Jcoup_dict_path = my_path + "/Jcoup_dict.pickle"
+    pickle.dump(Jcoup_dict, open(Jcoup_dict_path, "wb"))
+    jcoup_data = None
+
+    if Jcoup_dict:
+        jcoup_data = calc.jcoupling(
+            csv_buffer,
+            calced_data_storage,
+            model_data,
+            db_entry,
+            Jcoup_dict,
+            my_path,
+            bme_weights,
+        )
+        data_found = True
 
     # -----------------------  Chemical shift calc  --------------------- #
     chem_shift_lists = star_nmr_data.parse_chemshift()
