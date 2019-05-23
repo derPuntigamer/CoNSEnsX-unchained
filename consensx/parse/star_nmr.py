@@ -92,54 +92,46 @@ class StarNMR:
 
     def parse_s2(self):
         """Returns a dictionary with the parsed S2 data"""
-
         try:
-            saveShifts = self.parsed.value.saves["order_param"]
-
-            loopShifts = saveShifts.loops[-1]
-            s2_records = []
-
-            for ix in range(len(loopShifts.rows)):  # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
-
-                S2_value = float("{0:.2f}".format(float(row["S2_value"])))
-
-                s2_records.append(
-                    S2Record(
-                        row["Residue_seq_code"], row["Atom_name"], S2_value)
-                )
-
-            # split list into dict according to S2 types
-            S2_dict = {}
-            prev_type = ""
-
-            for record in s2_records:
-                if prev_type != record.type:
-                    S2_dict[record.type] = []
-                    S2_dict[record.type].append(record)
-                else:
-                    S2_dict[record.type].append(record)
-
-                prev_type = record.type
-
-            return S2_dict
-
-        except KeyError:
-            print("No S2 parameter list found")
+            s2_loop = self.parsed.get_loops_by_category("Order_param")[0]
+        except IndexError:
             return None
+
+        tag_list = ["Seq_ID", "Atom_ID", "Order_param_val"]
+        s2_records = []
+
+        for row_data in s2_loop.get_tag(tag_list):
+            s2_records.append(
+                S2Record(*row_data)
+            )
+
+        # split list into dict according to S2 types
+        s2_dict = {}
+        prev_type = ""
+
+        for record in s2_records:
+            if prev_type != record.type:
+                s2_dict[record.type] = []
+                s2_dict[record.type].append(record)
+            else:
+                s2_dict[record.type].append(record)
+
+            prev_type = record.type
+
+        return s2_dict
 
     def parse_s2_sidechain(self):
         """Returns a dictionary with the parsed S2 data"""
 
         sidechain_name = "side-chain_methyl_order_parameters"
         try:
-            saveShifts = self.parsed.value.saves[sidechain_name]
+            save_shifts = self.parsed.value.saves[sidechain_name]
 
-            loopShifts = saveShifts.loops[-1]
+            loop_shifts = save_shifts.loops[-1]
             s2_records = []
 
-            for ix in range(len(loopShifts.rows)):   # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
+            for ix in range(len(loop_shifts.rows)):   # fetch values from file
+                row = loop_shifts.getRowAsDict(ix)
 
                 S2_value = float("{0:.2f}".format(float(row["S2_value"])))
 
@@ -156,10 +148,13 @@ class StarNMR:
 
     def parse_jcoup(self):
         """Returns a dictionary with the parsed J-coupling data"""
+        try:
+            jcoup_loop = self.parsed.get_loops_by_category("Coupling_constant")[0]
+        except IndexError:
+            return None
 
         tag_list = ["Seq_ID_1", "Code", "Val"]
         jcoup_records = []
-        jcoup_loop = self.parsed.get_loops_by_category("Coupling_constant")[0]
 
         for row_data in jcoup_loop.get_tag(tag_list):
             if row_data[1] not in ["3JHNCB", "3JHNHA", "3JHNC", "3JHAC"]:

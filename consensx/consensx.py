@@ -189,26 +189,26 @@ def run_calculation(request, calc_id):
         )
         data_found = True
 
-    # # ----------------------------  S2 calc  ---------------------------- #
-    # s2_dict = star_nmr_data.parse_s2()
-    # s2_dump = [s2_dict, db_entry.superimpose, db_entry.fit_range]
-    # s2_dict_path = my_path + "/S2_dict.pickle"
-    # pickle.dump(s2_dump, open(s2_dict_path, "wb"))
-    # s2_data = None
-    #
-    # if s2_dict:
-    #     s2_data = calc.s2(
-    #         csv_buffer,
-    #         calced_data_storage,
-    #         s2_dict,
-    #         my_path,
-    #         model_data,
-    #         fit=db_entry.superimpose,
-    #         fit_range=db_entry.fit_range,
-    #     )
-    #
-    #     data_found = True
-    #
+    # ----------------------------  S2 calc  ---------------------------- #
+    s2_dict = star_nmr_data.parse_s2()
+    s2_dump = [s2_dict, db_entry.superimpose, db_entry.fit_range]
+    s2_dict_path = my_path + "/S2_dict.pickle"
+    pickle.dump(s2_dump, open(s2_dict_path, "wb"))
+    s2_data = None
+
+    if s2_dict:
+        s2_data = calc.s2(
+            csv_buffer,
+            calced_data_storage,
+            s2_dict,
+            my_path,
+            model_data,
+            fit=db_entry.superimpose,
+            fit_range=db_entry.fit_range,
+        )
+
+        data_found = True
+
     # s2_sidechain = star_nmr_data.parse_s2_sidechain()
     # s2_sc_data = None
     #
