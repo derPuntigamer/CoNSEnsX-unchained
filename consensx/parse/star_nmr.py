@@ -156,44 +156,33 @@ class StarNMR:
 
     def parse_jcoup(self):
         """Returns a dictionary with the parsed J-coupling data"""
-        try:
-            saveShifts = self.parsed.value.saves["coupling_constants"]
 
-            loopShifts = saveShifts.loops[-1]
-            jcoup_records = []
+        tag_list = ["Seq_ID_1", "Code", "Val"]
+        jcoup_records = []
+        jcoup_loop = self.parsed.get_loops_by_category("Coupling_constant")[0]
 
-            for ix in range(len(loopShifts.rows)):   # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
+        for row_data in jcoup_loop.get_tag(tag_list):
+            if row_data[1] not in ["3JHNCB", "3JHNHA", "3JHNC", "3JHAC"]:
+                continue
 
-                JC_value = row["Coupling_constant_value"]
-                JC_value = float("{0:.2f}".format(float(JC_value)))
+            jcoup_records.append(
+                JCoupRecord(*row_data)
+            )
 
-                jcoup_records.append(
-                    JCoupRecord(
-                        row["Atom_one_residue_seq_code"],
-                        row["Coupling_constant_code"],
-                        JC_value
-                    )
-                )
+        # split list into dict according to J-coupling types
+        jcoup_dict = {}
+        prev_type = ""
 
-            # split list into dict according to J-cuopling types
-            jcoup_dict = {}
-            prev_type = ""
+        for record in jcoup_records:
+            if prev_type != record.type:
+                jcoup_dict[record.type] = []
+                jcoup_dict[record.type].append(record)
+            else:
+                jcoup_dict[record.type].append(record)
 
-            for record in jcoup_records:
-                if prev_type != record.type:
-                    jcoup_dict[record.type] = []
-                    jcoup_dict[record.type].append(record)
-                else:
-                    jcoup_dict[record.type].append(record)
+            prev_type = record.type
 
-                prev_type = record.type
-
-            return jcoup_dict
-
-        except KeyError:
-            print("No J-coupling parameter list found")
-            return None
+        return jcoup_dict
 
     def parse_chemshift(self):
         """Returns ChemShift lists as dictionaries containing ChemShift_Record
