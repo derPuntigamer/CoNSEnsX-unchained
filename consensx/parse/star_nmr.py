@@ -1,4 +1,3 @@
-import consensx.nmrpystar as nmrpystar
 import pynmrstar
 
 
