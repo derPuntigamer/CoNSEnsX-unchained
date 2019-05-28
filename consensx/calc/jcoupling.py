@@ -57,12 +57,18 @@ def calc_dihedral_angles(pdb_model_data):
 
     for i in range(pdb_model_data.coordsets):
         pdb_model_data.atomgroup.setACSIndex(i)
-        current_resindex = 1
+
+        current_resindex = -1
+        first_atom = True
         prev_c, my_n, my_ca, my_c = None, None, None, None
         j_coup_dict = {}
 
         for atom in pdb_model_data.atomgroup:
-            atom_res = atom.getResindex() + 1
+            atom_res = atom.getResnum()
+
+            if first_atom:
+                current_resindex = atom_res
+                first_atom = False
 
             if atom_res != current_resindex:
 
@@ -118,7 +124,6 @@ def calc_jcoupling(
     experimental,
     jcoup_type,
     my_path,
-    exp_dat_file_name,
     bme_weights,
 ):
     """Calculates J-coupling values from dihedral angles
@@ -199,9 +204,9 @@ def calc_jcoupling(
             phi = Jcoup_dict[record.resnum]
 
             J = (
-                    A[jcoup_type] * (math.cos(phi + THETA[jcoup_type])) ** 2
-                    + B[jcoup_type] * math.cos(phi + THETA[jcoup_type])
-                    + C[jcoup_type]
+                A[jcoup_type] * (math.cos(phi + THETA[jcoup_type])) ** 2
+                + B[jcoup_type] * math.cos(phi + THETA[jcoup_type])
+                + C[jcoup_type]
             )
 
             model_data_dict[record.resnum] = J
@@ -234,6 +239,13 @@ def jcoupling(
 
         jcoup_exp_file.write("# DATA=JCOUPLINGS PRIOR=GAUSS\n")
 
+        jcoup_dict[Jcoup_type] = list(
+            filter(
+                lambda x: x.resnum in dihed_lists[0].keys(),
+                jcoup_dict[Jcoup_type]
+            )
+        )
+
         for i in jcoup_dict[Jcoup_type]:
             jcoup_exp_file.write(
                 str(i.resnum)
@@ -252,7 +264,6 @@ def jcoupling(
             jcoup_dict[Jcoup_type],
             Jcoup_type,
             my_path,
-            exp_dat_file_name,
             bme_weights,
         )
 

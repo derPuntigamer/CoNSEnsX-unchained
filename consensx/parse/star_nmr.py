@@ -1,46 +1,44 @@
 import consensx.nmrpystar as nmrpystar
+import pynmrstar
 
 
-class RDC_Record(object):
+class RdcRecord:
     """Class for storing RDC data"""
-
-    def __init__(self, resnum1, atom1, resnum2, atom2, RDC_value):
-        self.RDC_type = (str(int(resnum1) - int(resnum2))
-                         + '_' + atom1 + '_' + atom2)
+    def __init__(self, resnum1, atom1, resnum2, atom2, rdc_value):
+        self.RDC_type = (
+            str(int(resnum1) - int(resnum2)) + '_' + atom1 + '_' + atom2
+        )
         self.resnum = int(resnum1)
         self.atom = atom1
         self.resnum2 = int(resnum2)
         self.atom2 = atom2
-        self.value = float(RDC_value)
+        self.value = float(rdc_value)
 
 
-class S2_Record(object):
+class S2Record:
     """Class for storing S2 data"""
-
-    def __init__(self, resnum, S2_type, S2_value):
+    def __init__(self, resnum, s2_type, s2_value):
         self.resnum = int(resnum)
-        self.type = S2_type
-        self.value = float(S2_value)
+        self.type = s2_type
+        self.value = float(s2_value)
         self.calced = None
 
 
-class JCoup_Record(object):
+class JCoupRecord:
     """Class for storing J-Coupling data"""
-
-    def __init__(self, resnum, jcoup_type, JCoup_value):
+    def __init__(self, resnum, jcoup_type, jcoup_value):
         self.resnum = int(resnum)
         self.type = jcoup_type
-        self.value = float(JCoup_value)
+        self.value = float(jcoup_value)
 
 
-class ChemShift_Record(object):
+class ChemShiftRecord:
     """Class for storing chemical shift data"""
-
-    def __init__(self, resnum, res_name, atom_name, ChemShift_value):
+    def __init__(self, resnum, res_name, atom_name, chemshift_value):
         self.resnum = int(resnum)
         self.res_name = res_name
         self.atom_name = atom_name
-        self.value = float(ChemShift_value)
+        self.value = float(chemshift_value)
 
     def __str__(self):
         return (
@@ -54,169 +52,91 @@ class ChemShift_Record(object):
         return self.__str__()
 
 
-class StarNMR():
-    def __init__(self, STR_FILE):
-        """Parse BMRB file into a python object"""
-
-        star_file = open(STR_FILE)  # open STR file
-        myString = ""
-        parse_exception = (
-            "ERROR during STR parsing, please check your STAR-NMR file!"
-        )
-
-        try:
-            for line in star_file:  # read STR file into a string
-                myString += line
-        except UnicodeDecodeError:
-            raise Exception(
-                "ERROR during reading STAR-NMR file, please use ASCII encoding"
-            )
-
-        star_file.close()
-
-        try:
-            self.parsed = nmrpystar.parse(myString)  # parsing -> parsed.value
-
-            if self.parsed.status != 'success':  # check if parsing was ok
-                raise Exception(parse_exception)
-        except KeyError:
-            raise Exception(parse_exception)
+class StarNMR:
+    def __init__(self, str_file):
+        self.parsed = pynmrstar.Entry.from_file(str_file)
 
     def parse_rdc(self):
-        """Returns RDC lists as dictonaries containing RDC_Record objects,
-        grouped by RDCtype (keys())"""
+        """Returns RDC lists as dictionaries containing RDC_Record objects,
+        grouped by RDC type (keys())"""
 
-        list_number = 1
-        RDC_lists = []
+        tag_list = ["Seq_ID_1", "Atom_ID_1", "Seq_ID_2", "Atom_ID_2", "Val"]
+        rdc_lists = []
+        rdc_records = []
 
-        while True:
-            saveShiftName = 'CNS/XPLOR_dipolar_coupling_' + str(list_number)
-            try:
-                saveShifts = self.parsed.value.saves[saveShiftName]
-            except KeyError:
-                break
-            loopShifts = saveShifts.loops[-1]
-            RDC_records = []
+        for rdc_loop in self.parsed.get_loops_by_category("RDC"):
+            for row_data in rdc_loop.get_tag(tag_list):
+                # ['95', 'H', '95', 'N', '-0.823']
+                rdc_records.append(RdcRecord(*row_data))
 
-            # STR key values recognised by this program
-            rdc_res1_keys = ["RDC.Seq_ID_1", "Atom_one_residue_seq_code", "RDC_constraint.Seq_ID_1"]
-            rdc_atom1_keys = ["RDC.Atom_type_1", "Atom_one_atom_name", "RDC_constraint.Atom_ID_1"]
-            rdc_res2_keys = ["RDC.Seq_ID_2", "Atom_two_residue_seq_code", "RDC_constraint.Seq_ID_2"]
-            rdc_atom2_keys = ["RDC.Atom_type_2", "Atom_two_atom_name", "RDC_constraint.Atom_ID_2"]
-            rdc_value_keys = ["RDC.Val", "Residual_dipolar_coupling_value", "RDC_constraint.RDC_val"]
-
-            for ix in range(len(loopShifts.rows)):  # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
-
-                for my_resnum1 in rdc_res1_keys:  # fetch 1. residue number
-                    if my_resnum1 in list(row.keys()):
-                        resnum1 = row[my_resnum1]
-
-                for my_atom1 in rdc_atom1_keys:  # fetch 1. atom name
-                    if my_atom1 in list(row.keys()):
-                        atom1 = row[my_atom1]
-
-                for my_resnum2 in rdc_res2_keys:  # fetch 2. residue number
-                    if my_resnum2 in list(row.keys()):
-                        resnum2 = row[my_resnum2]
-
-                for my_atom2 in rdc_atom2_keys:  # fetch 2. atom name
-                    if my_atom2 in list(row.keys()):
-                        atom2 = row[my_atom2]
-
-                for my_RDC_value in rdc_value_keys:  # fetch RDC value
-                    if my_RDC_value in list(row.keys()):
-                        RDC_value = float(row[my_RDC_value])
-                        RDC_value = float("{0:.2f}".format(RDC_value))
-
-                # check if all parameters are fetched
-                if (resnum1 and atom1 and resnum2 and atom2 and RDC_value):
-                    # append RDC_Record object to list
-                    RDC_records.append(
-                        RDC_Record(
-                            resnum1, atom1, resnum2, atom2, RDC_value
-                        )
-                    )
-                else:
-                    print(row)
-
-            RDC_lists.append(RDC_records)
-            list_number += 1
+            rdc_lists.append(rdc_records)
 
         # split list into dict according to RDC types
-        new_RDC_list = []
-        for RDC_list in RDC_lists:
+        new_rdc_list = []
+        for RDC_list in rdc_lists:
             prev_type = ""
-            RDC_dict = {}
+            rdc_dict = {}
 
             for record in RDC_list:
                 if prev_type != record.RDC_type:
-                    RDC_dict[record.RDC_type] = []
-                    RDC_dict[record.RDC_type].append(record)
+                    rdc_dict[record.RDC_type] = []
+                    rdc_dict[record.RDC_type].append(record)
                 else:
-                    RDC_dict[record.RDC_type].append(record)
+                    rdc_dict[record.RDC_type].append(record)
 
                 prev_type = record.RDC_type
 
-            new_RDC_list.append(RDC_dict)
+            new_rdc_list.append(rdc_dict)
 
-        return new_RDC_list
+        return new_rdc_list
 
     def parse_s2(self):
-        """Returns a dictonary with the parsed S2 data"""
-
+        """Returns a dictionary with the parsed S2 data"""
         try:
-            saveShifts = self.parsed.value.saves["order_param"]
-
-            loopShifts = saveShifts.loops[-1]
-            s2_records = []
-
-            for ix in range(len(loopShifts.rows)):  # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
-
-                S2_value = float("{0:.2f}".format(float(row["S2_value"])))
-
-                s2_records.append(
-                    S2_Record(
-                        row["Residue_seq_code"], row["Atom_name"], S2_value)
-                )
-
-            # split list into dict according to S2 types
-            S2_dict = {}
-            prev_type = ""
-
-            for record in s2_records:
-                if prev_type != record.type:
-                    S2_dict[record.type] = []
-                    S2_dict[record.type].append(record)
-                else:
-                    S2_dict[record.type].append(record)
-
-                prev_type = record.type
-
-            return S2_dict
-
-        except KeyError:
-            print("No S2 parameter list found")
+            s2_loop = self.parsed.get_loops_by_category("Order_param")[0]
+        except IndexError:
             return None
 
+        tag_list = ["Seq_ID", "Atom_ID", "Order_param_val"]
+        s2_records = []
+
+        for row_data in s2_loop.get_tag(tag_list):
+            s2_records.append(
+                S2Record(*row_data)
+            )
+
+        # split list into dict according to S2 types
+        s2_dict = {}
+        prev_type = ""
+
+        for record in s2_records:
+            if prev_type != record.type:
+                s2_dict[record.type] = []
+                s2_dict[record.type].append(record)
+            else:
+                s2_dict[record.type].append(record)
+
+            prev_type = record.type
+
+        return s2_dict
+
     def parse_s2_sidechain(self):
-        """Returns a dictonary with the parsed S2 data"""
+        """Returns a dictionary with the parsed S2 data"""
 
         sidechain_name = "side-chain_methyl_order_parameters"
         try:
-            saveShifts = self.parsed.value.saves[sidechain_name]
+            save_shifts = self.parsed.value.saves[sidechain_name]
 
-            loopShifts = saveShifts.loops[-1]
+            loop_shifts = save_shifts.loops[-1]
             s2_records = []
 
-            for ix in range(len(loopShifts.rows)):   # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
+            for ix in range(len(loop_shifts.rows)):   # fetch values from file
+                row = loop_shifts.getRowAsDict(ix)
 
                 S2_value = float("{0:.2f}".format(float(row["S2_value"])))
 
                 s2_records.append(
-                    S2_Record(
+                    S2Record(
                         row["Residue_seq_code"], row["Atom_name"], S2_value
                     )
                 )
@@ -227,144 +147,107 @@ class StarNMR():
             return None
 
     def parse_jcoup(self):
-        """Returns a dictonary with the parsed J-coupling data"""
+        """Returns a dictionary with the parsed J-coupling data"""
         try:
-            saveShifts = self.parsed.value.saves["coupling_constants"]
-
-            loopShifts = saveShifts.loops[-1]
-            jcoup_records = []
-
-            for ix in range(len(loopShifts.rows)):   # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
-
-                JC_value = row["Coupling_constant_value"]
-                JC_value = float("{0:.2f}".format(float(JC_value)))
-
-                jcoup_records.append(
-                    JCoup_Record(
-                        row["Atom_one_residue_seq_code"],
-                        row["Coupling_constant_code"],
-                        JC_value
-                    )
-                )
-
-            # split list into dict according to J-cuopling types
-            jcoup_dict = {}
-            prev_type = ""
-
-            for record in jcoup_records:
-                if prev_type != record.type:
-                    jcoup_dict[record.type] = []
-                    jcoup_dict[record.type].append(record)
-                else:
-                    jcoup_dict[record.type].append(record)
-
-                prev_type = record.type
-
-            return jcoup_dict
-
-        except KeyError:
-            print("No J-coupling parameter list found")
+            jcoup_loop = self.parsed.get_loops_by_category("Coupling_constant")[0]
+        except IndexError:
             return None
+
+        tag_list = ["Seq_ID_1", "Code", "Val"]
+        jcoup_records = []
+
+        for row_data in jcoup_loop.get_tag(tag_list):
+            if row_data[1] not in ["3JHNCB", "3JHNHA", "3JHNC", "3JHAC"]:
+                continue
+
+            jcoup_records.append(
+                JCoupRecord(*row_data)
+            )
+
+        # split list into dict according to J-coupling types
+        jcoup_dict = {}
+        prev_type = ""
+
+        for record in jcoup_records:
+            if prev_type != record.type:
+                jcoup_dict[record.type] = []
+                jcoup_dict[record.type].append(record)
+            else:
+                jcoup_dict[record.type].append(record)
+
+            prev_type = record.type
+
+        return jcoup_dict
 
     def parse_chemshift(self):
         """Returns ChemShift lists as dictionaries containing ChemShift_Record
         objects, grouped by Atom_name (keys())"""
-        list_number = 1
-        ChemShift_lists = []
-        cs_lot = [
-            {
-                "seq_code": "Residue_seq_code",
-                "label": "Residue_label",
-                "name": "Atom_name",
-                "value": "Chem_shift_value"
-            },
-            {
-                "seq_code": "Atom_chem_shift.Seq_ID",
-                "label": "Atom_chem_shift.Comp_ID",
-                "name": "Atom_chem_shift.Atom_ID",
-                "value": "Atom_chem_shift.Val"
-            }
-        ]
 
-        while True:
-            saveShiftName = 'chem_shift_list_' + str(list_number)
-            altShiftName = 'assigned_chem_shift_list_' + str(list_number)
-            try:
-                saveShifts = self.parsed.value.saves[saveShiftName]
-                str_type = 0
-            except KeyError:
-                try:
-                    saveShifts = self.parsed.value.saves[altShiftName]
-                    str_type = 1
-                except KeyError:
-                    break
+        chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
+        tag_list = ["Seq_ID", "Comp_ID", "Atom_ID", "Atom_type", "Val"]
+        chemshift_records = []
+        chem_shift_lists = []
+        ha_sum = 0.0
 
-            loopShifts = saveShifts.loops[-1]
-            chemshift_records = []
-            HA_sum = 0.0
+        for cs_loop in self.parsed.get_loops_by_category("Atom_chem_shift"):
+            for row_data in cs_loop.get_tag(tag_list):
+                row = dict(zip(tag_list, row_data))
+                # ['21', 'PRO', 'HD3', 'H', '3.448']
 
-            for ix in range(len(loopShifts.rows)):   # fetch values from file
-                row = loopShifts.getRowAsDict(ix)
+                cs_value = float("{0:.2f}".format(float(row["Val"])))
 
-                CS_value = row[cs_lot[str_type]["value"]]
-                CS_value = float("{0:.2f}".format(float(CS_value)))
-
-                if row[cs_lot[str_type]["name"]] == "HA2":
-                    HA_sum += CS_value
+                if row["Atom_ID"] == "HA2":
+                    ha_sum += cs_value
                     continue
 
-                if row[cs_lot[str_type]["name"]] == "HA3":
-                    HA_sum += CS_value
+                if row["Atom_ID"] == "HA3":
+                    ha_sum += cs_value
 
                     chemshift_records.append(
-                        ChemShift_Record(
-                            row[cs_lot[str_type]["seq_code"]],
-                            row[cs_lot[str_type]["label"]],
-                            "HA", HA_sum / 2
+                        ChemShiftRecord(
+                            row["Seq_ID"],
+                            row["Comp_ID"],
+                            "HA", ha_sum / 2
                         )
                     )
-                    HA_sum = 0.0
+                    ha_sum = 0.0
                     continue
 
-                chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
-
-                if row[cs_lot[str_type]["name"]] in chemshift_types:
+                if row["Atom_ID"] in chemshift_types:
                     chemshift_records.append(
-                        ChemShift_Record(
-                            row[cs_lot[str_type]["seq_code"]],
-                            row[cs_lot[str_type]["label"]],
-                            row[cs_lot[str_type]["name"]],
-                            CS_value
+                        ChemShiftRecord(
+                            row["Seq_ID"],
+                            row["Comp_ID"],
+                            row["Atom_ID"],
+                            cs_value
                         )
                     )
 
-                elif row[cs_lot[str_type]["name"]] == "HN":
+                elif row["Atom_ID"] == "HN":
                     chemshift_records.append(
-                        ChemShift_Record(
-                            row[cs_lot[str_type]["seq_code"]],
-                            row[cs_lot[str_type]["label"]],
+                        ChemShiftRecord(
+                            row["Seq_ID"],
+                            row["Comp_ID"],
                             "H",
-                            CS_value
+                            cs_value
                         )
                     )
 
-            ChemShift_lists.append(chemshift_records)
-            list_number += 1
+            chem_shift_lists.append(chemshift_records)
 
-        new_CS_list = []
+        new_cs_list = []
 
-        for ChemShift_list in ChemShift_lists:
-            ChemShift_dict = {}
+        for chem_shift_list in chem_shift_lists:
+            chem_shift_dict = {}
 
-            for record in ChemShift_list:
+            for record in chem_shift_list:
 
-                if record.atom_name in list(ChemShift_dict.keys()):
-                    ChemShift_dict[record.atom_name].append(record)
+                if record.atom_name in list(chem_shift_dict.keys()):
+                    chem_shift_dict[record.atom_name].append(record)
                 else:
-                    ChemShift_dict[record.atom_name] = []
-                    ChemShift_dict[record.atom_name].append(record)
+                    chem_shift_dict[record.atom_name] = []
+                    chem_shift_dict[record.atom_name].append(record)
 
-            new_CS_list.append(ChemShift_dict)
+            new_cs_list.append(chem_shift_dict)
 
-        return new_CS_list
+        return new_cs_list

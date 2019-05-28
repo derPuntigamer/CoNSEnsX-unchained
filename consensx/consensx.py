@@ -209,24 +209,24 @@ def run_calculation(request, calc_id):
 
         data_found = True
 
-    s2_sidechain = star_nmr_data.parse_s2_sidechain()
-    s2_sc_data = None
-
-    if s2_sidechain:
-        s2_sc_data = calc.s2_sidechain(
-            csv_buffer,
-            s2_sidechain,
-            my_path,
-            model_data,
-            fit=db_entry.superimpose,
-        )
-
-        if "error" in s2_sc_data.keys():
-            return render(
-                request, "consensx/home.html", {"error": s2_sidechain["error"]}
-            )
-
-        data_found = True
+    # s2_sidechain = star_nmr_data.parse_s2_sidechain()
+    # s2_sc_data = None
+    #
+    # if s2_sidechain:
+    #     s2_sc_data = calc.s2_sidechain(
+    #         csv_buffer,
+    #         s2_sidechain,
+    #         my_path,
+    #         model_data,
+    #         fit=db_entry.superimpose,
+    #     )
+    #
+    #     if "error" in s2_sc_data.keys():
+    #         return render(
+    #             request, "consensx/home.html", {"error": s2_sidechain["error"]}
+    #         )
+    #
+    #     data_found = True
 
     # ------------------------  J-coupling calc  ------------------------ #
     Jcoup_dict = star_nmr_data.parse_jcoup()
