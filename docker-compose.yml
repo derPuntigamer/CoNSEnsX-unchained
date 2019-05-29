@@ -10,7 +10,7 @@ services:
     links:
       - consensx-db
     volumes:
-      - /usr/src/app/consensx.itk.ppke.hu/media
+      - media:/usr/src/app/consensx.itk.ppke.hu/media
 
   consensx-db:
     image: postgres:11.1
@@ -18,3 +18,11 @@ services:
     - POSTGRES_PASSWORD=password
     - POSTGRES_USER=consensxuser
     - POSTGRES_DB=consensx
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+
+volumes:
+  media:
+    driver: local
+  postgresql:
+    driver: local
