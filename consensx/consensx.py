@@ -199,8 +199,23 @@ def run_calculation(request, calc_id):
     s2_dict_path = my_path + "/S2_dict.pickle"
     pickle.dump(s2_dump, open(s2_dict_path, "wb"))
     s2_data = None
+    s2_sc_data = None
+    sidechain_atoms = ["CB", "CD1", "CD2", "CG1", "CG2", "CD", "CE"]
 
-    if s2_dict:
+    if any(elem in sidechain_atoms for elem in s2_dict):
+        print("SIDECHAIN")
+
+        s2_sc_data = calc.s2_sidechain(
+            csv_buffer,
+            s2_dict,
+            my_path,
+            model_data,
+            fit=db_entry.superimpose,
+        )
+
+        data_found = True
+
+    elif s2_dict:
         s2_data = calc.s2(
             csv_buffer,
             calced_data_storage,
@@ -212,25 +227,6 @@ def run_calculation(request, calc_id):
         )
 
         data_found = True
-
-    # s2_sidechain = star_nmr_data.parse_s2_sidechain()
-    # s2_sc_data = None
-    #
-    # if s2_sidechain:
-    #     s2_sc_data = calc.s2_sidechain(
-    #         csv_buffer,
-    #         s2_sidechain,
-    #         my_path,
-    #         model_data,
-    #         fit=db_entry.superimpose,
-    #     )
-    #
-    #     if "error" in s2_sc_data.keys():
-    #         return render(
-    #             request, "consensx/home.html", {"error": s2_sidechain["error"]}
-    #         )
-    #
-    #     data_found = True
 
     # ------------------------  J-coupling calc  ------------------------ #
     Jcoup_dict = star_nmr_data.parse_jcoup()

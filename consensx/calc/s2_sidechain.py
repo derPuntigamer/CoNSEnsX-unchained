@@ -7,7 +7,7 @@ import numpy as np
 from .vec_3d import Vec3D
 
 
-def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
+def s2_sidechain(csv_buffer, s2_data, my_path, model_data, fit=None):
     """Back-calculate order parameters from given S2 dict and PDB models"""
 
     sc_lot = {
@@ -23,11 +23,14 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
         model_data.atomgroup.setACSIndex(0)
         prody.alignCoordsets(model_data.atomgroup.calpha)
 
-    for record in s2_sidechain:
+    s2_sidechain_all = [j for i in s2_data for j in s2_data[i]]
+    s2_sidechain_all.sort(key=lambda item: item.resnum)
+
+    for record in s2_sidechain_all:
         vectors = []
         resnum = record.resnum
+        my_res = record.resname
         my_type = record.type
-        my_res = model_data.atomgroup[("A", resnum)].getResname()
 
         # find pair for measured aa
         pair = sc_lot[my_res][my_type]
@@ -77,7 +80,7 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
 
     prev_resnum = -100000
 
-    for record in s2_sidechain:
+    for record in s2_sidechain_all:
         if record.resnum != prev_resnum:
             sidechain_exp1.append(record)
             sidechain_calc1[record.resnum] = record.calced
@@ -107,7 +110,7 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
     m = [0.0, 0.0, 0.0]
     d = [0.0, 0.0]
 
-    for record in s2_sidechain:
+    for record in s2_sidechain_all:
         exp = record.value
         calc = record.calced
 
@@ -115,20 +118,20 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
         m[1] += exp
         m[2] += calc * exp
 
-    m[0] /= len(s2_sidechain)
-    m[1] /= len(s2_sidechain)
-    m[2] /= len(s2_sidechain)
+    m[0] /= len(s2_sidechain_all)
+    m[1] /= len(s2_sidechain_all)
+    m[2] /= len(s2_sidechain_all)
 
-    for record in s2_sidechain:
+    for record in s2_sidechain_all:
         exp = record.value
         calc = record.calced
 
         d[0] += (calc - m[0]) ** 2
         d[1] += (exp - m[1]) ** 2
 
-    d[0] /= len(s2_sidechain)
+    d[0] /= len(s2_sidechain_all)
     d[0] = math.sqrt(d[0])
-    d[1] /= len(s2_sidechain)
+    d[1] /= len(s2_sidechain_all)
     d[1] = math.sqrt(d[1])
 
     correl = (m[2] - (m[0] * m[1])) / (d[0] * d[1])
@@ -137,7 +140,7 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
     # Q-value calculation
     d2, e2 = 0, 0
 
-    for record in s2_sidechain:
+    for record in s2_sidechain_all:
         exp = record.value
         calc = record.calced
 
@@ -151,19 +154,19 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
     # RMSD calculation
     d2 = 0
 
-    for record in s2_sidechain:
+    for record in s2_sidechain_all:
         exp = record.value
         calc = record.calced
 
         d2 += (calc - exp) ** 2
 
-    rmsd = math.sqrt(d2 / len(s2_sidechain))
+    rmsd = math.sqrt(d2 / len(s2_sidechain_all))
     print("RMSD: ", round(rmsd, 6))
 
     exp_values = []
     calced_values = []
 
-    for record in s2_sidechain:
+    for record in s2_sidechain_all:
         exp_values.append(record.value)
         calced_values.append(record.calced)
 
@@ -205,7 +208,7 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
     xs = []
     prev_resnum2 = -1
 
-    for record in s2_sidechain:
+    for record in s2_sidechain_all:
         if record.resnum != prev_resnum2:
             xs.append(record.resnum)
             prev_resnum2 = record.resnum
@@ -213,7 +216,7 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
             xs.append(record.resnum + 0.3)
 
     print("XS AXIS", xs)
-    print("len SC", len(s2_sidechain))
+    print("len SC", len(s2_sidechain_all))
     print("len xs", len(xs))
 
     plt.figure(figsize=(10, 5), dpi=80)
@@ -250,7 +253,7 @@ def s2_sidechain(csv_buffer, s2_sidechain, my_path, model_data, fit=None):
     print("GRAPH", my_id + "S2_sc_graph.svg")
 
     s2_sc_data = {
-        "S2_model_n": len(s2_sidechain),
+        "S2_model_n": len(s2_sidechain_all),
         "correlation": "{0:.3f}".format(correl),
         "q_value": "{0:.3f}".format(q_value),
         "rmsd": "{0:.3f}".format(rmsd),

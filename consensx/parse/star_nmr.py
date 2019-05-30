@@ -16,8 +16,9 @@ class RdcRecord:
 
 class S2Record:
     """Class for storing S2 data"""
-    def __init__(self, resnum, s2_type, s2_value):
+    def __init__(self, resnum, resname, s2_type, s2_value):
         self.resnum = int(resnum)
+        self.resname = resname
         self.type = s2_type
         self.value = float(s2_value)
         self.calced = None
@@ -96,7 +97,7 @@ class StarNMR:
         except IndexError:
             return None
 
-        tag_list = ["Seq_ID", "Atom_ID", "Order_param_val"]
+        tag_list = ["Seq_ID", "Comp_ID", "Atom_ID", "Order_param_val"]
         s2_records = []
 
         for row_data in s2_loop.get_tag(tag_list):
@@ -106,44 +107,15 @@ class StarNMR:
 
         # split list into dict according to S2 types
         s2_dict = {}
-        prev_type = ""
 
         for record in s2_records:
-            if prev_type != record.type:
+            try:
+                s2_dict[record.type].append(record)
+            except KeyError:
                 s2_dict[record.type] = []
                 s2_dict[record.type].append(record)
-            else:
-                s2_dict[record.type].append(record)
-
-            prev_type = record.type
 
         return s2_dict
-
-    def parse_s2_sidechain(self):
-        """Returns a dictionary with the parsed S2 data"""
-
-        sidechain_name = "side-chain_methyl_order_parameters"
-        try:
-            save_shifts = self.parsed.value.saves[sidechain_name]
-
-            loop_shifts = save_shifts.loops[-1]
-            s2_records = []
-
-            for ix in range(len(loop_shifts.rows)):   # fetch values from file
-                row = loop_shifts.getRowAsDict(ix)
-
-                S2_value = float("{0:.2f}".format(float(row["S2_value"])))
-
-                s2_records.append(
-                    S2Record(
-                        row["Residue_seq_code"], row["Atom_name"], S2_value
-                    )
-                )
-
-            return s2_records
-
-        except KeyError:
-            return None
 
     def parse_jcoup(self):
         """Returns a dictionary with the parsed J-coupling data"""
