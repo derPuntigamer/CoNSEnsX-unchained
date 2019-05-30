@@ -166,8 +166,12 @@ def run_calculation(request, calc_id):
     try:
         star_nmr_data = parse.StarNMR(nmr_file_path)
     except Exception as e:
-        print("EXCEPTION", e)
-        return HttpResponse(e)
+        print("STR parsing failed with", e)
+        return render(
+            request,
+            "consensx/home.html",
+            {"error": e},
+        )
 
     # ------------------------  RDC calculation  ------------------------ #
     rdc_lists = star_nmr_data.parse_rdc()
