@@ -13,7 +13,7 @@ def values_graph(my_path, calced, my_experimental, graph_name):
 
     exp_line, calc_line = [], []
 
-    for k in range(0, max(calced.keys()) + 1):  # fetch data from arguments
+    for k in range(min(calced.keys()) - 1, max(calced.keys()) + 1):
         if k in list(calced.keys()):
             calc = calced[k]
             exp = experimental.pop(0).value
@@ -34,7 +34,7 @@ def values_graph(my_path, calced, my_experimental, graph_name):
     calc_mask = np.where(np.isfinite(calc_line))
 
     # x axis values as numpy array
-    xs = np.arange(max(calced.keys())+2)
+    xs = np.arange(min(calced.keys())-1, max(calced.keys())+2)
 
     plt.figure(figsize=(10, 5), dpi=80)
 
