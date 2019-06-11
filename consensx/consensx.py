@@ -202,7 +202,7 @@ def run_calculation(request, calc_id):
     s2_sc_data = None
     sidechain_atoms = ["CB", "CD1", "CD2", "CG1", "CG2", "CD", "CE"]
 
-    if any(elem in sidechain_atoms for elem in s2_dict):
+    if s2_dict and any(elem in sidechain_atoms for elem in s2_dict):
         print("SIDECHAIN")
 
         s2_sc_data = calc.s2_sidechain(
