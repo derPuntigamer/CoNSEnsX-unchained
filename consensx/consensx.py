@@ -265,8 +265,8 @@ def run_calculation(request, calc_id):
 
     csv_buffer.write_csv()
 
-    calc.peptide_bonds(model_data)
-    calc.nh_angles(model_data)
+    # calc.peptide_bonds(model_data)
+    # calc.nh_angles(model_data)
 
     # pack BME input files for zipping
     bme_zf = None
