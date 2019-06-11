@@ -6,7 +6,7 @@ plt.switch_backend('Agg')
 def mod_correl_graph(my_path, correl, avg_corr, model_corrs, corr_graph_name):
     """Y axis -> correlation values
        X axis -> ensemble correlation, model avg. correlation,
-                 per modeel correlation
+                 per model correlation
        parameter 'model_corrs' is a list containing per model
        correlation values
        """
@@ -31,8 +31,7 @@ def mod_correl_graph(my_path, correl, avg_corr, model_corrs, corr_graph_name):
     plt.axis([-1, len(model_corrs), 0, 1])
     plt.xlabel('models (worse to best)')
     plt.ylabel('correlation')
-    ax = plt.axes()
-    ax.yaxis.grid()
+    plt.grid(axis="y")
     plt.tight_layout(pad=1.08)
     plt.savefig(my_path + "/" + corr_graph_name, format="svg")
     plt.close()
