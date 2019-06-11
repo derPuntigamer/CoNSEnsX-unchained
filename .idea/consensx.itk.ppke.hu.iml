@@ -14,7 +14,7 @@
   </component>
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
-    <orderEntry type="jdk" jdkName="Remote Python 3.6.7 Docker Compose (consensx-server at [C:\Users\ddudo\PycharmProjects\consensx.itk.ppke.hu\docker-compose.yml])" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Pipenv (consensx.itk.ppke.hu)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TemplatesService">
