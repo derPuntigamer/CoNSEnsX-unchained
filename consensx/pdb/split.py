@@ -34,6 +34,9 @@ def split(my_path, pdb_file):
                 pass
             my_data.append(line.strip())
         elif line.startswith("ENDMDL"):
+            if my_name in model_names:
+                raise Exception("Looks like you have redundant model numbers in your PDB. It is easy to fix:")
+
             model_names.append(my_name)
             model_data.append(my_data)
             my_name = ""

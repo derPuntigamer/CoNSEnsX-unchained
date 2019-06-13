@@ -54,7 +54,14 @@ def run_calculation(request, calc_id):
     my_pdb = my_path + db_entry.PDB_file
 
     consensx.pdb.clean(my_path, my_pdb, csv_buffer)
-    model_count = consensx.pdb.split(my_path, my_pdb)
+
+    try:
+        model_count = consensx.pdb.split(my_path, my_pdb)
+    except Exception as e:
+        return render(request, "consensx/home.html", {
+            "error": e,
+            "gist": "<script src='https://gist.github.com/derPuntigamer/59f2b03f4666d5250d055ca7625ba5f2.js'></script>"
+        })
 
     model_data = parse.Pdb(my_pdb, my_path, model_count)
 
