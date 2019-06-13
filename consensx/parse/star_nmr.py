@@ -74,17 +74,14 @@ class StarNMR:
         # split list into dict according to RDC types
         new_rdc_list = []
         for RDC_list in rdc_lists:
-            prev_type = ""
             rdc_dict = {}
 
             for record in RDC_list:
-                if prev_type != record.RDC_type:
+                try:
+                    rdc_dict[record.RDC_type].append(record)
+                except KeyError:
                     rdc_dict[record.RDC_type] = []
                     rdc_dict[record.RDC_type].append(record)
-                else:
-                    rdc_dict[record.RDC_type].append(record)
-
-                prev_type = record.RDC_type
 
             new_rdc_list.append(rdc_dict)
 
@@ -137,16 +134,13 @@ class StarNMR:
 
         # split list into dict according to J-coupling types
         jcoup_dict = {}
-        prev_type = ""
 
         for record in jcoup_records:
-            if prev_type != record.type:
+            try:
+                jcoup_dict[record.type].append(record)
+            except KeyError:
                 jcoup_dict[record.type] = []
                 jcoup_dict[record.type].append(record)
-            else:
-                jcoup_dict[record.type].append(record)
-
-            prev_type = record.type
 
         return jcoup_dict
 
@@ -212,10 +206,9 @@ class StarNMR:
             chem_shift_dict = {}
 
             for record in chem_shift_list:
-
-                if record.atom_name in list(chem_shift_dict.keys()):
+                try:
                     chem_shift_dict[record.atom_name].append(record)
-                else:
+                except KeyError:
                     chem_shift_dict[record.atom_name] = []
                     chem_shift_dict[record.atom_name].append(record)
 
