@@ -3,9 +3,10 @@ import pynmrstar
 
 class RdcRecord:
     """Class for storing RDC data"""
+
     def __init__(self, resnum1, atom1, resnum2, atom2, rdc_value):
         self.RDC_type = (
-            str(int(resnum1) - int(resnum2)) + '_' + atom1 + '_' + atom2
+            str(int(resnum1) - int(resnum2)) + "_" + atom1 + "_" + atom2
         )
         self.resnum = int(resnum1)
         self.atom = atom1
@@ -16,6 +17,7 @@ class RdcRecord:
 
 class S2Record:
     """Class for storing S2 data"""
+
     def __init__(self, resnum, resname, s2_type, s2_value):
         self.resnum = int(resnum)
         self.resname = resname
@@ -26,6 +28,7 @@ class S2Record:
 
 class JCoupRecord:
     """Class for storing J-Coupling data"""
+
     def __init__(self, resnum, jcoup_type, jcoup_value):
         self.resnum = int(resnum)
         self.type = jcoup_type
@@ -34,6 +37,7 @@ class JCoupRecord:
 
 class ChemShiftRecord:
     """Class for storing chemical shift data"""
+
     def __init__(self, resnum, res_name, atom_name, chemshift_value):
         self.resnum = int(resnum)
         self.res_name = res_name
@@ -42,10 +46,15 @@ class ChemShiftRecord:
 
     def __str__(self):
         return (
-            "resnum: " + str(self.resnum) + "," +
-            "res_name: " + self.res_name + "," +
-            "atom_name: " + self.atom_name + "," +
-            "value: " + str(self.value) + "\n"
+            "resnum: "
+            + str(self.resnum)
+            + ", res_name: "
+            + self.res_name
+            + ", atom_name: "
+            + self.atom_name
+            + ", value: "
+            + str(self.value)
+            + "\n"
         )
 
     def __repr__(self):
@@ -98,9 +107,7 @@ class StarNMR:
         s2_records = []
 
         for row_data in s2_loop.get_tag(tag_list):
-            s2_records.append(
-                S2Record(*row_data)
-            )
+            s2_records.append(S2Record(*row_data))
 
         # split list into dict according to S2 types
         s2_dict = {}
@@ -117,7 +124,8 @@ class StarNMR:
     def parse_jcoup(self):
         """Returns a dictionary with the parsed J-coupling data"""
         try:
-            jcoup_loop = self.parsed.get_loops_by_category("Coupling_constant")[0]
+            jcoup_loop = self.parsed.get_loops_by_category(
+                "Coupling_constant")[0]
         except IndexError:
             return None
 
@@ -128,9 +136,7 @@ class StarNMR:
             if row_data[1] not in ["3JHNCB", "3JHNHA", "3JHNC", "3JHAC"]:
                 continue
 
-            jcoup_records.append(
-                JCoupRecord(*row_data)
-            )
+            jcoup_records.append(JCoupRecord(*row_data))
 
         # split list into dict according to J-coupling types
         jcoup_dict = {}
@@ -170,9 +176,7 @@ class StarNMR:
 
                     chemshift_records.append(
                         ChemShiftRecord(
-                            row["Seq_ID"],
-                            row["Comp_ID"],
-                            "HA", ha_sum / 2
+                            row["Seq_ID"], row["Comp_ID"], "HA", ha_sum / 2
                         )
                     )
                     ha_sum = 0.0
@@ -184,17 +188,14 @@ class StarNMR:
                             row["Seq_ID"],
                             row["Comp_ID"],
                             row["Atom_ID"],
-                            cs_value
+                            cs_value,
                         )
                     )
 
                 elif row["Atom_ID"] == "HN":
                     chemshift_records.append(
                         ChemShiftRecord(
-                            row["Seq_ID"],
-                            row["Comp_ID"],
-                            "H",
-                            cs_value
+                            row["Seq_ID"], row["Comp_ID"], "H", cs_value
                         )
                     )
 
