@@ -35,7 +35,10 @@ def split(my_path, pdb_file):
             my_data.append(line.strip())
         elif line.startswith("ENDMDL"):
             if my_name in model_names:
-                raise Exception("Looks like you have redundant model numbers in your PDB. It is easy to fix:")
+                raise Exception(
+                    "You have redundant model numbers in your PDB. "
+                    + "It is easy to fix:"
+                )
 
             model_names.append(my_name)
             model_data.append(my_data)
@@ -48,7 +51,7 @@ def split(my_path, pdb_file):
 
     for i in range(len(model_names)):
         file_name = my_path + "model_" + model_names[i] + ".pdb"
-        temp_pdb = open(file_name, 'w')
+        temp_pdb = open(file_name, "w")
         temp_pdb.write("HEADER    MODEL " + model_names[i] + "\n")
 
         for _ in model_data[i]:

@@ -25,10 +25,8 @@ import consensx.pdb
 from consensx.misc.natural_sort import natural_sort
 from consensx import thirdparty
 
-
 # Django server
 from django.shortcuts import render
-from django.http import HttpResponse
 from .models import CSX_upload, CSX_calculation
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,10 +56,17 @@ def run_calculation(request, calc_id):
     try:
         model_count = consensx.pdb.split(my_path, my_pdb)
     except Exception as e:
-        return render(request, "consensx/home.html", {
-            "error": e,
-            "gist": "<script src='https://gist.github.com/derPuntigamer/59f2b03f4666d5250d055ca7625ba5f2.js'></script>"
-        })
+        return render(
+            request,
+            "consensx/home.html",
+            {
+                "error": e,
+                "gist": (
+                    "<script src='https://gist.github.com/derPuntigamer/"
+                    "59f2b03f4666d5250d055ca7625ba5f2.js'></script>"
+                ),
+            },
+        )
 
     model_data = parse.Pdb(my_pdb, my_path, model_count)
 
@@ -70,8 +75,8 @@ def run_calculation(request, calc_id):
             request,
             "consensx/home.html",
             {
-                "error": "DISCARDED MODELS FOUND, CHECK IF ALL MODELS HAVE THE SAME\
-            NUMBER OF ATOMS"
+                "error": "DISCARDED MODELS FOUND, CHECK IF ALL MODELS HAVE\
+                THE SAME NUMBER OF ATOMS"
             },
         )
 
@@ -174,11 +179,7 @@ def run_calculation(request, calc_id):
         star_nmr_data = parse.StarNMR(nmr_file_path)
     except Exception as e:
         print("STR parsing failed with", e)
-        return render(
-            request,
-            "consensx/home.html",
-            {"error": e},
-        )
+        return render(request, "consensx/home.html", {"error": e})
 
     # ------------------------  RDC calculation  ------------------------ #
     rdc_lists = star_nmr_data.parse_rdc()
@@ -213,11 +214,7 @@ def run_calculation(request, calc_id):
         print("SIDECHAIN")
 
         s2_sc_data = calc.s2_sidechain(
-            csv_buffer,
-            s2_dict,
-            my_path,
-            model_data,
-            fit=db_entry.superimpose,
+            csv_buffer, s2_dict, my_path, model_data, fit=db_entry.superimpose
         )
 
         data_found = True
