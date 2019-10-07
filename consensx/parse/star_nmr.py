@@ -98,28 +98,28 @@ class StarNMR:
 
     def parse_s2(self):
         """Returns a dictionary with the parsed S2 data"""
-        try:
-            s2_loop = self.parsed.get_loops_by_category("Order_param")[0]
-        except IndexError:
-            return None
+        s2_lists = []
 
-        tag_list = ["Seq_ID", "Comp_ID", "Atom_ID", "Order_param_val"]
-        s2_records = []
+        for s2_loop in self.parsed.get_loops_by_category("Order_param"):
+            tag_list = ["Seq_ID", "Comp_ID", "Atom_ID", "Order_param_val"]
+            s2_records = []
 
-        for row_data in s2_loop.get_tag(tag_list):
-            s2_records.append(S2Record(*row_data))
+            for row_data in s2_loop.get_tag(tag_list):
+                s2_records.append(S2Record(*row_data))
 
-        # split list into dict according to S2 types
-        s2_dict = {}
+            # split list into dict according to S2 types
+            s2_dict = {}
 
-        for record in s2_records:
-            try:
-                s2_dict[record.type].append(record)
-            except KeyError:
-                s2_dict[record.type] = []
-                s2_dict[record.type].append(record)
+            for record in s2_records:
+                try:
+                    s2_dict[record.type].append(record)
+                except KeyError:
+                    s2_dict[record.type] = []
+                    s2_dict[record.type].append(record)
 
-        return s2_dict
+            s2_lists.append(s2_dict)
+
+        return s2_lists
 
     def parse_jcoup(self):
         """Returns a dictionary with the parsed J-coupling data"""

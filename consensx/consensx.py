@@ -202,35 +202,36 @@ def run_calculation(request, calc_id):
         data_found = True
 
     # ----------------------------  S2 calc  ---------------------------- #
-    s2_dict = star_nmr_data.parse_s2()
-    s2_dump = [s2_dict, db_entry.superimpose, db_entry.fit_range]
+    s2_lists = star_nmr_data.parse_s2()
+    s2_dump = [s2_lists, db_entry.superimpose, db_entry.fit_range]
     s2_dict_path = my_path + "/S2_dict.pickle"
     pickle.dump(s2_dump, open(s2_dict_path, "wb"))
     s2_data = None
     s2_sc_data = None
     sidechain_atoms = ["CB", "CD1", "CD2", "CG1", "CG2", "CD", "CE"]
 
-    if s2_dict and any(elem in sidechain_atoms for elem in s2_dict):
-        print("SIDECHAIN")
+    for s2_dict in s2_lists:
+        if s2_dict and any(elem in sidechain_atoms for elem in s2_dict):
 
-        s2_sc_data = calc.s2_sidechain(
-            csv_buffer, s2_dict, my_path, model_data, fit=db_entry.superimpose
-        )
+            s2_sc_data = calc.s2_sidechain(
+                csv_buffer, s2_dict, my_path, model_data,
+                fit=db_entry.superimpose
+            )
 
-        data_found = True
+            data_found = True
 
-    elif s2_dict:
-        s2_data = calc.s2(
-            csv_buffer,
-            calced_data_storage,
-            s2_dict,
-            my_path,
-            model_data,
-            fit=db_entry.superimpose,
-            fit_range=db_entry.fit_range,
-        )
+        elif s2_dict:
+            s2_data = calc.s2(
+                csv_buffer,
+                calced_data_storage,
+                s2_dict,
+                my_path,
+                model_data,
+                fit=db_entry.superimpose,
+                fit_range=db_entry.fit_range,
+            )
 
-        data_found = True
+            data_found = True
 
     # ------------------------  J-coupling calc  ------------------------ #
     Jcoup_dict = star_nmr_data.parse_jcoup()
