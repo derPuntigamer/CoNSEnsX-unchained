@@ -1,4 +1,4 @@
-FROM ubuntu:18.10 AS builder
+FROM ubuntu:19.04 AS builder
 LABEL maintainer="dudola.daniel@itk.ppke.hu"
 
 ENV LANG=C.UTF-8
@@ -26,7 +26,7 @@ RUN PIP_USER=1 PYTHONUSERBASE=$PYROOT pipenv install --system --deploy
 #    '--\ `-.__..-'    /.    (_), |  )
 #        `._        ___\_____.'_| |__/
 #           `~----"`   `-.........'
-FROM ubuntu:18.10
+FROM ubuntu:19.04
 
 ENV PGPASSWORD=password
 ENV LANG=C.UTF-8
