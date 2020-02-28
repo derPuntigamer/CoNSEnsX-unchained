@@ -100,15 +100,22 @@
         <li>
             We provide simple tools to convert DIANA/DYANA .upl and X-PLOR/CNS .tbl distance restraint files into an intermediate format ‘disre’. By default, the converters ‘upl2disre.pl’ and ‘tbl2disre.pl’ will dereference all pseudoatoms into existing ones with the aid of the (already name-converted) PDB file supplied (e.g. ALA HB# to HB1, HB2, HB3 etc.). This intermediate format can then be converted to NMR-STAR format (v2 mr file format in the PDB web site) by ‘disre2str.pl’.
         </li>
-        <li>All scripts below are provided on an ‘as is’ basis, they might not be error-free but they are provided in the belief that they might be useful. They can be freely modified for research purpose (usage information invoked with -h):
+        <li>All scripts below are provided on an ‘as is’ basis, they might not be error-free but they are provided in the belief that they might be useful. Note that the scripts are not officially supported by BMRB. They can be freely modified for research purpose (usage information invoked with -h):
             <table class="tools">
                 <tr>
+                    <td><a href="http://consensx.itk.ppke.hu/static/tools/protonate_ensemble.pl" download>protonate_ensemble.pl</a></td>
+                    <td>Adds/replaces hydrogens to a PDB ensemble by invoking GROMACS's pdb2gmx on each model</td>
+                </tr>
+                <tr>
+                    <td><a href="http://consensx.itk.ppke.hu/static/tools/pdbfile2bmrbnomenclature.pl" download>pdbfile2bmrbnomenclature.pl</a></td>
+                    <td>Renames hydrogens in a PDB file according to the BMRB nomenclature.</td>
+                </tr>
                     <td><a href="http://consensx.itk.ppke.hu/static/tools/atomconverter_pdb.pl" download>atomcoverter_pdb.pl</a></td>
                     <td>Converts atom names in a PDB file</td>
                 </tr>
                 <tr>
                     <td><a href="http://consensx.itk.ppke.hu/static/tools/atomconverter_str.pl" download>atomconverter_str.pl</a></td>
-                    <td>Converts atom names in a STR file</td>
+                    <td>Converts atom names in an NMR-Star file</td>
                 </tr>
                 <tr>
                     <td><a href="http://consensx.itk.ppke.hu/static/tools/str2distre.pl" download>str2distre.pl</a></td>
