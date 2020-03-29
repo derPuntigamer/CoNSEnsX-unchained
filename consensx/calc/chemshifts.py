@@ -1,6 +1,9 @@
 import pickle
 import os
+import threading
+import multiprocessing
 import subprocess
+from time import perf_counter
 
 import consensx.graph as graph
 
@@ -12,12 +15,50 @@ from consensx.misc.natural_sort import natural_sort
 chemshift_types = ["HA", "CA", "CB", "N", "H", "C"]
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
+def shiftx_runner(file_list):
+    for config in file_list:
+        subprocess.call(
+            [
+                thirdparty.ThirdParty.shiftx,
+                "1",
+                config["pdb_file"],
+                config["out_name"]
+            ]
+        )
+
+
 def call_shiftx_on(my_path, pdb_files, bme_weights=None):
     """Call ShiftX on PDB models. Each output is appended to 'out_name'"""
+    print("Number of cpu cores:", multiprocessing.cpu_count())
+
+    t1_start = perf_counter()
+
+    shiftx_runs = []
+
     for i, pdb_file in enumerate(pdb_files):
-        pdb_file = my_path + pdb_file
-        out_name = my_path + "/modell_" + str(i + 1) + ".out"
-        subprocess.call([thirdparty.ThirdParty.shiftx, "1", pdb_file, out_name])
+        shiftx_runs.append({
+            "pdb_file": my_path + pdb_file,
+            "out_name": my_path + "/modell_" + str(i + 1) + ".out",
+        })
+
+    threads = []
+
+    for shiftx_run_chunk in chunks(shiftx_runs, 6):
+        thread = threading.Thread(target=shiftx_runner, args=(shiftx_run_chunk,))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    t1_stop = perf_counter()
+    print("[chemshift] Call Shiftx in seconds:", t1_stop - t1_start)
 
     shiftx_output_files = []
     average_ha, average_h, average_n = {}, {}, {}
@@ -33,6 +74,8 @@ def call_shiftx_on(my_path, pdb_files, bme_weights=None):
     for some_file in natural_sort(os.listdir(my_path)):
         if some_file.startswith("modell") and some_file.endswith(".out"):
             shiftx_output_files.append(some_file)
+
+    t1_start = perf_counter()
 
     for i, shiftx_output in enumerate(shiftx_output_files):
         if bme_weights:
@@ -120,6 +163,9 @@ def call_shiftx_on(my_path, pdb_files, bme_weights=None):
 
         mod_ha, mod_h, mod_n, mod_ca, mod_cb, mod_c = {}, {}, {}, {}, {}, {}
 
+    t1_stop = perf_counter()
+    print("[chemshift] Getting averages from Pales outputs in seconds:", t1_stop - t1_start)
+
     averages = [
         average_ha,
         average_h,
@@ -129,9 +175,14 @@ def call_shiftx_on(my_path, pdb_files, bme_weights=None):
         average_c,
     ]
 
+    t1_start = perf_counter()
+
     for avg_dict in averages:
         for key in avg_dict:
             avg_dict[key] /= model_weight_sum
+
+    t1_stop = perf_counter()
+    print("[chemshift] Calculating averages in seconds:", t1_stop - t1_start)
 
     return (
         {
