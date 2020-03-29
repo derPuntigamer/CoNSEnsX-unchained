@@ -10,7 +10,7 @@ import json
 
 from .models import CSX_upload, CSX_calculation
 from .consensx import run_calculation
-from .selection import run_selection
+from .selection import Selection
 
 
 chars = string.ascii_uppercase + string.digits
@@ -115,12 +115,10 @@ def selection(request, my_id):
     print("SELECTION ID IS: " + my_id)
     my_path = os.path.join(BASE_DIR, 'media', my_id)
     user_selection = json.loads(request.body.decode("utf-8"))
-
     original_values = pickle.load(open(my_path + "/calced_values.p", "rb"))
+    sel = Selection(my_path, original_values, user_selection)
 
-    num_coordsets, sel_values, pca_image_names = run_selection(
-        my_path, original_values, user_selection
-    )
+    num_coordsets, sel_values, pca_image_names = sel.run_selection()
 
     measure = user_selection["MEASURE"]
 
