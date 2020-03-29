@@ -3,6 +3,8 @@
 import os
 import pickle
 import prody
+import multiprocessing
+import threading
 from time import perf_counter
 
 # own modules
@@ -10,6 +12,12 @@ import consensx.graph as graph
 import consensx.calc as calc
 from consensx.misc.natural_sort import natural_sort
 from .models import CSX_upload
+
+
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 
 def get_pdb_models(path):
@@ -203,6 +211,9 @@ class Selection:
         self.dumped_data = DumpedData()
         self.user_sel = []
 
+        self.iter_data = []
+        self.model_scores = {}
+
         for key, value in user_selection_json.items():
             # set MEASURE for selection
             if key == "MEASURE":
@@ -268,6 +279,32 @@ class Selection:
                 my_weight = float(value)
                 self.user_sel.append(["ChemShift", my_type, my_weight])
 
+        for sel in self.user_sel:
+            if "RDC" in sel and not self.dumped_data.RDC_is_loaded:
+                self.dumped_data.load_rdc_dump(self.my_path)
+                # TODO do we need double names?
+                self.RDC_lists = self.dumped_data.RDC_lists
+                self.RDC_model_data = self.dumped_data.RDC_model_data
+
+            if "S2" in sel and not self.dumped_data.S2_is_loaded:
+                self.dumped_data.load_s2_dump(self.my_path)
+                self.S2_dict = self.dumped_data.S2_dict
+                self.fit = self.dumped_data.S2_fit
+                self.fit_range = self.dumped_data.S2_fit_range
+
+                self.dumped_data.load_pdb_data(self.my_path)
+                self.pdb_data = self.dumped_data.pdb_model_data
+
+            if "JCoup" in sel and not self.dumped_data.Jcoup_is_loaded:
+                self.dumped_data.load_jcoup_data(self.my_path)
+                self.Jcoup_dict = self.dumped_data.Jcoup_dict
+                self.JCoup_modell_data = self.dumped_data.Jcoup_model_data
+
+            if "ChemShift" in sel and not self.dumped_data.ChemShift_is_loaded:
+                self.dumped_data.load_chemshift_data(self.my_path)
+                self.ChemShifts = self.dumped_data.ChemShift_lists
+                self.ChemShift_model_data = self.dumped_data.ChemShift_model_data
+
     def run_selection(self):
         pdb_output_name = self.my_path + "/raw.pdb"
 
@@ -278,8 +315,6 @@ class Selection:
             os.remove(self.my_path + "/selected.pdb")
 
         in_selection, iter_data, iter_all = self.selection_on()
-
-        print("ITER ALL", iter_all)
 
         for key, val in iter_data.items():
             print("CALCED ", key, '{0:.3f}'.format(val))
@@ -327,38 +362,133 @@ class Selection:
 
         return num_coordsets, iter_data, pca_image_names
 
+    def selection_on_chunk(self, selection_combinations):
+        model_scores = {}
+        iter_scores = {}
+
+        for pdb_sel in selection_combinations:
+            num = pdb_sel[0]
+            iter_scores[num] = {}
+
+            for sel_data in self.user_sel:
+                if sel_data[0] == "RDC":
+                    RDC_num = sel_data[1]
+                    RDC_type = sel_data[2]
+                    RDC_weight = sel_data[3]
+
+                    my_data = self.RDC_model_data.rdc_data[RDC_num][RDC_type]
+                    averageRDC = averageRDCs_on(pdb_sel, my_data)
+                    my_RDC = self.RDC_lists[RDC_num - 1][RDC_type]
+                    calced = None
+
+                    if self.measure == "correlation":
+                        calced = calc.correlation(averageRDC, my_RDC)
+                    elif self.measure == "q-value":
+                        calced = calc.q_value(averageRDC, my_RDC)
+                    elif self.measure == "rmsd":
+                        calced = calc.rmsd(averageRDC, my_RDC)
+
+                    if num in model_scores.keys():
+                        model_scores[num] += calced * RDC_weight
+                    else:
+                        model_scores[num] = calced * RDC_weight
+
+                    my_type = "".join(sel_data[2].split('_'))
+                    my_key = (
+                            sel_data[0] + '_' + str(sel_data[1]) + '_' + my_type
+                    )
+                    iter_scores[num][my_key] = calced
+
+                elif sel_data[0] == "S2":
+                    S2_type = sel_data[1]
+                    S2_weight = sel_data[2]
+
+                    averageS2 = averageS2_on(
+                        pdb_sel, self.pdb_data,
+                        self.S2_dict, S2_type,
+                        self.fit, self.fit_range
+                    )
+                    experimental = self.S2_dict[S2_type]
+                    calced = None
+
+                    if self.measure == "correlation":
+                        calced = calc.correlation(averageS2, experimental)
+                    elif self.measure == "q-value":
+                        calced = calc.q_value(averageS2, experimental)
+                    elif self.measure == "rmsd":
+                        calced = calc.rmsd(averageS2, experimental)
+
+                    if num in model_scores.keys():
+                        model_scores[num] += calced * S2_weight
+                    else:
+                        model_scores[num] = calced * S2_weight
+
+                    iter_scores[num][sel_data[0] + '_' + str(sel_data[1])] = calced
+
+                elif sel_data[0] == "JCoup":
+                    JCoup_type = sel_data[1]
+                    JCoup_weight = sel_data[2]
+
+                    my_type = self.JCoup_modell_data[JCoup_type]
+                    averageJCoup = averageJCoup_on(pdb_sel, my_type)
+                    my_JCoup = self.Jcoup_dict[JCoup_type]
+                    calced = None
+
+                    if self.measure == "correlation":
+                        calced = calc.correlation(averageJCoup, my_JCoup)
+                    elif self.measure == "q-value":
+                        calced = calc.q_value(averageJCoup, my_JCoup)
+                    elif self.measure == "rmsd":
+                        calced = calc.rmsd(averageJCoup, my_JCoup)
+
+                    if num in model_scores.keys():
+                        model_scores[num] += calced * JCoup_weight
+                    else:
+                        model_scores[num] = calced * JCoup_weight
+
+                    iter_scores[num][sel_data[0] + '_' + str(sel_data[1])] = calced
+
+                elif sel_data[0] == "ChemShift":
+                    ChemShift_type = sel_data[1]
+                    ChemShift_weight = sel_data[2]
+
+                    my_ChemShifts = self.ChemShifts[0][ChemShift_type]
+                    my_type = self.ChemShift_model_data.get_type_data(
+                        ChemShift_type
+                    )
+
+                    averageChemShift = averageChemShift_on(pdb_sel, my_type)
+                    calced = None
+
+                    if self.measure == "correlation":
+                        calced = calc.correlation(
+                            averageChemShift, my_ChemShifts
+                        )
+                    elif self.measure == "q-value":
+                        calced = calc.q_value(
+                            averageChemShift, my_ChemShifts
+                        )
+                    elif self.measure == "rmsd":
+                        calced = calc.rmsd(
+                            averageChemShift, my_ChemShifts
+                        )
+
+                    if num in model_scores.keys():
+                        model_scores[num] += calced * ChemShift_weight
+                    else:
+                        model_scores[num] = calced * ChemShift_weight
+
+                    iter_scores[num]["CS_" + sel_data[1]] = calced
+
+        return {
+            "iter_scores": iter_scores,
+            "model_scores": model_scores
+        }
+
     def selection_on(self):
         pdb_models = get_pdb_models(self.my_path)
 
         print("user_sel: ", self.user_sel)
-
-        for sel in self.user_sel:
-            print(sel)
-            if "RDC" in sel and not self.dumped_data.RDC_is_loaded:
-                self.dumped_data.load_rdc_dump(self.my_path)
-                print("RDC_lists assigned")
-                # TODO do we need double names?
-                self.RDC_lists = self.dumped_data.RDC_lists
-                self.RDC_model_data = self.dumped_data.RDC_model_data
-
-            if "S2" in sel and not self.dumped_data.S2_is_loaded:
-                self.dumped_data.load_s2_dump(self.my_path)
-                self.S2_dict = self.dumped_data.S2_dict
-                fit = self.dumped_data.S2_fit
-                fit_range = self.dumped_data.S2_fit_range
-
-                self.dumped_data.load_pdb_data(self.my_path)
-                self.pdb_data = self.dumped_data.pdb_model_data
-
-            if "JCoup" in sel and not self.dumped_data.Jcoup_is_loaded:
-                self.dumped_data.load_jcoup_data(self.my_path)
-                self.Jcoup_dict = self.dumped_data.Jcoup_dict
-                self.JCoup_modell_data = self.dumped_data.Jcoup_model_data
-
-            if "ChemShift" in sel and not self.dumped_data.ChemShift_is_loaded:
-                self.dumped_data.load_chemshift_data(self.my_path)
-                self.ChemShifts = self.dumped_data.ChemShift_lists
-                self.ChemShift_model_data = self.dumped_data.ChemShift_model_data
 
         in_selection = []
 
@@ -367,8 +497,11 @@ class Selection:
         first_run = True
         first_try = True
         above_best = 0
-        iter_data = []
-        divide_by = 0.0
+        divide_by = 0
+
+        for selection_choice in self.user_sel:
+            divide_by += selection_choice[2]
+
         num_models = len(pdb_models)
 
         if self.measure == "correlation":
@@ -380,9 +513,11 @@ class Selection:
 
         t1_start = perf_counter()
 
+        pool = multiprocessing.Pool(4)
+
         while True:
-            model_scores = {}
-            iter_scores = {}
+            self.model_scores = {}
+            sel_combinations = []
 
             # iterate on all PDB models
             for num in range(num_models):
@@ -390,128 +525,35 @@ class Selection:
                 if num in in_selection:
                     continue
 
-                divide_by = 0.0  # variable for storing weight sum
-                pdb_sel = [num] + in_selection  # creating test ensemble
+                # creating test ensemble combinations
+                sel_combinations.append([num] + in_selection)
 
-                for sel_data in self.user_sel:
-                    if sel_data[0] == "RDC":
-                        RDC_num = sel_data[1]
-                        RDC_type = sel_data[2]
-                        RDC_weight = sel_data[3]
+            combination_chunks_list = list(chunks(sel_combinations, 6))
+            process_results = pool.map(self.selection_on_chunk, combination_chunks_list)
 
-                        my_data = self.RDC_model_data.rdc_data[RDC_num][RDC_type]
-                        averageRDC = averageRDCs_on(pdb_sel, my_data)
-                        my_RDC = self.RDC_lists[RDC_num - 1][RDC_type]
-                        calced = None
+            iter_data_dict = {}
 
-                        if self.measure == "correlation":
-                            calced = calc.correlation(averageRDC, my_RDC)
-                        elif self.measure == "q-value":
-                            calced = calc.q_value(averageRDC, my_RDC)
-                        elif self.measure == "rmsd":
-                            calced = calc.rmsd(averageRDC, my_RDC)
+            for result in process_results:
+                iter_data_dict.update(result["iter_scores"])
+                self.model_scores.update(result["model_scores"])
 
-                        if num in model_scores.keys():
-                            model_scores[num] += calced * RDC_weight
-                        else:
-                            model_scores[num] = calced * RDC_weight
+            self.iter_data = [iter_data_dict[key] for key in sorted(iter_data_dict.keys())]
 
-                        divide_by += RDC_weight
+            # processes = []
+            #
+            # for sel_combination in chunks(sel_combinations, 6):
+            #     # process = multiprocessing.Process(
+            #     process = threading.Thread(
+            #         target=self.selection_on_chunk,
+            #         args=(sel_combination,)
+            #     )
+            #     processes.append(process)
+            #     process.start()
+            #
+            # for process in processes:
+            #     process.join()
 
-                        my_type = "".join(sel_data[2].split('_'))
-                        my_key = (
-                                sel_data[0] + '_' + str(sel_data[1]) + '_' + my_type
-                        )
-                        iter_scores[my_key] = calced
 
-                    elif sel_data[0] == "S2":
-                        S2_type = sel_data[1]
-                        S2_weight = sel_data[2]
-
-                        averageS2 = averageS2_on(
-                            pdb_sel, self.pdb_data,
-                            self.S2_dict, S2_type,
-                            self.dumped_data.S2_fit, self.dumped_data.S2_fit_range
-                        )
-                        experimental = self.S2_dict[S2_type]
-                        calced = None
-
-                        if self.measure == "correlation":
-                            calced = calc.correlation(averageS2, experimental)
-                        elif self.measure == "q-value":
-                            calced = calc.q_value(averageS2, experimental)
-                        elif self.measure == "rmsd":
-                            calced = calc.rmsd(averageS2, experimental)
-
-                        if num in model_scores.keys():
-                            model_scores[num] += calced * S2_weight
-                        else:
-                            model_scores[num] = calced * S2_weight
-
-                        divide_by += S2_weight
-
-                        iter_scores[sel_data[0] + '_' + str(sel_data[1])] = calced
-
-                    elif sel_data[0] == "JCoup":
-                        JCoup_type = sel_data[1]
-                        JCoup_weight = sel_data[2]
-
-                        my_type = self.JCoup_modell_data[JCoup_type]
-                        averageJCoup = averageJCoup_on(pdb_sel, my_type)
-                        my_JCoup = self.Jcoup_dict[JCoup_type]
-                        calced = None
-
-                        if self.measure == "correlation":
-                            calced = calc.correlation(averageJCoup, my_JCoup)
-                        elif self.measure == "q-value":
-                            calced = calc.q_value(averageJCoup, my_JCoup)
-                        elif self.measure == "rmsd":
-                            calced = calc.rmsd(averageJCoup, my_JCoup)
-
-                        if num in model_scores.keys():
-                            model_scores[num] += calced * JCoup_weight
-                        else:
-                            model_scores[num] = calced * JCoup_weight
-
-                        divide_by += JCoup_weight
-
-                        iter_scores[sel_data[0] + '_' + str(sel_data[1])] = calced
-
-                    elif sel_data[0] == "ChemShift":
-                        ChemShift_type = sel_data[1]
-                        ChemShift_weight = sel_data[2]
-
-                        my_ChemShifts = self.ChemShifts[0][ChemShift_type]
-                        my_type = self.ChemShift_model_data.get_type_data(
-                            ChemShift_type
-                        )
-
-                        averageChemShift = averageChemShift_on(pdb_sel, my_type)
-                        calced = None
-
-                        if self.measure == "correlation":
-                            calced = calc.correlation(
-                                averageChemShift, my_ChemShifts
-                            )
-                        elif self.measure == "q-value":
-                            calced = calc.q_value(
-                                averageChemShift, my_ChemShifts
-                            )
-                        elif self.measure == "rmsd":
-                            calced = calc.rmsd(
-                                averageChemShift, my_ChemShifts
-                            )
-
-                        if num in model_scores.keys():
-                            model_scores[num] += calced * ChemShift_weight
-                        else:
-                            model_scores[num] = calced * ChemShift_weight
-
-                        divide_by += ChemShift_weight
-
-                        iter_scores["CS_" + sel_data[1]] = calced
-
-            iter_data.append(iter_scores)
             best_num = -1
 
             if self.measure == "correlation":
@@ -519,8 +561,8 @@ class Selection:
             else:
                 best_val = 1000
 
-            for num in model_scores.keys():
-                model_score = model_scores[num] / divide_by
+            for num in self.model_scores.keys():
+                model_score = self.model_scores[num] / divide_by
                 if self.measure == "correlation" and model_score > best_val:
                     best_val = model_score
                     best_num = num
@@ -565,7 +607,7 @@ class Selection:
                         )
                         t1_stop = perf_counter()
                         print("[selection] Selection in seconds:", t1_stop - t1_start)
-                        return in_selection, iter_data[-above_best - 1], iter_data
+                        return in_selection, self.iter_data[-above_best - 1], self.iter_data
                     else:
                         print(
                             "EXIT -> selection reached max desired size \
@@ -573,7 +615,7 @@ class Selection:
                         )
                         t1_stop = perf_counter()
                         print("[selection] Selection in seconds:", t1_stop - t1_start)
-                        return in_selection, iter_data[-above_best - 1], iter_data
+                        return in_selection, self.iter_data[-above_best - 1], self.iter_data
 
             # if new selection results a higher score
             if (
@@ -598,7 +640,7 @@ class Selection:
                     print("EXIT -> selection reached max desired size")
                     t1_stop = perf_counter()
                     print("[selection] Selection in seconds:", t1_stop - t1_start)
-                    return in_selection, iter_data[-1], iter_data
+                    return in_selection, self.iter_data[-1], self.iter_data
 
             # if new selection results a lower score
             else:
@@ -626,7 +668,7 @@ class Selection:
                         del in_selection[-1]
                         t1_stop = perf_counter()
                         print("[selection] Selection in seconds:", t1_stop - t1_start)
-                        return in_selection, iter_data[-above_best - 1], iter_data
+                        return in_selection, self.iter_data[-above_best - 1], self.iter_data
 
                     above_best += 1
                     print("\x1b[31mwe are in overdrive with \x1b[0m" +
@@ -659,7 +701,7 @@ class Selection:
                             t1_stop = perf_counter()
                             print("[selection] Selection in seconds:", t1_stop - t1_start)
                             return (
-                                in_selection, iter_data[-above_best - 1], iter_data
+                                in_selection, self.iter_data[-above_best - 1], self.iter_data
                             )
 
                         if (self.measure in ["q-value", "rmsd"] and
@@ -675,7 +717,7 @@ class Selection:
                             t1_stop = perf_counter()
                             print("[selection] Selection in seconds:", t1_stop - t1_start)
                             return (
-                                in_selection, iter_data[-above_best - 1], iter_data
+                                in_selection, self.iter_data[-above_best - 1], self.iter_data
                             )
 
                     continue
@@ -697,7 +739,7 @@ class Selection:
                 print("EXIT -> selection got a worse score, no override")
                 t1_stop = perf_counter()
                 print("[selection] Selection in seconds:", t1_stop - t1_start)
-                return in_selection, iter_data[-1], iter_data
+                return in_selection, self.iter_data[-1], self.iter_data
 
             iter_count += 1
 
