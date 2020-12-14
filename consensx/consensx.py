@@ -181,25 +181,25 @@ def run_calculation(request, calc_id):
         print("STR parsing failed with", e)
         return render(request, "consensx/home.html", {"error": e})
 
-    # ------------------------  RDC calculation  ------------------------ #
-    rdc_lists = star_nmr_data.parse_rdc()
-    rdc_lists_path = my_path + "/RDC_lists.pickle"
-    pickle.dump(rdc_lists, open(rdc_lists_path, "wb"))
-    rdc_calced_data = None
-
-    if rdc_lists:
-        svd_enabled = db_entry.svd_enable
-        lc_model = db_entry.rdc_lc
-        rdc_calced_data = calc.rdc(
-            csv_buffer,
-            calced_data_storage,
-            rdc_lists,
-            pdb_models,
-            my_path,
-            svd_enabled,
-            lc_model,
-        )
-        data_found = True
+    # # ------------------------  RDC calculation  ------------------------ #
+    # rdc_lists = star_nmr_data.parse_rdc()
+    # rdc_lists_path = my_path + "/RDC_lists.pickle"
+    # pickle.dump(rdc_lists, open(rdc_lists_path, "wb"))
+    # rdc_calced_data = None
+    #
+    # if rdc_lists:
+    #     svd_enabled = db_entry.svd_enable
+    #     lc_model = db_entry.rdc_lc
+    #     rdc_calced_data = calc.rdc(
+    #         csv_buffer,
+    #         calced_data_storage,
+    #         rdc_lists,
+    #         pdb_models,
+    #         my_path,
+    #         svd_enabled,
+    #         lc_model,
+    #     )
+    #     data_found = True
 
     # ----------------------------  S2 calc  ---------------------------- #
     s2_lists = star_nmr_data.parse_s2()

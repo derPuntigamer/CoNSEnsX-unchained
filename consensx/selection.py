@@ -3,7 +3,7 @@
 import os
 import pickle
 import prody
-import multiprocessing
+import multiprocess
 import threading
 from time import perf_counter
 
@@ -513,7 +513,7 @@ class Selection:
 
         t1_start = perf_counter()
 
-        pool = multiprocessing.Pool(4)
+        pool = multiprocess.Pool(4)
 
         while True:
             self.model_scores = {}

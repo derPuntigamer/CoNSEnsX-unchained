@@ -93,8 +93,8 @@ DATABASES = {
         'NAME': 'consensx',
         'USER': 'consensxuser',
         'PASSWORD': 'password',
-        # 'HOST': 'localhost',
-        'HOST': 'consensx-db',
+        'HOST': 'localhost',
+        # 'HOST': 'consensx-db',
         'PORT': '',
     }
 }
